@@ -1,0 +1,5 @@
+*   Architected and developed a secure, scalable backend using Spring Boot and Java 17, featuring RESTful APIs and an enhanced security model with custom JWT decoding and token introspection.
+*   Engineered an AI-powered quiz generation system that automatically creates interactive tests by parsing user-uploaded DOCX and PDF documents using Apache POI and iText.
+*   Implemented a robust file management solution with Cloudinary, including asynchronous processing via webhooks, and built a versatile document export engine for generating custom reports in both PDF and Word formats.
+*   Built a full-featured content management module with complete CRUD operations for articles and a nested commenting system to drive user engagement.
+*   Developed comprehensive user lifecycle features, including secure account verification via OTP (Spring Mail), robust server-side validation, and a donation processing endpoint.

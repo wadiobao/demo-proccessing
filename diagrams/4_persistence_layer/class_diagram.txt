@@ -1,0 +1,42 @@
+```mermaid
+classDiagram
+    title Layer: Data Persistence
+
+    package "JPA / SQL" {
+        class UserRepository {
+            <<Interface>>
+            +findByUsername(String) : Optional~User~
+        }
+        class TopicRepository {
+            <<Interface>>
+        }
+        class User {
+            <<@Entity>>
+            -Long id
+            -String username
+            -String password
+        }
+        class Topic {
+            <<@Entity>>
+            -Long id
+            -String name
+        }
+        UserRepository ..> User
+        TopicRepository ..> Topic
+    }
+
+    package "Mongo" {
+        class PdfStoreRepository {
+            <<Interface>>
+            +save(PdfStore) : PdfStore
+        }
+        class PdfStore {
+            <<@Document>>
+            -String id
+            -String title
+            -String author
+            -String content
+        }
+        PdfStoreRepository ..> PdfStore
+    }
+```

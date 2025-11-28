@@ -1,0 +1,63 @@
+```mermaid
+classDiagram
+    title Module: Authentication & User Management
+
+    class AuthenticationController {
+        -AuthenticationService authService
+        +login(LoginRequest) : AuthenticationResponse
+        +introspect(IntrospectRequest) : IntrospectResponse
+        +logout(LogoutRequest) : void
+    }
+
+    class UserController {
+        -UserService userService
+        +createUser(UserCreationRequest) : UserResponse
+        +getMyInfo() : UserResponse
+    }
+
+    class AuthenticationService {
+        -UserRepository userRepository
+        -InvalidatedTokenRepository invalidatedTokenRepo
+        +authenticate(LoginRequest) : AuthenticationResponse
+        +introspect(IntrospectRequest) : IntrospectResponse
+    }
+
+    class UserService {
+        -UserRepository userRepository
+        -UserMapper userMapper
+        +createUser(UserCreationRequest) : UserResponse
+        +getMyInfo() : UserResponse
+    }
+
+    class UserRepository {
+        <<Interface>>
+        +findByUsername(String) : Optional~User~
+    }
+
+    class User {
+        <<SQL Entity>>
+        -Long id
+        -String username
+        -String password
+        -Set~Role~ roles
+    }
+    
+    class Role {
+        <<Enum>>
+        USER
+        ADMIN
+    }
+
+    class LoginRequest { <<DTO>> }
+    class UserCreationRequest { <<DTO>> }
+    class UserResponse { <<DTO>> }
+    class IntrospectResponse { <<DTO>> }
+
+    AuthenticationController o-- AuthenticationService
+    UserController o-- UserService
+    AuthenticationService o-- UserRepository
+    UserService o-- UserRepository
+    UserService o-- UserMapper
+    UserRepository ..> User
+    User *-- Role
+```

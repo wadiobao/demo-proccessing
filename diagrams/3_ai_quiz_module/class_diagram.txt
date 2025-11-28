@@ -1,0 +1,63 @@
+```mermaid
+classDiagram
+    title Module: AI-Powered Quiz Generation
+
+    class QuizController {
+        -QuizService quizService
+        +handlePdf(MultipartFile, int, int, int) : StateResponse~Object~
+    }
+
+    class QuizService {
+        -PDFProcessingService pdfProcessingService
+        -GeminiAIService geminiAIService
+        -FileGenerationService fileGenerationService
+        -PdfStoreService pdfStoreService
+        +handlePdf(MultipartFile, ...) : StateResponse~Object~
+    }
+
+    class PDFProcessingService {
+        +extractTextFromPdf(MultipartFile) : String
+        +renderPdfToPngToString(MultipartFile) : String
+    }
+
+    class GeminiAIService {
+        +generateQuestionWithGemini(String) : GeminiResponse
+        +generateImageWithGemini(String, String) : String[]
+    }
+
+    class FileGenerationService {
+        +generateWordAndPdfBase64(List~Question~) : String[]
+    }
+
+    class PdfStoreService {
+        -PdfStoreRepository pdfStoreRepo
+        +save(PdfStore) : PdfStore
+    }
+
+    class PdfStoreRepository {
+        <<Interface>>
+        +save(PdfStore) : PdfStore
+    }
+
+    class PdfStore {
+        <<Mongo Entity>>
+        -String id
+        -String author
+        -String content
+        -String wordBase64
+    }
+
+    class Question { <<Model>> }
+    class Answer { <<Model>> }
+    class FileGenerateResponse { <<DTO>> }
+
+    QuizController o-- QuizService
+    QuizService o-- PDFProcessingService
+    QuizService o-- GeminiAIService
+    QuizService o-- FileGenerationService
+    QuizService o-- PdfStoreService
+    PdfStoreService o-- PdfStoreRepository
+    PdfStoreRepository ..> PdfStore
+    QuizService ..> Question
+    Question "1" *-- "many" Answer
+```

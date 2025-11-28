@@ -1,0 +1,50 @@
+```mermaid
+packageDiagram
+    title Kiến trúc tổng thể của ứng dụng
+
+    package "Controller (API Layer)" {
+        class AuthenticationController
+        class QuizController
+        class UserController
+    }
+
+    package "Service (Business Logic)" {
+        class AuthenticationService
+        class QuizService
+        class UserService
+    }
+
+    package "Repository (Data Access)" {
+        class UserRepository
+        class TopicRepository
+        class PdfStoreRepository
+    }
+
+    package "Entity (Database Models)" {
+        package "SQL Entities" {
+            class User
+            class Topic
+        }
+        package "Mongo Entities" {
+            class PdfStore
+        }
+    }
+
+    package "Model (DTOs & View Models)" {
+        class LoginRequest
+        class UserResponse
+        class Question
+        class FileGenerateResponse
+    }
+
+    package "Configuration" {
+        class SecurityConfig
+    }
+
+    Controller --> Service : uses
+    Service --> Repository : uses
+    Service --> Model : uses/creates
+    Repository --> Entity : manages
+    Controller --> Model : uses
+    Configuration --> Service : configures
+```

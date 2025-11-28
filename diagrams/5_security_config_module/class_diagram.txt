@@ -1,0 +1,27 @@
+```mermaid
+classDiagram
+    title Module: Security Configuration
+
+    class SecurityConfig {
+        -CustomJwtDecoder customJwtDecoder
+        -JwtAuthenticationEntryPoint jwtEntryPoint
+        +securityFilterChain(HttpSecurity http) : SecurityFilterChain
+    }
+
+    class CustomJwtDecoder {
+        -UserService userService
+        +decode(String token) : Jwt
+    }
+
+    class JwtAuthenticationEntryPoint {
+        +commence(...) : void
+    }
+
+    class AuthenticationService {
+        +generateToken(Authentication) : String
+    }
+
+    SecurityConfig o-- CustomJwtDecoder
+    SecurityConfig o-- JwtAuthenticationEntryPoint
+    CustomJwtDecoder ..> AuthenticationService : (uses nimbusds)
+```

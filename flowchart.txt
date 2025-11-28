@@ -1,0 +1,35 @@
+flowchart TD
+    A[Client gửi POST /api/handlepdf: file, questionCount, mode, type] --> B{QuizController}
+    B --> C{QuizServiceHandlePdf}
+    C --> D{KiểmTraLoạiPDF: pdfProcessingServiceCheckPDF}
+    D --> E{PDFLàTextBASE?}
+    E -- Có --> F[HandleBasePdf]
+    E -- Không --> G[HandleScanPdf]
+
+    subgraph HandleBasePdf
+        F --> F1[TríchXuấtVănBảnTừPDF]
+        F1 --> F2[TạoPromptChoAI]
+        F2 --> F3[GọiGeminiAIService]
+        F3 --> F4[NhậnKếtQuảChuyểnJSONThànhListQuestion]
+        F4 --> H{FileGenerationService}
+    end
+
+    subgraph HandleScanPdf
+        G --> G1[DùngOCRTríchXuấtVănBảnTừẢnhPDF]
+        G1 --> G2[TạoPromptChoAI]
+        G2 --> G3[GọiGeminiAIService]
+        G3 --> G4[NhậnKếtQuảChuyểnJSONThànhListQuestion]
+        G4 --> H
+    end
+
+    H --> I[TạoFileWordPDFTừListQuestionMãHóaBase64]
+    I --> J{NgườiDùngĐãĐăngNhập?}
+    J -- Có --> K[LưuKếtQuảVàoMongoDBPdfStoreService]
+    J -- Không --> L[BỏQua]
+    K --> L
+    L --> M[TạoĐốiTượngFileGenerateResponse]
+    M --> N{ControllerĐóngGóiTrongStateResponse}
+    N --> O[TrảVềResponseChứaFileBase64ChoClient]
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style O fill:#f9f,stroke:#333,stroke-width:2px

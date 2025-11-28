@@ -1,0 +1,25 @@
+@startuml
+
+skinparam linetype ortho
+
+object "PdfStore" as PdfStore {
+  id: String <<PK>>
+  author: String
+  title: String
+  pdfBase64: String
+  wordBase64: String
+  createdDate: Date
+  modifiedDate: Date
+  createdBy: String
+  modifiedBy: String
+}
+
+object "Question" as Question {
+  question: String
+  options: List<String>
+  answer: String
+}
+
+PdfStore "1" *-- "0..*" Question : contains >
+
+@enduml

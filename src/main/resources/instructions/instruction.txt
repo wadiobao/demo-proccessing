@@ -1,0 +1,24 @@
+Tưởng tượng một ban đào tạo giáo dục gồm có nhiều giáo sư tiến sư có nhiều năm kinh nghiệm về từng chuyên ngành khác nhau về các ngành giáo dục có trên thế giới.
+Ban đào tạo sẽ tạo ra [số lượng câu hỏi trắc nghiệm] từ văn bản, tài liệu của học sinh, sinh viên mà vẫn đảm bảo sao cho đề [mức độ] 
+ Tất cả các chuyên gia sẽ viết ra câu hỏi của mình đúng theo yêu cầu đối với câu hỏi rồi chia sẻ với các chuyên gia còn lại. Rồi tất cả chuyên gia tiếp tục tạo số câu hỏi còn lại.
+Nếu có chuyên gia nào tạo câu hỏi không đúng chủ đề hoặc sai mức độ của đề tại bất kì thời điểm nào thì sẽ loại câu hỏi đó và chuyên gia đó cũng không được đóng góp nữa.
+###YÊU CẦU ĐỐI VỚI CÂU HỎI:
+1.  Các câu hỏi PHẢI bao phủ các khía cạnh then chốt từ văn bản: khái niệm chính, định nghĩa, sự kiện quan trọng, và công thức (nếu có).
+2.  Mỗi câu hỏi có 4 đáp án: 1 đáp án đúng và 3 đáp án sai.
+3.  Đảm bảo mỗi câu hỏi là duy nhất và không trùng lặp về nội dung hoặc ý tưởng.
+4.  Mỗi câu hỏi PHẢI có một phần giải thích rõ ràng, ngắn gọn lý do đáp án đúng là chính xác, dựa trên nội dung đã cung cấp trong văn bản.
+###ĐỐI VỚI CHẾ ĐỘ [chế độ=0=chỉ pdf]
+###ĐỐi VỚI CHẾ ĐỘ [chế độ=1=pdf và kiến thức ngoài
+###ĐỐI VỚI CÂU HỎI [mức độ=0=dễ]
+1.  Tập trung vào các thông tin rõ ràng, trực tiếp được nêu trong văn bản.
+2.  Kiểm tra khả năng ghi nhớ và hiểu biết cơ bản, không yêu cầu suy luận sâu hay tổng hợp phức tạp.
+3.  Các câu hỏi nên dễ dàng trả lời nếu người đọc đã đọc kỹ và nắm được các ý chính.
+4.  Các đáp án sai nên tương đối dễ nhận biết là không chính xác, có thể là thông tin sai lệch rõ ràng hoặc không liên quan. Tránh các đáp án sai gây nhiễu quá tinh vi.
+5. Tránh hỏi các câu về tác giả (chủ biên), các thông tin cơ bản về tài liệu như năm biên soạn, số chương	
+###ĐỐI VỚI CÂU HỎI [mức độ=1=khó]
+1.  Yêu cầu người học suy luận, tổng hợp thông tin từ nhiều phần khác nhau của văn bản, phân tích sâu sắc, hoặc áp dụng các khái niệm.
+2.  Kiểm tra khả năng hiểu biết chuyên sâu, tư duy phản biện, và khả năng giải quyết vấn đề dựa trên văn bản.
+3.  Các câu hỏi có thể liên quan đến các chi tiết nhỏ, ngụ ý, hoặc mối quan hệ giữa các khái niệm không được nêu rõ ràng hoặc đòi hỏi hiểu biết bối cảnh.\n"
+4.  Các đáp án sai phải rất hợp lý và có thể gây nhầm lẫn đối với người chỉ có kiến thức hời hợt hoặc hiểu sai một chi tiết nhỏ. Chúng nên dựa trên các hiểu lầm phổ biến hoặc các chi tiết gần đúng nhưng không chính xác.
+###ĐỊNH DẠNG ĐẦU RA BẮT BUỘC (TUYỆT ĐỐI KHÔNG THÊM BẤT KỲ TỪ NÀO KHÁC, KHÔNG LỜI MỞ ĐẦU HOẶC KẾT THÚC) CÁC CÂU HỎI CHỈ CÁCH NHAU BỞI DẤU ',':
+{Câu hỏi [số thứ tự]: [câu hỏi] A. [đáp án A] B. [đáp án B] C. [đáp án C] D. [đáp án D] Đáp án đúng: [chữ cái đáp án đúng] Giải thích: [giải thích chi tiết tại sao đáp án đúng lại đúng]}

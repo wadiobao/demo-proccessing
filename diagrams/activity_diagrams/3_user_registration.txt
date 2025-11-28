@@ -1,0 +1,42 @@
+@startuml
+title Activity Diagram - User Registration
+
+|Client|
+start
+:Điền và gửi form đăng ký;
+
+|UserController|
+:Nhận UserCreationRequest;
+:Xác thực dữ liệu đầu vào (validation);
+if (Dữ liệu không hợp lệ?) then (yes)
+    :Trả về HTTP 400 Bad Request;
+    stop
+endif
+:Gọi UserService.createUser();
+
+|UserService|
+:Gọi UserRepository để kiểm tra username đã tồn tại chưa;
+if (Username đã tồn tại?) then (yes)
+    :Ném ra Exception (ví dụ: UserAlreadyExists);
+    |HandleException|
+    :Bắt exception;
+    :Trả về HTTP 409 Conflict;
+    stop
+else (no)
+    :Mã hóa mật khẩu (BCrypt);
+    :Tạo đối tượng User mới;
+    |UserRepository|
+    :Lưu đối tượng User vào cơ sở dữ liệu;
+    |UserService|
+    :Sử dụng UserMapper để chuyển User entity thành UserResponse DTO;
+endif
+
+|UserController|
+:Nhận UserResponse từ Service;
+:Trả về HTTP 201 Created với thông tin người dùng;
+
+|Client|
+:Nhận phản hồi và thông báo thành công;
+stop
+
+@enduml

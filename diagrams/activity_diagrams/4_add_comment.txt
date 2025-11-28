@@ -1,0 +1,32 @@
+@startuml
+title Activity Diagram - Add a Comment (CRUD Example)
+
+|Authenticated User|
+start
+:Viết và gửi một bình luận;
+note left: Người dùng phải được xác thực
+để thực hiện hành động này.
+
+|CommentController|
+:Nhận yêu cầu POST với nội dung bình luận;
+:Lấy thông tin người dùng từ SecurityContext;
+:Gọi CommentService.createComment();
+
+|CommentService|
+:Tạo một đối tượng Comment entity;
+:Gán nội dung và thông tin tác giả (người dùng hiện tại);
+:Có thể kiểm tra xem đối tượng được bình luận có tồn tại không;
+|CommentRepository|
+:Lưu đối tượng Comment vào cơ sở dữ liệu;
+|CommentService|
+:Trả về đối tượng Comment đã được lưu;
+
+|CommentController|
+:Nhận lại đối tượng Comment;
+:Trả về HTTP 201 Created với dữ liệu bình luận;
+
+|Authenticated User|
+:Nhận và thấy bình luận mới của mình được hiển thị;
+stop
+
+@enduml

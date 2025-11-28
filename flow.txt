@@ -1,0 +1,25 @@
+MÔ HÌNH HOẠT ĐỘNG TRỪU TƯỢNG CỦA HỆ THỐNG
+
+Đây là mô tả cấp cao về các module chức năng chính của ứng dụng:
+
+**Module 1: Quản lý Định danh và Truy cập (Identity & Access Management)**
+
+*   **Đăng ký tài khoản:** Người dùng cung cấp thông tin để yêu cầu tạo tài khoản. Hệ thống thực hiện một bước xác thực (ví dụ: qua OTP email) để đảm bảo tính chính danh trước khi hoàn tất việc tạo tài khoản.
+*   **Xác thực người dùng:** Người dùng cung cấp thông tin đăng nhập (credentials) để truy cập vào hệ thống.
+*   **Quản lý phiên (Session Management):** Sau khi xác thực thành công, hệ thống cấp phát một phiên làm việc hoặc mã thông báo (token) có thời hạn. Hệ thống hỗ trợ các cơ chế để làm mới, kiểm tra và thu hồi quyền truy cập một cách an toàn.
+
+**Module 2: Chức năng lõi - Tạo Quiz bằng AI (Core Feature: AI Quiz Generation)**
+
+*   **Tiếp nhận kiến thức đầu vào:** Người dùng tải lên một tài liệu (ví dụ: PDF) làm nguồn kiến thức cho việc tạo quiz.
+*   **Phân tích và Xử lý bằng AI:** Một module xử lý trung tâm sử dụng trí tuệ nhân tạo để phân tích ngữ nghĩa của tài liệu, sau đó tự động tạo ra một bộ câu hỏi và câu trả lời liên quan.
+*   **Cung cấp kết quả:** Hệ thống trả về bộ câu hỏi đã được tạo cho người dùng cuối.
+
+**Module 3: Quản lý Dữ liệu và Tệp (Data & File Management)**
+
+*   **Quản lý tài liệu nguồn:** Cung cấp cho người dùng khả năng xem lại và xóa các tài liệu đã tải lên. Các tệp này được quản lý và lưu trữ trên một dịch vụ đám mây bên ngoài.
+*   **Xuất/Tạo tài liệu:** Hệ thống có khả năng tạo ra các tệp tài liệu (như Word, PDF) từ dữ liệu nội bộ và cung cấp chúng cho người dùng.
+
+**Module 4: Quản lý Hồ sơ Người dùng (User Profile Management)**
+
+*   **Truy xuất thông tin:** Cho phép người dùng xem thông tin cá nhân của họ và các thông tin công khai của những người dùng khác trong hệ thống.
+*   **Quản trị người dùng:** Cung cấp các chức năng cho vai trò quản trị viên để giám sát và quản lý toàn bộ danh sách người dùng.

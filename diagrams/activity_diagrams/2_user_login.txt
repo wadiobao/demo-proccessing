@@ -1,0 +1,46 @@
+@startuml
+title Activity Diagram - User Login
+
+|Client|
+start
+:Gửi yêu cầu đăng nhập (username, password);
+
+|AuthenticationController|
+:Nhận LoginRequest;
+:Gọi AuthenticationService.authenticate();
+
+|AuthenticationService|
+:Sử dụng AuthenticationManager của Spring Security;
+note right: Spring Security sẽ dùng UserDetailsService
+để tìm user trong DB và so sánh password.
+
+|UserRepository|
+:Tìm người dùng theo username;
+
+|AuthenticationService|
+if (Xác thực thành công?) then (yes)
+    :Tạo JSON Web Token (JWT);
+    :Tạo AuthenticationResponse chứa token;
+else (no)
+    :Ném ra AuthenticationException;
+endif
+
+|AuthenticationController|
+if (Nhận được AuthenticationResponse?) then (yes)
+    :Trả về HTTP 200 OK với token;
+else (no)
+    |HandleException|
+    :Bắt exception;
+    :Trả về HTTP 401 Unauthorized;
+endif
+
+|Client|
+:Nhận phản hồi;
+if (Thành công?) then (yes)
+    :Lưu token và chuyển hướng;
+else (no)
+    :Hiển thị thông báo lỗi;
+endif
+stop
+
+@enduml
