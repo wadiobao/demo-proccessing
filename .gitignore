@@ -50,3 +50,6 @@ Thumbs.db
 
 # APT generated test files
 .apt_generated_tests/
+
+.txt
+.md
