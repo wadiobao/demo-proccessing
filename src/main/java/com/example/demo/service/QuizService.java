@@ -1,6 +1,5 @@
 package com.example.demo.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +14,14 @@ import com.example.demo.constants.Constants;
 import com.example.demo.dto.StateResponse;
 import com.example.demo.dto.question.FileGenerateResponse;
 import com.example.demo.dto.question.Question;
-import com.example.demo.dto.question.QuizRequest;
-import com.example.demo.dto.question.UserAnswer;
 import com.example.demo.mongo.entity.ArchivedQuestion;
-import com.example.demo.mongo.entity.UserResource;
-import com.example.demo.mongo.repository.UserResourceRepository;
 import com.example.demo.mongo.service.ArchivedQuestionService;
+import com.example.demo.mongo.service.UserResourceService;
 import com.example.demo.service.iservice.IQuizService;
 import com.example.demo.service.quiz.FileGenerationService;
 import com.example.demo.service.quiz.GeminiAIService;
 import com.example.demo.service.quiz.GeminiAIService.GeminiResponse;
 import com.example.demo.service.quiz.PDFProcessingService;
-import com.example.demo.utils.IRTCalculator;
 
 import jakarta.transaction.Transactional;
 
@@ -58,23 +53,21 @@ public class QuizService implements IQuizService {
 	private ArchivedQuestionService archivedQuestionService;
 	
 	@Autowired
-	private UserResourceRepository userResourceRepository;
+	private UserResourceService userResourceService;
 
-	@Autowired
-	private IRTCalculator irtCalculator;
 	@Override
 	@Transactional
-	public StateResponse<Object> privateHandlePdf(MultipartFile file, int questionCount, int mode, int type,
+	public StateResponse<Object> privateHandlePdf(MultipartFile file, int questionCount, int level, int type,
 			String language) throws Exception {
 		StateResponse<Object> response;
 
 		if (pdfProcessingService.checkPDF(file).equals("BASE")) {
 			System.out.println("BASE");
-			response = handleBasePdf(file, questionCount, mode, type, 0, language);
+			response = handleBasePdf(file, questionCount, level, type, 0, language);
 			
 		} else {
 			System.out.println("SCAN");
-			response = handleScanPdf(file, questionCount, mode, type, 0, language);
+			response = handleScanPdf(file, questionCount, level, type, 0, language);
 		}
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		System.out.println(authentication);
@@ -93,39 +86,31 @@ public class QuizService implements IQuizService {
 			
 			
 			String fileName = file.getOriginalFilename();
-
-			UserResource resource = userResourceRepository.findByTitle(fileName)
-					.orElse(UserResource.builder()
-							.title(fileName)
-							.content(fileGenerateResponse.getContentPdf())
-							.history(new ArrayList<UserAnswer>())
-							.userName(authentication.getName())
-							.theta(0.0)
-							.b(0.0)
-							.build());
+			String pdfContent = fileGenerateResponse.getContentPdf();
+			String username = authentication.getName();
 			
-			userResourceRepository.save(resource);
+			userResourceService.save(fileName, pdfContent, username);
 
 		}
 		return response;
 	}
 
 	@Override
-	public StateResponse<Object> publicHandlePdf(MultipartFile file, int questionCount, int mode, int type,
+	public StateResponse<Object> publicHandlePdf(MultipartFile file, int questionCount, int level, int type,
 			String language) throws Exception {
 		StateResponse<Object> response;
 		if (pdfProcessingService.checkPDF(file).equals("BASE")) {
 			System.out.println("BASE");
-			response = handleBasePdf(file, questionCount, mode, type, 0, language);
+			response = handleBasePdf(file, questionCount, level, type, 0, language);
 		} else {
 			System.out.println("SCAN");
-			response = handleScanPdf(file, questionCount, mode, type, 0, language);
+			response = handleScanPdf(file, questionCount, level, type, 0, language);
 		}
 		return response;
 	}
 
 	@Override
-	public StateResponse<Object> handleBasePdf(MultipartFile file, int questionCount, int mode, int type, int imgQuest,
+	public StateResponse<Object> handleBasePdf(MultipartFile file, int questionCount, int level, int type, int imgQuest,
 			String language) {
 		try {
 			if (!file.getContentType().equals(Constants.FileTypes.PDF)) {
@@ -136,11 +121,11 @@ public class QuizService implements IQuizService {
 			String prompt = null;
 			GeminiResponse geminiResponse = null;
 			
-			if(mode == 2) {
-				prompt = combineReGenPrompt(questionCount, mode, language,pdfText);
+			if(level == 2) {
+				//prompt = combineReGenPrompt(questionCount, level, language,pdfText);
 				geminiResponse = geminiAIService.reGenerateQuestionWithGemini(prompt);
 			}else {
-				prompt = combinePrompt(questionCount, mode, pdfText, type, imgQuest, language);
+				prompt = combinePrompt(questionCount, level, pdfText, type, imgQuest, language);
 				geminiResponse = geminiAIService.generateQuestionWithGemini(prompt);
 			}
 			
@@ -178,7 +163,7 @@ public class QuizService implements IQuizService {
 	}
 
 	@Override
-	public StateResponse<Object> handleScanPdf(MultipartFile file, int questionCount, int mode, int type, int imgQuest,
+	public StateResponse<Object> handleScanPdf(MultipartFile file, int questionCount, int level, int type, int imgQuest,
 			String language) {
 		try {
 			if (!file.getContentType().equals(Constants.FileTypes.PDF)) {
@@ -186,7 +171,7 @@ public class QuizService implements IQuizService {
 			}
 
 			String pdfText = pdfProcessingService.renderPdfToPngToString(file);
-			String prompt = combinePrompt(questionCount, mode, pdfText, type, imgQuest, language);
+			String prompt = combinePrompt(questionCount, level, pdfText, type, imgQuest, language);
 			GeminiResponse geminiResponse = geminiAIService.generateQuestionWithGemini(prompt);
 
 			String[] wordAndPdf = fileGenerationService.generateWordAndPdfBase64(geminiResponse.getQuestions());
@@ -220,7 +205,7 @@ public class QuizService implements IQuizService {
 	}
 
 	@Override
-	public String combinePrompt(int questionCount, int mode, String pdfText, int type, int imgQuesion,
+	public String combinePrompt(int questionCount, int level, String pdfText, int type, int imgQuesion,
 			String language) {
 		return String.format(
 				Constants.QuestionFormat.QUESTION_COUNT 
@@ -229,7 +214,7 @@ public class QuizService implements IQuizService {
 				+ Constants.QuestionFormat.IMAGE_PRESENTATION
 				+ Constants.QuestionFormat.LANGUAGE
 				+ Constants.QuestionFormat.DOCUMENT_PROVIDED,
-				questionCount, mode, type, imgQuesion,language, pdfText);
+				questionCount, level, type, imgQuesion,language, pdfText);
 	}
 	
 	public String combineReGenPrompt(int questionCount, double min, double max,String language, String pdfText) {
@@ -243,21 +228,7 @@ public class QuizService implements IQuizService {
 	}
 	
 	
-	public void reviewAnswer(QuizRequest quizRequest) {
-		UserResource userResource = userResourceRepository.findById(quizRequest.getId()).get();
-		
-		double[] reviewPoint = irtCalculator.reviewAnswer(quizRequest.getAnswers(), userResource.getTheta(),userResource.getHistory());
-		double thetaNew = reviewPoint[0];
-		double b_min = reviewPoint[1];
-		double b_max = reviewPoint[2];
-		double b = (b_max+b_min)/2;
-		
-		
-		userResource.setTheta(thetaNew);
-		userResource.setB(b);
-		
-		userResourceRepository.save(userResource);
-	}
+	
 	
 	public void getB() {
 		

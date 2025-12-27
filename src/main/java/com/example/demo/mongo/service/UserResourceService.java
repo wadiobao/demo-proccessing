@@ -1,15 +1,46 @@
 package com.example.demo.mongo.service;
 
-import com.example.demo.dto.StateResponse;
-import com.example.demo.mongo.entity.UserResource;
-import com.example.demo.mongo.service.iservice.IUserResourceService;
+import java.util.ArrayList;
 
+import org.springframework.stereotype.Service;
+
+import com.example.demo.dto.StateResponse;
+import com.example.demo.dto.question.QuizRequest;
+import com.example.demo.dto.question.UserAnswer;
+import com.example.demo.mongo.entity.UserResource;
+import com.example.demo.mongo.repository.UserResourceRepository;
+import com.example.demo.mongo.service.iservice.IUserResourceService;
+import com.example.demo.utils.IRTCalculator;
+
+import jakarta.transaction.Transactional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
+@Service
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserResourceService implements IUserResourceService {
+	
+	UserResourceRepository userResourceRepository;
+	
+	IRTCalculator irtCalculator;
+	
 
 	@Override
-	public UserResource save(UserResource resource) {
-		// TODO Auto-generated method stub
-		return null;
+	@Transactional
+	public void save(String fileName,String pdfContent,String userName) {
+		UserResource resource = userResourceRepository.findByTitle(fileName)
+				.orElse(UserResource.builder()
+						.title(fileName)
+						.content(pdfContent)
+						.history(new ArrayList<UserAnswer>())
+						.userName(userName)
+						.theta(0.0)
+						.b(0.0)
+						.build());
+		
+		userResourceRepository.save(resource);
 	}
 
 	@Override
@@ -22,6 +53,22 @@ public class UserResourceService implements IUserResourceService {
 	public void delete(String id) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public void reviewAnswer(QuizRequest quizRequest) {
+		UserResource userResource = userResourceRepository.findById(quizRequest.getId()).get();
+		
+		double[] reviewPoint = irtCalculator.reviewAnswer(quizRequest.getAnswers(), userResource.getTheta(),userResource.getHistory());
+		double thetaNew = reviewPoint[0];
+		double b_min = reviewPoint[1];
+		double b_max = reviewPoint[2];
+		double b = (b_max+b_min)/2;
+		
+		
+		userResource.setTheta(thetaNew);
+		userResource.setB(b);
+		
+		userResourceRepository.save(userResource);
 	}
 
 }

@@ -1,0 +1,32 @@
+**SimilarityUtil.java**
+
+**Purpose:**
+This is a straightforward, self-contained utility class designed to calculate the **Cosine Similarity** between two pieces of text. Cosine similarity is a common metric in text analysis used to measure how similar two documents are, irrespective of their size. It determines the "angle" of the documents in a high-dimensional space where each word is a dimension.
+
+**How it works:**
+
+The process involves converting each text into a numerical vector and then calculating the cosine of the angle between these vectors.
+
+1.  **`termFrequency(String text)` Method (Text to Vector Conversion):**
+    - This private helper method is the first step. It takes a raw `String` of text and converts it into a **Term Frequency (TF)** vector, represented as a `Map<String, Integer>`.
+    - **Cleaning:** The text is converted to lowercase and all punctuation and special characters are removed, leaving only letters, numbers, and spaces.
+    - **Tokenization:** The cleaned text is split into an array of words ("tokens") based on spaces.
+    - **Counting:** The method iterates through the tokens and counts the occurrences of each unique word, producing a map where the key is the word and the value is its frequency (e.g., `{"the": 5, "quick": 1, "brown": 1, "fox": 1}`). This map is the numerical representation of the text.
+
+2.  **`similarity(String text1, String text2)` Method (Calculation):**
+    - This is the main public method.
+    - It calls `termFrequency` on both input texts to get two separate frequency maps (`tf1` and `tf2`).
+    - It creates a combined set of all unique words from both texts (`allWords`).
+    - It then iterates through this combined set to calculate the three components of the cosine similarity formula:
+        - **Dot Product (`dot`):** For each word, it multiplies its frequency in text 1 by its frequency in text 2 and adds it to the total. `dot = Σ(tf1[word] * tf2[word])`.
+        - **Magnitude of Vector 1 (`mag1`):** For each word, it squares its frequency in text 1 and adds it to a running total. The final magnitude is the square root of this total. `mag1 = sqrt(Σ(tf1[word]^2))`.
+        - **Magnitude of Vector 2 (`mag2`):** The same calculation is done for text 2.
+    - Finally, it computes the similarity score using the formula: `score = dot / (mag1 * mag2)`.
+    - The result is a `double` value between `0.0` (the texts share no words in common) and `1.0` (the texts have identical word counts and proportions).
+
+**Comparison and Use Case:**
+
+- **Simplicity:** This utility is very simple and has no external dependencies beyond standard Java.
+- **Language:** It is best suited for English or other languages where words are separated by spaces. It does not perform proper word segmentation for languages like Vietnamese or Chinese.
+- **No Stopwords:** It does not filter out common "stopwords" (like "a", "an", "the"), which can sometimes skew similarity scores.
+- **Use Case:** This is perfect for quick, general-purpose similarity checks where high linguistic precision is not required. For example, comparing two paragraphs, checking for near-duplicate comments, or performing a basic "relatedness" check between two short documents. For more advanced or language-specific analysis (like Vietnamese), the `FileBasedKeywordExtractor` class is the more appropriate tool.

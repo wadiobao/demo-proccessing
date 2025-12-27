@@ -1,10 +1,9 @@
 package com.example.demo.mongo.service.iservice;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.mongo.entity.UserResource;
 
 public interface IUserResourceService {
-	public UserResource save(UserResource resource);
+	public void save(String filename,String pdfContent,String userName);
 	public StateResponse<Object> findByTitle(String author);
 	public void delete(String id);
 }

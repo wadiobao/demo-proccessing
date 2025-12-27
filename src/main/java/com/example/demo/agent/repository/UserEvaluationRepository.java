@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.example.demo.agent.entity.UserEvaluation;
 
 @Repository
-public interface UserEvaluationRepository extends MongoRepository<UserEvaluation, Long> {
+public interface UserEvaluationRepository extends MongoRepository<UserEvaluation, String> {
 	Optional<UserEvaluation> findByEmail(String email);
 	List<UserEvaluation> findAllByEmail(String email);
 	

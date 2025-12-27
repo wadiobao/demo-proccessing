@@ -72,8 +72,4 @@ public final class Constants {
         public static final String QUESTIONS = "questions";
     }
     
-    // Http links
-    public static final class HttpLink {
-    	public static final String CLOUDINARY = "https://res.cloudinary.com/dazwde9dq/image/upload/v1742990631/";
-    }
 } 

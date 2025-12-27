@@ -1,0 +1,44 @@
+**FileBasedKeywordExtractor.java**
+
+**Purpose:**
+This class is a sophisticated utility for performing text analysis on files, specifically tailored for the Vietnamese language. Its core functions are to extract keywords from text, remove common "stopwords," and calculate the similarity between two different text files based on their keyword usage.
+
+**How it works:**
+The class is implemented as a Spring `@Component` for easy integration.
+
+- **Initialization & Configuration:**
+  - `FileBasedKeywordExtractor()`: The constructor initializes empty sets for a dictionary and stopwords.
+  - `loadDictionary(String filePath)`: Reads a custom dictionary from a file. This dictionary helps the tokenizer identify multi-word Vietnamese terms (e.g., "trí tuệ nhân tạo"). It expects a JSON-like format (`{"text": "word"}`) and determines the maximum word length (in syllables) to optimize tokenization.
+  - `loadStopWords(String filePath)`: Loads a list of Vietnamese stopwords (common words like "là", "và", "của" that are ignored during analysis) from a specified file.
+
+- **`tokenize(String text)` Method (Vietnamese Word Segmentation):**
+  - This is a crucial step for processing Vietnamese. Unlike English, Vietnamese words can be composed of multiple syllables separated by spaces.
+  - The method first cleans the input text by removing special characters.
+  - It then implements a "maximal matching" (or forward-matching) algorithm. It iterates through the text, trying to find the longest possible sequence of syllables that matches an entry in the loaded dictionary. This correctly groups syllables into meaningful words.
+  - The result is a `List<String>` of properly segmented words (tokens).
+
+- **`getFrequencyMapFromFile(String filePath)` Method:**
+  - This method reads a file line by line to efficiently handle large files without consuming excessive memory.
+  - For each line, it calls the `tokenize` method to get the words.
+  - It then counts the occurrences of each word (token), skipping any stopwords or single-character tokens.
+  - It returns a `Map<String, Integer>` where keys are the extracted keywords and values are their frequencies in the file.
+
+- **`compareFiles(String filePath1, String filePath2)` Method (Core Logic):**
+  - This is the main analysis function. It orchestrates the entire comparison process:
+    1. It calls `getFrequencyMapFromFile` for both input files to get their respective keyword frequency maps.
+    2. It identifies the set of `commonKeywords` that appear in both files.
+    3. It calculates two standard metrics for text similarity:
+       - **Cosine Similarity:** A value between 0 and 1 that measures the cosine of the angle between the two keyword frequency vectors. A value closer to 1 means the files are very similar in terms of keyword usage and frequency. It answers: "Do the files use the same words with similar frequency?"
+       - **Jaccard Similarity:** A value between 0 and 1 that measures the ratio of common keywords to the total number of unique keywords in both files. It answers: "How much do the sets of words in the two files overlap?"
+    4. It prints a detailed report to the console, including the similarity scores and a list of the top 10 most prominent common keywords.
+    5. It returns a `FileCompareResult` object containing the calculated similarity scores and the set of common keywords for further use.
+
+- **Helper Methods:**
+  - `calculateCosineSimilarity(...)` and `calculateJaccardSimilarity(...)`: Private methods that implement the mathematical formulas for the respective similarity metrics.
+
+**Usage:**
+This utility is ideal for tasks like:
+- **Plagiarism Detection:** Comparing a student's submission against a source document to check for overlap.
+- **Document Clustering:** Grouping similar documents together based on their content.
+- **Content Recommendation:** Finding documents related to a given document.
+- **Keyword Analysis:** Understanding the most important terms in a body of text.

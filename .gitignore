@@ -31,3 +31,22 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Log files
+*.log
+
+# Environment variables
+.env
+
+# Compiled output
+bin/
+
+# Temporary files
+*~
+*.bak
+
+# OS-specific
+Thumbs.db
+
+# APT generated test files
+.apt_generated_tests/

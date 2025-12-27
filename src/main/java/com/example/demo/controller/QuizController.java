@@ -34,19 +34,19 @@ public class QuizController {
 	@PostMapping("/handlepdf")
 	public StateResponse<Object> handlePdf(@RequestParam MultipartFile file,
 			@RequestParam("questionCount")@Min(value = 1) @Max(value = 50) int questionCount,
-			@RequestParam("mode") @Min(value = 0) @Max(value = 1) int mode,
+			@RequestParam("level") @Min(value = 0) @Max(value = 1) int level,
 			@RequestParam("type") @Min(value = 0) @Max(value = 1) int type,
 			@RequestParam("language") @DefaultValue(value = "vietnamese") String language) throws Exception {
-		return quizService.publicHandlePdf(file, questionCount, mode,type,language);
+		return quizService.publicHandlePdf(file, questionCount, level,type,language);
 	}
 	
 	@PostMapping("/handlepdf/private")
 	public StateResponse<Object> handlePdfPrivate(@RequestParam MultipartFile file,
 			@RequestParam("questionCount")@Min(value = 1) @Max(value = 50) int questionCount,
-			@RequestParam("mode") @Min(value = 0) @Max(value = 1) int mode,
+			@RequestParam("level") @Min(value = 0) @Max(value = 1) int level,
 			@RequestParam("type") @Min(value = 0) @Max(value = 1) int type,
 			@RequestParam("language") @DefaultValue(value = "vietnamese") String language) throws Exception {
-		return quizService.privateHandlePdf(file, questionCount, mode,type,language);
+		return quizService.privateHandlePdf(file, questionCount, level,type,language);
 	}
 
 	@PostMapping("/test")

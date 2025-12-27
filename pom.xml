@@ -48,7 +48,8 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<optional>true</optional>
+			<version>1.18.42</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -60,12 +61,6 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!-- Apache PDFBox để xử lý file PDF -->
-		<dependency>
-			<groupId>org.apache.pdfbox</groupId>
-			<artifactId>pdfbox</artifactId>
-			<version>2.0.29</version>
-		</dependency>
 
 		<!-- Commons FileUpload -->
 		<dependency>
@@ -74,6 +69,7 @@
 			<version>1.5</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
@@ -116,7 +112,7 @@
 		</dependency>
 
 
-		<!--spring jpa-->
+		<!--spring jpa -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -168,12 +164,6 @@
 			<artifactId>docx4j-export-fo</artifactId>
 			<version>11.5.2</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.cloudinary/cloudinary-core -->
-		<dependency>
-			<groupId>com.cloudinary</groupId>
-			<artifactId>cloudinary-core</artifactId>
-			<version>2.2.0</version>
-		</dependency>
 		<!--
 		https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation -->
 		<dependency>
@@ -193,8 +183,7 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-crypto</artifactId>
-			<version>6.4.4</version>
-		</dependency>
+			</dependency>
 
 		<!--
 		https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator -->
@@ -276,6 +265,11 @@
 			<artifactId>spring-data-redis</artifactId>
 			<version>3.5.6</version>
 		</dependency>
+		<dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
 	</dependencies>
 
 	<build>

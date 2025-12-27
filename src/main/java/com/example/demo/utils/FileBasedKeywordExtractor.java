@@ -16,6 +16,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.stereotype.Component;
+
+import com.example.demo.dto.quiz.FileCompareResult;
+
+@Component
 public class FileBasedKeywordExtractor {
 
     private Set<String> dictionary;
@@ -132,13 +137,21 @@ public class FileBasedKeywordExtractor {
         }
         return freqMap;
     }
+    
+    
 
     // --- PHẦN 4: HÀM SO SÁNH HAI FILE (MỚI) ---
 
-    public void compareFiles(String filePath1, String filePath2) {
+    public FileCompareResult compareFiles(String filePath1, String filePath2) {
         try {
             System.out.println("Đang phân tích File 1...");
             Map<String, Integer> map1 = getFrequencyMapFromFile(filePath1);
+            
+            map1.entrySet().stream()
+            .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
+            .limit(50)
+            .forEach(e -> System.out.printf("- %s (F1: %d)\n", e.getKey(), e.getValue()));
+
             
             System.out.println("Đang phân tích File 2...");
             Map<String, Integer> map2 = getFrequencyMapFromFile(filePath2);
@@ -169,9 +182,16 @@ public class FileBasedKeywordExtractor {
                 .limit(10)
                 .forEach(k -> System.out.printf("- %s (F1: %d, F2: %d)\n", k, map1.get(k), map2.get(k)));
 
+            FileCompareResult result = FileCompareResult.builder()
+            		.commonKeywords(commonKeywords)
+            		.cosineSim(cosineSim)
+            		.jaccardSim(jaccardSim)
+            		.build();
+            return result;
         } catch (IOException e) {
             e.printStackTrace();
         }
+		return null;
     }
 
     // Công thức Cosine Similarity: (A . B) / (||A|| * ||B||)
@@ -215,6 +235,9 @@ public class FileBasedKeywordExtractor {
     public static void main(String[] args) throws IOException {
         FileBasedKeywordExtractor comparator = new FileBasedKeywordExtractor();
         
+        long a = System.currentTimeMillis();
+        
+        for(int i=0;i<1;i++) {
         // 1. Cấu hình
         comparator.loadDictionary("C:\\Users\\Wdibao\\Main\\Downloads\\demo\\src\\main\\resources\\instructions\\words.txt");
         comparator.loadStopWords("C:\\Users\\Wdibao\\Main\\Downloads\\demo\\src\\main\\resources\\instructions\\vietnamese-stopwords.txt");
@@ -224,8 +247,12 @@ public class FileBasedKeywordExtractor {
         //createDummyFile("doc2.txt", "Trí tuệ nhân tạo cần dữ liệu lớn. Máy chủ xử lý thuật toán.");
 
         // 3. So sánh
-        comparator.compareFiles("C:\\Users\\Wdibao\\Main\\Downloads\\demo\\src\\main\\resources\\instructions\\dog1.txt", 
+        comparator.compareFiles("C:\\Users\\Wdibao\\Main\\Downloads\\demo\\src\\main\\resources\\instructions\\test.txt", 
         		"C:\\Users\\Wdibao\\Main\\Downloads\\demo\\src\\main\\resources\\instructions\\dog2.txt");
+        }
+        long b = System.currentTimeMillis();
+        
+        System.out.println(b-a);
     }
 
     private static void createDummyFile(String path, String content) throws IOException {
