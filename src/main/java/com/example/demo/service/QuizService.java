@@ -22,6 +22,8 @@ import com.example.demo.service.quiz.FileGenerationService;
 import com.example.demo.service.quiz.GeminiAIService;
 import com.example.demo.service.quiz.GeminiAIService.GeminiResponse;
 import com.example.demo.service.quiz.PDFProcessingService;
+import com.example.demo.utils.FileBasedKeywordExtractor;
+import com.example.demo.utils.GeneralUtils;
 
 import jakarta.transaction.Transactional;
 
@@ -54,6 +56,12 @@ public class QuizService implements IQuizService {
 	
 	@Autowired
 	private UserResourceService userResourceService;
+	
+	@Autowired
+	private FileBasedKeywordExtractor basedKeywordExtractor;
+	
+	@Autowired
+	private GeneralUtils generalUtils;
 
 	@Override
 	@Transactional
@@ -74,6 +82,7 @@ public class QuizService implements IQuizService {
 		if (authentication != null && authentication.isAuthenticated()
 				&& !(authentication instanceof AnonymousAuthenticationToken)) {
 			System.out.println("login");
+						
 			FileGenerateResponse fileGenerateResponse = (FileGenerateResponse) response.getResult();
 			
 			ArchivedQuestion pdfStore = ArchivedQuestion.builder()
@@ -88,8 +97,11 @@ public class QuizService implements IQuizService {
 			String fileName = file.getOriginalFilename();
 			String pdfContent = fileGenerateResponse.getContentPdf();
 			String username = authentication.getName();
+			String id = generalUtils.sha256(pdfContent+username);
 			
-			userResourceService.save(fileName, pdfContent, username);
+			if(!userResourceService.existsById(id)) {
+				userResourceService.save(id,fileName, pdfContent, username);
+			}
 
 		}
 		return response;

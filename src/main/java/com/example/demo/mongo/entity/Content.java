@@ -1,11 +1,8 @@
 package com.example.demo.mongo.entity;
 
-import java.util.List;
-
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.example.demo.dto.basemodel.BaseModel;
-import com.example.demo.dto.question.UserAnswer;
 
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
@@ -21,16 +18,11 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "user_resource")
+@Document(collection = "content")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserResource extends BaseModel{
+public class Content extends BaseModel {
 	@Id
 	String id;
-	String title;
-	List<String> contentIds;
-	String userName;
-	List<UserAnswer> history;
-	double theta;
-	double b;
-
+	String content;
 }
+

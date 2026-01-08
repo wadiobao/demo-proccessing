@@ -11,6 +11,5 @@ import com.example.demo.sql.entity.User;
 public interface UserRepository extends JpaRepository<User,Long> {
 	boolean existsByUserName(String username);
 	boolean existsByEmail(String email);
-	Optional<User> findByUserName(String username);
-	
+	Optional<User> findByUserName(String username);	
 }
