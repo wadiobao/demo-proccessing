@@ -12,5 +12,6 @@ import com.example.demo.mongo.entity.UserResource;
 public interface UserResourceRepository extends MongoRepository<UserResource, String> {
 	Optional<UserResource> findByTitle(String title);
 	List<UserResource> findAllByUserName(String userName);
+	Optional<UserResource> findByUserName(String userName);
 
 }

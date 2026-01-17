@@ -1,10 +1,13 @@
 package com.example.demo.mongo.entity;
 
+import java.util.List;
+
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.example.demo.dto.basemodel.BaseModel;
 
 import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,5 +27,9 @@ public class Content extends BaseModel {
 	@Id
 	String id;
 	String content;
+	String owner;
+	List<Double> embedding;
+	@Transient
+	Double vectorSearchScore;
 }
 

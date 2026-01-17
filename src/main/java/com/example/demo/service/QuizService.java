@@ -93,17 +93,12 @@ public class QuizService implements IQuizService {
 					.title(file.getOriginalFilename()).build();
 			archivedQuestionService.save(pdfStore);
 			
-			
+			// save and find content
 			String fileName = file.getOriginalFilename();
 			String pdfContent = fileGenerateResponse.getContentPdf();
 			String username = authentication.getName();
-			String id = generalUtils.sha256(pdfContent+username);
 			
-			if(!iUserResourceService.existsById(id)) {
-				iUserResourceService.save(id,fileName, pdfContent, username);
-			}else {
-				
-			}
+			iUserResourceService.save(fileName, pdfContent, username);
 
 		}
 		return response;

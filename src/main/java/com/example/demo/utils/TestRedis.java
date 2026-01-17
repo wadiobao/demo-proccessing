@@ -55,6 +55,7 @@ public class TestRedis {
 
         // 3. Tạo Vector (Embedding)
         Embedding embedding = embeddingModel.embed(text).content();
+        
 
         // 4. In kết quả ra màn hình
         float[] vector = embedding.vector();
@@ -62,5 +63,7 @@ public class TestRedis {
         for (int i = 0; i < 5; i++) { // In thử 5 số đầu tiên
             System.out.print(vector[i] + ", ");
         }
+        
+        
     }
 }

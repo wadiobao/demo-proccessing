@@ -1,5 +1,6 @@
 package com.example.demo.mongo.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -10,6 +11,7 @@ import com.example.demo.dto.question.UserAnswer;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -26,11 +28,16 @@ import lombok.experimental.SuperBuilder;
 public class UserResource extends BaseModel{
 	@Id
 	String id;
-	String title;
-	List<String> contentIds;
+	//title is unique
+	String topic;
+	@Default
+	List<String> contentIds = new ArrayList<String>();
 	String userName;
-	List<UserAnswer> history;
-	double theta;
-	double b;
+	@Default
+	List<UserAnswer> history = new ArrayList<UserAnswer>();
+	@Default
+	double theta = 0.0;
+	@Default
+	double b = 0.0;
 
 }
