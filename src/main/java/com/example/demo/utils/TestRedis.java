@@ -4,6 +4,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -44,13 +47,20 @@ public class TestRedis {
     }
     
     public static void main(String[] args) {
-		//connectBasic();
-		String content = sha256("acasdsadasdasdasdasdsadasdxczbcvx vsdcvd zxczxc zxcz xcxzc zxczxcz xc");
-		String contentb = sha256("acasdsadasdasdasdasdsadasdxczbcvx vsdcvd zxczxc zxcz xcxzc zxczxcz xc");
-    	System.out.println(content.equals(contentb));
-		
-		String a = "id/324";
-		String[] b = a.split("/");
-		System.out.println(Integer.valueOf(b[1]));
-	}
+        // 1. Khởi tạo mô hình (Tự động tải model về máy trong lần đầu)
+        EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+
+        // 2. Câu văn bản bạn muốn chuyển đổi
+        String text = "Lập trình Java rất thú vị";
+
+        // 3. Tạo Vector (Embedding)
+        Embedding embedding = embeddingModel.embed(text).content();
+
+        // 4. In kết quả ra màn hình
+        float[] vector = embedding.vector();
+        System.out.println("Độ dài vector: " + vector.length);
+        for (int i = 0; i < 5; i++) { // In thử 5 số đầu tiên
+            System.out.print(vector[i] + ", ");
+        }
+    }
 }

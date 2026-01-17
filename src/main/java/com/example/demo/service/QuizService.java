@@ -16,7 +16,7 @@ import com.example.demo.dto.question.FileGenerateResponse;
 import com.example.demo.dto.question.Question;
 import com.example.demo.mongo.entity.ArchivedQuestion;
 import com.example.demo.mongo.service.ArchivedQuestionService;
-import com.example.demo.mongo.service.UserResourceService;
+import com.example.demo.mongo.service.iservice.IUserResourceService;
 import com.example.demo.service.iservice.IQuizService;
 import com.example.demo.service.quiz.FileGenerationService;
 import com.example.demo.service.quiz.GeminiAIService;
@@ -55,7 +55,7 @@ public class QuizService implements IQuizService {
 	private ArchivedQuestionService archivedQuestionService;
 	
 	@Autowired
-	private UserResourceService userResourceService;
+	private IUserResourceService iUserResourceService;
 	
 	@Autowired
 	private FileBasedKeywordExtractor basedKeywordExtractor;
@@ -99,8 +99,10 @@ public class QuizService implements IQuizService {
 			String username = authentication.getName();
 			String id = generalUtils.sha256(pdfContent+username);
 			
-			if(!userResourceService.existsById(id)) {
-				userResourceService.save(id,fileName, pdfContent, username);
+			if(!iUserResourceService.existsById(id)) {
+				iUserResourceService.save(id,fileName, pdfContent, username);
+			}else {
+				
 			}
 
 		}

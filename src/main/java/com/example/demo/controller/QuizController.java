@@ -3,14 +3,11 @@ package com.example.demo.controller;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.agent.entity.UserAnswer;
-import com.example.demo.agent.service.GeneralService;
 import com.example.demo.dto.StateResponse;
 import com.example.demo.service.iservice.IQuizService;
 
@@ -29,7 +26,6 @@ public class QuizController {
 
 	
 	IQuizService quizService;
-	GeneralService generalService;
 
 	@PostMapping("/handlepdf")
 	public StateResponse<Object> handlePdf(@RequestParam MultipartFile file,
@@ -49,14 +45,5 @@ public class QuizController {
 		return quizService.privateHandlePdf(file, questionCount, level,type,language);
 	}
 
-	@PostMapping("/test")
-	public StateResponse<Object> test(@RequestBody UserAnswer answer) {
-		return generalService.saveAnalysis(answer,answer.getEmail());
-	}
-	
-	@PostMapping("/test/all")
-	public StateResponse<Object> gellAllTest(@RequestParam String email) {
-		return StateResponse.builder().result(generalService.getUserEvaluationByEmail(email)).build(); 
-	}
 
 }
