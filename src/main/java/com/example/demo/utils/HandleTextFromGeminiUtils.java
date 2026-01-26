@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.dto.question.Answer;
 import com.example.demo.dto.question.Question;
+import com.example.demo.mongo.dto.TopicAndTags;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -75,6 +76,14 @@ public class HandleTextFromGeminiUtils {
 		List<Question> questions = gson.fromJson(clean, questionListType);
 		//System.out.println(questions.toString());
         return questions;
+    }
+	
+	public TopicAndTags parseTopicAndTags(String inputText) {
+		String clean = extractJsonArrayString(inputText);
+		Gson gson = new Gson();
+		Type type = new TypeToken<TopicAndTags>(){}.getType();
+		TopicAndTags topicAndTags = gson.fromJson(clean, type);
+        return topicAndTags;
     }
 	
 	public static String extractJsonArrayString(String rawInput) {

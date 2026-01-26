@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.constants.Constants;
 import com.example.demo.dto.question.Question;
+import com.example.demo.mongo.dto.TopicAndTags;
 import com.example.demo.utils.FileGeneratorUtils;
 import com.example.demo.utils.HandleTextFromGeminiUtils;
 import com.google.genai.Client;
@@ -43,6 +44,8 @@ public class GeminiAIService {
     @Value("${demo.instruction.regen.path}")
     private String instructionRegenPath;
     
+    @Value("${demo.instruction.topic-tags.path}")
+    private String topicAndTagsPath;
     
     @Autowired
     private HandleTextFromGeminiUtils handleTextFromGeminiUtils;
@@ -95,6 +98,22 @@ public class GeminiAIService {
         return new GeminiResponse(response.text(), parsedList);
     }
     
+    public TopicAndTags detectTopicAndTags(String userPrompt) throws IOException {
+    	makeTopicTagsInstruction();
+        Client client = new Client.Builder().apiKey(geminiApiKey).build();
+        List<Part> parts = new ArrayList<Part>();
+        Part part = Part.builder().text(systemInstuction.toString()).build();
+        parts.add(part);
+        Content content = Content.builder().parts(parts).build();
+        
+        GenerateContentConfig config = GenerateContentConfig.builder().systemInstruction(content).build();
+        
+        GenerateContentResponse response = client.models.generateContent(MODEL, userPrompt, config);
+        TopicAndTags topicAndTags = handleTextFromGeminiUtils.parseTopicAndTags(response.text());
+        
+        return topicAndTags;
+    }
+    
     public String[] generateImageWithGemini(String imgPrompt,int id) throws IOException {
         Client client = new Client.Builder().apiKey(imageGeminiApiKey).build();
        
@@ -128,6 +147,17 @@ public class GeminiAIService {
     
     private void makeReGenInstruction() throws IOException {
         InputStream resource = new ClassPathResource(instructionRegenPath).getInputStream();
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))){
+            for(String line; (line = reader.readLine())!=null;) {
+                systemInstuction.add(line);
+            }
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    
+    private void makeTopicTagsInstruction() throws IOException {
+        InputStream resource = new ClassPathResource(topicAndTagsPath).getInputStream();
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))){
             for(String line; (line = reader.readLine())!=null;) {
                 systemInstuction.add(line);

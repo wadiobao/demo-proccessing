@@ -28,7 +28,7 @@ import lombok.experimental.SuperBuilder;
 public class UserResource extends BaseModel{
 	@Id
 	String id;
-	//title is unique
+	//topic is unique
 	String topic;
 	@Default
 	List<String> contentIds = new ArrayList<String>();

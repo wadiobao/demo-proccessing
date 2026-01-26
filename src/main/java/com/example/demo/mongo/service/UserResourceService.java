@@ -36,11 +36,8 @@ public class UserResourceService implements IUserResourceService {
 		UserResource u = userResourceRepository.findByUserName(userName)
 				.orElse(UserResource
 						.builder()
-						.topic(fileName)
 						.userName(userName)
 						.build());
-		
-		
 		
 					
 	}

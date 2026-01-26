@@ -23,7 +23,7 @@ public class ContentService implements IContentService {
 
 	@Override
 	public Content save(String content, String owner) {
-		List<Double> embedding = vectorUtils.createVector(owner);
+		List<Double> embedding = vectorUtils.createVector(content);
 		Content c = Content.builder()
 				.content(content)
 				.owner(owner)
@@ -41,7 +41,7 @@ public class ContentService implements IContentService {
 			return theMostSimilar;
 		}
 		
-		return null;
+		return Content.builder().build();
 	}
 	
 

@@ -28,7 +28,9 @@ public class Content extends BaseModel {
 	String id;
 	String content;
 	String owner;
+	List<String> tags;
 	List<Double> embedding;
+	String topic;
 	@Transient
 	Double vectorSearchScore;
 }
