@@ -27,6 +27,4 @@ public class TopicAndTags {
     // Ngôn ngữ của tài liệu (vi, en, jp...)
     private String language;
     
-    // Đoạn mô tả ngắn về khía cạnh chính để hỗ trợ check Topic Drift
-    private String semanticFocus;
 }

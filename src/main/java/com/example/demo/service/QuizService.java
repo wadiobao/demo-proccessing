@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,7 +14,9 @@ import com.example.demo.dto.StateResponse;
 import com.example.demo.dto.question.FileGenerateResponse;
 import com.example.demo.dto.question.Question;
 import com.example.demo.mongo.entity.ArchivedQuestion;
+import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.service.ArchivedQuestionService;
+import com.example.demo.mongo.service.iservice.IContentService;
 import com.example.demo.mongo.service.iservice.IUserResourceService;
 import com.example.demo.service.iservice.IQuizService;
 import com.example.demo.service.quiz.FileGenerationService;
@@ -26,8 +27,13 @@ import com.example.demo.utils.FileBasedKeywordExtractor;
 import com.example.demo.utils.GeneralUtils;
 
 import jakarta.transaction.Transactional;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class QuizService implements IQuizService {
 
 	@Value("${gemini.api.key}")
@@ -41,27 +47,15 @@ public class QuizService implements IQuizService {
 
 	@Value("${demo.wordfile.path}")
 	private String wordPath;
-
-	@Autowired
-	private PDFProcessingService pdfProcessingService;
-
-	@Autowired
-	private GeminiAIService geminiAIService;
-
-	@Autowired
-	private FileGenerationService fileGenerationService;
-
-	@Autowired
-	private ArchivedQuestionService archivedQuestionService;
 	
-	@Autowired
-	private IUserResourceService iUserResourceService;
-	
-	@Autowired
-	private FileBasedKeywordExtractor basedKeywordExtractor;
-	
-	@Autowired
-	private GeneralUtils generalUtils;
+	 PDFProcessingService pdfProcessingService;	
+	 GeminiAIService geminiAIService;	
+	 FileGenerationService fileGenerationService;	
+	 ArchivedQuestionService archivedQuestionService;	
+	 IUserResourceService iUserResourceService;
+	 FileBasedKeywordExtractor basedKeywordExtractor;
+	 GeneralUtils generalUtils;
+	 IContentService iContentService;
 
 	@Override
 	@Transactional
@@ -98,6 +92,7 @@ public class QuizService implements IQuizService {
 			String pdfContent = fileGenerateResponse.getContentPdf();
 			String username = authentication.getName();
 			
+			Content c = iContentService.save(pdfContent, username);
 			iUserResourceService.save(fileName, pdfContent, username);
 
 		}

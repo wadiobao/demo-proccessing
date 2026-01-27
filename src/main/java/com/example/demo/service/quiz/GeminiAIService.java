@@ -29,6 +29,7 @@ import lombok.Data;
 
 @Service
 public class GeminiAIService {
+
     
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -65,6 +66,7 @@ public class GeminiAIService {
         	this.text = text;
 		}
     }
+
     
     public GeminiResponse generateQuestionWithGemini(String userPrompt) throws IOException {
         makeInstruction();
@@ -173,6 +175,13 @@ public class GeminiAIService {
     public static void main(String[] args) throws IOException {
 //    	GeminiAIService geminiResponse = new GeminiAIService();
 //    	geminiResponse.generateImageWithGemini("generate 2 separate picture of dogs");
-    	System.out.println(Constants.FilePaths.IMAGE_TEMP+1+".png");
+
+    	var resource1 = new ClassPathResource("file-test/test.txt");
+    	String f1 = new String(resource1.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    	
+    	GeminiAIService aiService = new GeminiAIService();
+    	TopicAndTags andTags = aiService.detectTopicAndTags(f1);
+    	System.out.println(andTags.getTopicId());
+    	
 	}
 } 

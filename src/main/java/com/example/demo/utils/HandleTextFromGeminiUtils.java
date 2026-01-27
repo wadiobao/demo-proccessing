@@ -79,10 +79,13 @@ public class HandleTextFromGeminiUtils {
     }
 	
 	public TopicAndTags parseTopicAndTags(String inputText) {
-		String clean = extractJsonArrayString(inputText);
+		System.out.println(inputText);
+		String clean = extractJsonObject(inputText);
+		System.out.println(clean);
 		Gson gson = new Gson();
 		Type type = new TypeToken<TopicAndTags>(){}.getType();
 		TopicAndTags topicAndTags = gson.fromJson(clean, type);
+		System.out.println(topicAndTags.toString());
         return topicAndTags;
     }
 	
@@ -97,6 +100,22 @@ public class HandleTextFromGeminiUtils {
 
         return null; // Không tìm thấy JSON array hợp lệ
     }
+	
+	public static String extractJsonObject(String input) {
+	    if (input == null) {
+			return null;
+		}
+
+	    int start = input.indexOf('{');
+	    int end = input.lastIndexOf('}');
+
+	    if (start == -1 || end == -1 || start > end) {
+	        throw new IllegalArgumentException("Không tìm thấy JSON hợp lệ");
+	    }
+
+	    return input.substring(start, end + 1);
+	}
+
 	
 	
 	public static String extractDataFromGemini(GenerateContentResponse response) {
