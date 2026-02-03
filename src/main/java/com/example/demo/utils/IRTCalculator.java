@@ -6,7 +6,7 @@ import java.util.Random;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.dto.question.UserAnswer;
+import com.example.demo.mongo.dto.question.UserAnswer;
 
 @Component
 public class IRTCalculator {

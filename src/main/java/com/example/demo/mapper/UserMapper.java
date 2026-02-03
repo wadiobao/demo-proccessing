@@ -2,7 +2,7 @@ package com.example.demo.mapper;
 
 import org.mapstruct.Mapper;
 
-import com.example.demo.dto.user.UserRequest;
+import com.example.demo.sql.dto.user.UserRequest;
 import com.example.demo.sql.entity.User;
 
 

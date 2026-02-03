@@ -8,7 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.dto.question.Question;
+import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.mapper.PdfStoreResponse;

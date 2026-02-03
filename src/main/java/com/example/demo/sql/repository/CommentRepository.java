@@ -1,7 +1,7 @@
 package com.example.demo.sql.repository;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +13,7 @@ import jakarta.transaction.Transactional;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-	List<Comment> findByForm_FormId(String id);
+	Page<Comment> findByForm_FormId(String id, Pageable pageable);
 
 	@Modifying
 	@Transactional

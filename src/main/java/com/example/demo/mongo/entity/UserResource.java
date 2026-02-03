@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.example.demo.dto.basemodel.BaseModel;
-import com.example.demo.dto.question.UserAnswer;
+import com.example.demo.mongo.dto.question.UserAnswer;
 
 import jakarta.persistence.Id;
 import lombok.AccessLevel;

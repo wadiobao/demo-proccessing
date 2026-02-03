@@ -3,7 +3,7 @@ package com.example.demo.mapper;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.example.demo.dto.question.Question;
+import com.example.demo.mongo.dto.question.Question;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

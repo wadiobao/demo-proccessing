@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.dto.quiz.FileCompareResult;
+import com.example.demo.mongo.dto.quiz.FileCompareResult;
 
 @Component
 public class FileBasedKeywordExtractor {

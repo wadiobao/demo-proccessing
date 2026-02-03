@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.dto.question.Answer;
-import com.example.demo.dto.question.Question;
+import com.example.demo.mongo.dto.question.Answer;
+import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.dto.TopicAndTags;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.gson.Gson;

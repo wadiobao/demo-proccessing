@@ -25,17 +25,20 @@ import com.example.demo.enums.Role;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private final String[] AUTH_END_POINTS = { "/user/register","/user/register/otp", "/auth/login", "/auth/introspect","/auth/logout","/auth/refresh" };
-	private final String[] API_END_POINTS = { "/api/handlepdf", "/api/uploadv4", "/api/pdfs","/api/webhook/cloudinary" ,"/api/test/*",};
-	private final String[] FORM_END_POINTS = {"/discussion","/discussion/*/forms","/discussion/form/*"};
-	private final String[] FILE_END_POINTS = {"file/test","mail/donate"};
-	
+	private final String[] AUTH_END_POINTS = { "/api/v1/user/register", "/api/v1/user/register/otp",
+			"/api/v1/auth/login",
+			"/api/v1/auth/introspect", "/api/v1/auth/logout", "/api/v1/auth/refresh" };
+	private final String[] API_END_POINTS = { "/api/v1/quiz/handlepdf", "/api/v1/quiz/handlepdf/private",
+			"/api/v1/pdfs/**", "/api/webhook/cloudinary" };
+	private final String[] FORM_END_POINTS = { "/api/v1/discussion/**" };
+	private final String[] FILE_END_POINTS = { "/api/v1/mail/donate", "/api/v1/mail/send-bug" };
+
 	@Value("${app.cors.allowed-origins}")
 	private String cors;
-	
+
 	@Autowired
 	private CustomJwtDecoder customJwtDecoder;
-	
+
 	@Autowired
 	private CookieBearerTokenResolver bearerTokenResolver;
 
@@ -48,8 +51,8 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET, FORM_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.POST, FORM_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.POST, FILE_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET,FILE_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, "/user").hasRole(Role.ADMIN.name())// hasAuthority("ROLE_ADMIN")
+				.requestMatchers(HttpMethod.GET, FILE_END_POINTS).permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole(Role.ADMIN.name())// hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());
 
 		http.oauth2ResourceServer(oauth2 -> oauth2.bearerTokenResolver(bearerTokenResolver).jwt(
@@ -60,15 +63,15 @@ public class SecurityConfig {
 				.ignoringRequestMatchers(API_END_POINTS)
 				.ignoringRequestMatchers(FILE_END_POINTS)
 				.ignoringRequestMatchers(FORM_END_POINTS));
-		
+
 		http.logout(t -> t.disable());
-				
+
 		http.cors(t -> t.configurationSource(request -> {
 			CorsConfiguration configuration = new CorsConfiguration();
 			configuration.setAllowedOrigins(List.of(cors));
-            configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+			configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
 			configuration.setAllowedHeaders(List.of("*"));
-			configuration.setExposedHeaders(List.of("Access-Token","Refresh-Token"));
+			configuration.setExposedHeaders(List.of("Access-Token", "Refresh-Token"));
 			configuration.setAllowCredentials(true);
 			return configuration;
 		}));
@@ -83,7 +86,6 @@ public class SecurityConfig {
 		authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
 		return authenticationConverter;
 	}
-
 
 	@Bean
 	PasswordEncoder encoder() {
