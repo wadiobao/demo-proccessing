@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import com.example.demo.constants.Constants;
 import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.utils.FileGeneratorUtils;
 
-@Service
-public class FileGenerationService {
+@Component
+public class WordPdfGeneration {
     
     @Autowired
     private FileGeneratorUtils fileGeneratorUtils;

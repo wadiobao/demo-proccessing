@@ -9,7 +9,7 @@ import com.example.demo.mongo.dto.TopicAndTags;
 import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.repository.ContentRepository;
 import com.example.demo.mongo.service.iservice.IContentService;
-import com.example.demo.mongo.service.quiz.GeminiAIService;
+import com.example.demo.mongo.service.quiz.GeminiAIUtils;
 import com.example.demo.utils.VectorUtils;
 
 import jakarta.transaction.Transactional;
@@ -24,7 +24,7 @@ public class ContentService implements IContentService {
 	
 	ContentRepository contentRepository;
 	VectorUtils vectorUtils;
-	GeminiAIService aiService;
+	GeminiAIUtils aiService;
 
 	@Override
 	@Transactional

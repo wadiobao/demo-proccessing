@@ -15,4 +15,6 @@ public interface UserResourceRepository extends MongoRepository<UserResource, St
 
 	Optional<UserResource> findByUserName(String userName);
 
+	Optional<UserResource> findByUserNameAndTopic(String userName, String topic);
+
 }

@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.constants.Constants;
@@ -20,7 +20,7 @@ import com.example.demo.constants.Constants;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
-@Service
+@Component
 public class PDFProcessingService {
     
     public String extractTextFromPdf(MultipartFile pdfFile) throws IOException {

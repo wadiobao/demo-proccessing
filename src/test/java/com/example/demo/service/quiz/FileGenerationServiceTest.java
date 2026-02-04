@@ -28,7 +28,7 @@ class FileGenerationServiceTest {
     private FileGeneratorUtils fileGeneratorUtils;
 
     @InjectMocks
-    private FileGenerationService fileGenerationService;
+    private WordPdfGeneration fileGenerationService;
 
     private Question question1;
     private Question question2;

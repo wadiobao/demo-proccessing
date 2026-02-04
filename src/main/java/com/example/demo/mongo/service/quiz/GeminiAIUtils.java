@@ -11,11 +11,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import com.example.demo.constants.Constants;
-import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.dto.TopicAndTags;
+import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.utils.FileGeneratorUtils;
 import com.example.demo.utils.HandleTextFromGeminiUtils;
 import com.google.genai.Client;
@@ -27,8 +27,8 @@ import com.google.genai.types.Part;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-@Service
-public class GeminiAIService {
+@Component
+public class GeminiAIUtils {
 
     
     @Value("${gemini.api.key}")
@@ -173,13 +173,13 @@ public class GeminiAIService {
     
     
     public static void main(String[] args) throws IOException {
-//    	GeminiAIService geminiResponse = new GeminiAIService();
+//    	GeminiAIUtils geminiResponse = new GeminiAIUtils();
 //    	geminiResponse.generateImageWithGemini("generate 2 separate picture of dogs");
 
     	var resource1 = new ClassPathResource("file-test/test.txt");
     	String f1 = new String(resource1.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     	
-    	GeminiAIService aiService = new GeminiAIService();
+    	GeminiAIUtils aiService = new GeminiAIUtils();
     	TopicAndTags andTags = aiService.detectTopicAndTags(f1);
     	System.out.println(andTags.getTopicId());
     	

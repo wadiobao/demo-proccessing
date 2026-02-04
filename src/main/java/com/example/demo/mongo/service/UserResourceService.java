@@ -30,13 +30,20 @@ public class UserResourceService implements IUserResourceService {
 
 	@Override
 	@Transactional
-	public void save(String fileName, String pdfContent, String userName) {
-		UserResource u = userResourceRepository.findByUserName(userName)
+	public void save(String fileName, String pdfContent, String userName,
+			com.example.demo.mongo.entity.Content content) {
+		UserResource u = userResourceRepository.findByUserNameAndTopic(userName, content.getTopic())
 				.orElse(UserResource
 						.builder()
 						.userName(userName)
+						.topic(content.getTopic())
 						.build());
 
+		if (!u.getContentIds().contains(content.getId())) {
+			u.getContentIds().add(content.getId());
+		}
+
+		userResourceRepository.save(u);
 	}
 
 	@Override
