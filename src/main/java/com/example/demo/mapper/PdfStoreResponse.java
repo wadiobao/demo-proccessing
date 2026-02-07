@@ -20,7 +20,7 @@ import lombok.experimental.FieldDefaults;
 public class PdfStoreResponse {
     String author;
     String title;
-    List<Question> content;
+    List<Question> questions;
     LocalDateTime createdAt;
     String pdfBase64;
     String wordBase64;

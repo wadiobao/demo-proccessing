@@ -5,12 +5,15 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.enums.ErrorCode;
+import com.example.demo.exception.HandleException;
 import com.example.demo.mongo.dto.question.UserAnswer;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionResponse;
 import com.example.demo.mongo.dto.user.UserStatsResponse;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.UserResourceRepository;
+import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
 import com.example.demo.mongo.service.iservice.IQuizAnswerService;
 import com.example.demo.utils.IRTCalculator;
 
@@ -32,11 +35,18 @@ public class QuizAnswerService implements IQuizAnswerService {
 
     UserResourceRepository userResourceRepository;
     IRTCalculator irtCalculator;
+    IArchivedQuestionService iArchivedQuestionService;
 
     @Override
     @Transactional
     public StateResponse<Object> submitQuizAnswers(QuizSubmissionRequest request, String username) throws Exception {
         log.info("Processing quiz submission for user: {}, topic: {}", username, request.getTopic());
+        
+        if(iArchivedQuestionService.isEvaluated(request.getArchivedQuestionId())) {
+        	log.info("Câu hỏi đã được đánh giá");
+        	throw new HandleException(ErrorCode.EVALUATED_QUESTIONS);
+        }
+        
 
         // Get or create user resource for this topic
         UserResource userResource = userResourceRepository

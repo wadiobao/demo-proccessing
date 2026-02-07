@@ -41,7 +41,7 @@ public class QuizPersistenceManager  {
      * @throws Exception if persistence fails
      */
     @Transactional
-    public void persistQuizData(FileGenerateResponse response, String username, String filename, String pdfContent)
+    public FileGenerateResponse persistQuizData(FileGenerateResponse response, String username, String filename, String pdfContent)
             throws Exception {
 
         log.info("Starting quiz data persistence for user: {}, file: {}", username, filename);
@@ -57,7 +57,7 @@ public class QuizPersistenceManager  {
         // Step 3: Save ArchivedQuestion (linked to Content via resourceId)
         ArchivedQuestion archivedQuestion = ArchivedQuestion.builder()
                 .author(username)
-                .content(response.getQuestions())
+                .questions(response.getQuestions())
                 .pdfBase64(response.getPdfBase64())
                 .wordBase64(response.getWordBase64())
                 .title(filename)
@@ -66,5 +66,11 @@ public class QuizPersistenceManager  {
 
         archivedQuestionService.save(archivedQuestion);
         log.info("Quiz data persistence completed successfully for user: {}", username);
+        
+        FileGenerateResponse fileGenerateResponse = response;
+        fileGenerateResponse.setTopic(content.getTopic());
+        fileGenerateResponse.setArchivedQuestionId(archivedQuestion.getId());
+        
+        return fileGenerateResponse;
     }
 }

@@ -43,6 +43,7 @@ public enum ErrorCode {
 	FILE_TOO_LARGE(4003, "Tệp quá lớn", HttpStatus.PAYLOAD_TOO_LARGE),
 	INVALID_FILE_TYPE(4004, "Loại tệp không hợp lệ", HttpStatus.BAD_REQUEST),
 	DATABASE_ERROR(4005, "Lỗi cơ sở dữ liệu", HttpStatus.INTERNAL_SERVER_ERROR),
+	EVALUATED_QUESTIONS(4006,"Câu hỏi đã được đánh giá",HttpStatus.BAD_REQUEST),
 
 	// 5xxx: AI & Quiz Errors
 	QUIZ_GENERATION_FAILED(5001, "Tạo bài trắc nghiệm thất bại", HttpStatus.INTERNAL_SERVER_ERROR),

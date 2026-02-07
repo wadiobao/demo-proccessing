@@ -8,9 +8,9 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
+import com.example.demo.mongo.dto.TopicAndTags;
 import com.example.demo.mongo.dto.question.Answer;
 import com.example.demo.mongo.dto.question.Question;
-import com.example.demo.mongo.dto.TopicAndTags;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -79,13 +79,10 @@ public class HandleTextFromGeminiUtils {
     }
 	
 	public TopicAndTags parseTopicAndTags(String inputText) {
-		System.out.println(inputText);
 		String clean = extractJsonObject(inputText);
-		System.out.println(clean);
 		Gson gson = new Gson();
 		Type type = new TypeToken<TopicAndTags>(){}.getType();
 		TopicAndTags topicAndTags = gson.fromJson(clean, type);
-		System.out.println(topicAndTags.toString());
         return topicAndTags;
     }
 	

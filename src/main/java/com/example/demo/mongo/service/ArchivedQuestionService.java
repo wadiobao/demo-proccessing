@@ -8,10 +8,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.mapper.PdfStoreResponse;
+import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.entity.ArchivedQuestion;
 import com.example.demo.mongo.repository.ArchivedQuestionRepository;
 import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
@@ -46,7 +46,7 @@ public class ArchivedQuestionService implements IArchivedQuestionService {
 			responses.add(PdfStoreResponse.builder()
 					.author(author)
 					.title(pdfStore.getTitle())
-					.content(pdfStore.getContent())
+					.questions(pdfStore.getQuestions())
 					.createdAt(pdfStore.getCreatedAt())
 					.pdfBase64(pdfStore.getPdfBase64())
 					.wordBase64(pdfStore.getWordBase64())
@@ -66,7 +66,7 @@ public class ArchivedQuestionService implements IArchivedQuestionService {
 	public void delete(String author) throws Exception {
 		ArchivedQuestion pdfStore = archivedQuestionRepository.findFirstByAuthorOrderByCreatedAtAsc(author).orElseThrow(()-> new HandleException(ErrorCode.USER_NOT_EXISTED));
 		List<String> deleteImgList = new ArrayList<String>();
-		List<Question> questions = pdfStore.getContent();
+		List<Question> questions = pdfStore.getQuestions();
 		for (Question question : questions) {
 			if(question.getImgPublicId()!=null) {
 				deleteImgList.add(question.getImgPublicId());
@@ -82,6 +82,13 @@ public class ArchivedQuestionService implements IArchivedQuestionService {
 	@Override
 	public ArchivedQuestion findByAuthorAndTitle(String author, String title) {
 		return archivedQuestionRepository.findByAuthorAndTitle(author, title);
+	}
+
+	@Override
+	public boolean isEvaluated(String id) {
+		ArchivedQuestion archivedQuestion = archivedQuestionRepository.findById(id)
+				.orElseThrow(() ->  new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
+		return archivedQuestion.isEvaluated();
 	}
 	
 	

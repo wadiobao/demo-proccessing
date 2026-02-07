@@ -5,24 +5,25 @@ import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.sql.dto.Introspect;
-import com.example.demo.sql.dto.IntrospectResponse;
 import com.example.demo.dto.StateResponse;
-import com.example.demo.sql.dto.authen.AuthenticationResponse;
-import com.example.demo.sql.dto.authen.AuthenticationUser;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
-import com.example.demo.sql.service.iservice.IAuthenticationService;
+import com.example.demo.sql.dto.Introspect;
+import com.example.demo.sql.dto.IntrospectResponse;
+import com.example.demo.sql.dto.authen.AuthenticationResponse;
+import com.example.demo.sql.dto.authen.AuthenticationUser;
 import com.example.demo.sql.entity.InvalidatedToken;
 import com.example.demo.sql.entity.User;
 import com.example.demo.sql.repository.InvalidatedTokenRepository;
 import com.example.demo.sql.repository.UserRepository;
+import com.example.demo.sql.service.iservice.IAuthenticationService;
 import com.example.demo.utils.JwtUtils;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
@@ -75,9 +76,8 @@ public class AuthenticationService implements IAuthenticationService {
 		ResponseCookie refreshCookie = jwtUtils.generateRefreshCookie(refreshToken);
 
 		ResponseEntity<StateResponse<Object>> responseEntity = ResponseEntity.ok()
-				.header("Set-Cookie", accessCookie.toString()).header("Set-Cookie", refreshCookie.toString())
-//				.header("Access-Token", accessToken)
-//				.header("Refresh-Token", refreshToken)
+				.header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+				.header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
 				.body(StateResponse.builder().result(AuthenticationResponse.builder().auth(auth).build()).build());
 
 		return responseEntity;
@@ -93,7 +93,7 @@ public class AuthenticationService implements IAuthenticationService {
 		} catch (HandleException e) {
 			isValid = false;
 		}
-		
+
 		return IntrospectResponse.builder().valid(isValid).build();
 	}
 
@@ -120,8 +120,8 @@ public class AuthenticationService implements IAuthenticationService {
 		ResponseCookie refreshCookie = jwtUtils.generateRefreshCookie(token);
 
 		ResponseEntity<StateResponse<Object>> responseEntity = ResponseEntity.ok()
-				.header("Set-Cookie", accessCookie.toString())
-				.header("Set-Cookie", refreshCookie.toString())
+				.header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+				.header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
 				.body(StateResponse.builder().result(AuthenticationResponse.builder().auth(true).build()).build());
 
 		return responseEntity;

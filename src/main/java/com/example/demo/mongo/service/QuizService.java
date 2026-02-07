@@ -61,23 +61,25 @@ public class QuizService implements IQuizService {
 
         // Generate quiz
         StateResponse<Object> response = quizProcessor.processQuiz(file, config);
-
+        FileGenerateResponse fileGenerateResponse = (FileGenerateResponse) response.getResult();
         // Persist data if user is authenticated
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.info(authentication.toString());
         if (isAuthenticated(authentication)) {
             String username = authentication.getName();
             log.info("User {} is authenticated, persisting quiz data", username);
 
-            FileGenerateResponse quizData = (FileGenerateResponse) response.getResult();
-            persistenceManager.persistQuizData(
-                    quizData,
+            fileGenerateResponse = persistenceManager.persistQuizData(
+            		fileGenerateResponse,
                     username,
                     file.getOriginalFilename(),
-                    quizData.getContentPdf());
+                    fileGenerateResponse.getContentPdf());
         } else {
             log.debug("User not authenticated, skipping persistence");
         }
 
+        response.setResult(fileGenerateResponse);
+        
         return response;
     }
 

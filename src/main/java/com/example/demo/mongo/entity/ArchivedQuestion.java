@@ -10,6 +10,7 @@ import com.example.demo.mongo.dto.question.Question;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,8 +29,10 @@ public class ArchivedQuestion extends BaseModel {
     String id;
     String author;
     String title;
-    List<Question> content;
+    List<Question> questions;
     String pdfBase64;
     String wordBase64;
     String resourceId;
+    @Default
+    boolean isEvaluated = false;
 }

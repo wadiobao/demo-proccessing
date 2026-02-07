@@ -26,9 +26,8 @@ import com.example.demo.enums.Role;
 public class SecurityConfig {
 
 	private final String[] AUTH_END_POINTS = { "/api/v1/user/register", "/api/v1/user/register/otp",
-			"/api/v1/auth/login",
-			"/api/v1/auth/introspect", "/api/v1/auth/logout", "/api/v1/auth/refresh" };
-	private final String[] API_END_POINTS = { "/api/v1/quiz/public", "/api/v1/quiz/private",
+			"/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/auth/refresh" };
+	private final String[] API_END_POINTS = { "/api/v1/quiz/public",
 			"/api/v1/pdfs/**", "/api/webhook/cloudinary" };
 	private final String[] FORM_END_POINTS = { "/api/v1/discussion/**" };
 	private final String[] FILE_END_POINTS = { "/api/v1/mail/donate", "/api/v1/mail/send-bug" };
@@ -71,7 +70,7 @@ public class SecurityConfig {
 			configuration.setAllowedOrigins(List.of(cors));
 			configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
 			configuration.setAllowedHeaders(List.of("*"));
-			configuration.setExposedHeaders(List.of("Access-Token", "Refresh-Token"));
+			configuration.setExposedHeaders(List.of("Access-Token", "Refresh-Token","access-token","refresh-token"));
 			configuration.setAllowCredentials(true);
 			return configuration;
 		}));

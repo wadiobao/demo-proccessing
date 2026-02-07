@@ -11,4 +11,5 @@ public interface IArchivedQuestionService {
 	public List<ArchivedQuestion> findAll();
 	public void delete(String author) throws Exception;
 	ArchivedQuestion findByAuthorAndTitle(String author, String title);
+	boolean isEvaluated(String id);
 }

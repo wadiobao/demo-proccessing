@@ -34,10 +34,10 @@ import lombok.experimental.NonFinal;
 
 @Component
 public class JwtUtils {
-	
+
 	@Autowired
 	InvalidatedTokenRepository invalidatedTokenRepository;
-	
+
 	@NonFinal
 	@Value("${demo.secret.key}")
 	String SIGN_KEY;
@@ -49,8 +49,7 @@ public class JwtUtils {
 	@NonFinal
 	@Value("${demo.time.token.access}")
 	int ACCESS_TiME;
-	
-	
+
 	public String generateToken(User user, boolean isRefresh) {
 		JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 		JWTClaimsSet claimsSet;
@@ -90,7 +89,6 @@ public class JwtUtils {
 		return joiner.toString();
 
 	}
-	
 
 	public SignedJWT verifyToken(String token) throws JOSEException, ParseException {
 
@@ -120,12 +118,12 @@ public class JwtUtils {
 
 	public ResponseCookie generateAccessCookie(String token) {
 		return ResponseCookie.from("access-token", token).httpOnly(true).path("/").maxAge(ACCESS_TiME)
-				.sameSite("Strict").build();
+				.sameSite("Lax").build();
 	}
 
 	public ResponseCookie generateRefreshCookie(String token) {
 		return ResponseCookie.from("refresh-token", token).httpOnly(true).path("/").maxAge(REFRESH_TiME)
-				.sameSite("Strict").build();
+				.sameSite("Lax").build();
 	}
 
 	public void clearToken(HttpServletResponse response) {

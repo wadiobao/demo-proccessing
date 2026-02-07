@@ -5,12 +5,13 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.constants.Constants;
 import com.example.demo.dto.StateResponse;
 import com.example.demo.mongo.dto.question.FileGenerateResponse;
 import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.dto.quiz.QuizConfig;
 import com.example.demo.mongo.service.quiz.GeminiAIUtils.GeminiResponse;
+import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
+import com.example.demo.mongo.service.quiz.processor.IDocumentProcessor;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class QuizProcessor  {
+public class QuizProcessor {
 
-    PDFProcessingService pdfProcessingService;
+    DocumentProcessorContext documentProcessorFactory;
     GeminiAIUtils geminiAIService;
     WordPdfGeneration fileGenerationService;
     QuizPromptBuilder promptBuilder;
@@ -43,16 +44,11 @@ public class QuizProcessor  {
      */
     public StateResponse<Object> processQuiz(MultipartFile file, QuizConfig config) {
         try {
-            // Validate file type
-            if (!file.getContentType().equals(Constants.FileTypes.PDF)) {
-                throw new IllegalArgumentException(Constants.Messages.PDF_ONLY);
-            }
+            // Select processor and extract text
+            IDocumentProcessor processor = documentProcessorFactory.getProcessor(file);
+            String pdfText = processor.extractText(file);
 
-            // Determine PDF type and extract text
-            String pdfType = pdfProcessingService.checkPDF(file);
-            String pdfText = extractTextFromPdf(file, pdfType);
-
-            log.info("Processing {} PDF with {} characters", pdfType, pdfText.length());
+            log.info("Processing file: {} with {} characters", file.getOriginalFilename(), pdfText.length());
 
             // Generate questions using AI
             GeminiResponse geminiResponse = generateQuestions(config, pdfText);
@@ -82,17 +78,6 @@ public class QuizProcessor  {
         } catch (Exception e) {
             log.error("Error processing quiz: {}", e.getMessage(), e);
             return responseBuilder.buildFileGenerationError();
-        }
-    }
-
-    /**
-     * Extracts text from PDF based on its type.
-     */
-    private String extractTextFromPdf(MultipartFile file, String pdfType) throws Exception {
-        if ("BASE".equals(pdfType)) {
-            return pdfProcessingService.extractTextFromPdf(file);
-        } else {
-            return pdfProcessingService.renderPdfToPngToString(file);
         }
     }
 
