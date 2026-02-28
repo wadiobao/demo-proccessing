@@ -1,66 +1,39 @@
 @startuml
-title Activity Diagram - AI Quiz Generation from PDF
+title Activity Diagram - AI Quiz Generation from PDF (Refactored)
 
 |Client|
 start
-:Tải lên file PDF và các tham số
-(Số lượng câu hỏi, chế độ, loại);
+:Tải lên file PDF và QuizConfig;
 
 |QuizController|
-:Nhận yêu cầu HTTP;
-:Gọi QuizService.handlePdf();
+:Nhận request;
+:Gọi QuizService.processPrivateQuiz();
 
 |QuizService|
-:Kiểm tra loại file PDF;
-if (File là PDF dạng văn bản?) then (yes)
-    :Trích xuất văn bản bằng PDFBox;
-else (no)
-    :Chuyển đổi PDF thành ảnh PNG;
-    :Trích xuất văn bản từ ảnh (OCR);
-endif
-:Kết hợp văn bản đã trích xuất thành một prompt;
-note right: Prompt bao gồm nội dung văn bản,
-số lượng câu hỏi, độ khó, v.v.
+:Gọi QuizProcessor.processQuiz();
 
-|GeminiAIService|
-:Gọi API Google Gemini với prompt;
-:Nhận phản hồi JSON chứa các câu hỏi;
+|QuizProcessor|
+:PDFProcessingService.extractTextFromPdf();
+:Xây dựng Prompt với PromptBuilder;
+:Gọi GeminiAIUtils.generateQuestionWithGemini();
+:Phân tích phản hồi với ResponseBuilder;
+:Gọi WordPdfGeneration.generateWordAndPdfBase64();
+:Tạo StateResponse;
 
 |QuizService|
-:Phân tích (Parse) JSON thành danh sách đối tượng Question;
-fork
-    |FileGenerationService|
-    :Tạo file Word và PDF từ danh sách câu hỏi;
-    :Mã hóa các file thành chuỗi Base64;
-fork again
-    |QuizService|
-    if (Câu hỏi yêu cầu hình ảnh?) then (yes)
-        repeat
-            :Gọi GeminiAIService để tạo hình ảnh;
-            note left: Gửi prompt tạo ảnh
-            |GeminiAIService|
-            :Gọi API tạo ảnh của Gemini;
-            :Nhận URL và public ID của ảnh;
-            |QuizService|
-            :Cập nhật đối tượng Question với thông tin ảnh;
-        repeat while (Còn câu hỏi cần tạo ảnh?)
-    endif
-end fork
-
-|QuizService|
+:Lấy kết quả từ QuizProcessor;
+:Lấy Authentication từ SecurityContextHolder;
 if (Người dùng đã đăng nhập?) then (yes)
-    |PdfStoreService|
-    :Tạo đối tượng PdfStore;
-    :Lưu thông tin quiz vào MongoDB;
+    |QuizPersistenceManager|
+    :Lưu dữ liệu vào MongoDB;
+    :Cập nhật Response với metadata;
 endif
-:Xây dựng đối tượng StateResponse chứa kết quả;
 
 |QuizController|
-:Nhận StateResponse từ Service;
-:Trả về phản hồi HTTP 200 OK cho client;
+:Trả về StateResponse;
 
 |Client|
-:Nhận và hiển thị kết quả (câu hỏi, link tải file);
+:Nhận kết quả và link download;
 stop
 
 @enduml

@@ -1,8 +1,6 @@
 package com.example.demo.sql.dto.user;
 
-import java.util.Date;
-import java.util.Set;
-
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,10 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
-	private String userName;
-	private String email;
-	private Date date;
-	private String avatarUrl;
-	private Set<String> roles;
+public class ChangePasswordRequest {
+    private String oldPassword;
+
+    @Size(min = 8, message = "INVALID_PASSWORD")
+    private String newPassword;
 }

@@ -16,13 +16,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.constants.Constants;
+import com.example.demo.utils.ImageProcessingUtils;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
 @Component
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PDFProcessingService {
-    
+
+    ImageProcessingUtils imageProcessingUtils;
+
     public String extractTextFromPdf(MultipartFile pdfFile) throws IOException {
         try (PDDocument document = PDDocument.load(pdfFile.getInputStream())) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -55,15 +63,26 @@ public class PDFProcessingService {
 
         for (int i = 0; i < pageCount; i++) {
             final int index = i;
-            final BufferedImage img = pdfRenderer.renderImageWithDPI(index, 100);
+            BufferedImage rawImg = pdfRenderer.renderImageWithDPI(index, 300);
+
+            // Pre-processing pipeline
+            BufferedImage processedImg = imageProcessingUtils.toGrayscale(rawImg);
+            processedImg = imageProcessingUtils.medianFilter(processedImg);
+            processedImg = imageProcessingUtils.binaryThreshold(processedImg);
+
+            final BufferedImage finalImg = processedImg;
 
             results.add(executor.submit(() -> {
-                Tesseract t = new Tesseract();
-                t.setDatapath(Constants.FilePaths.TESSDATA_PATH);
-                t.setLanguage(Constants.Languages.VIETNAMESE);
-                return String.format(Constants.Messages.PAGE_FORMAT, index + 1, t.doOCR(img));
+                try {
+                    Tesseract t = new Tesseract();
+                    t.setDatapath(Constants.FilePaths.TESSDATA_PATH);
+                    t.setLanguage(Constants.Languages.VIETNAMESE);
+                    return String.format(Constants.Messages.PAGE_FORMAT, index + 1, t.doOCR(finalImg));
+                } catch (TesseractException e) {
+                    return "Error OCR Page " + (index + 1) + ": " + e.getMessage();
+                }
             }));
-            img.flush();
+            rawImg.flush();
         }
 
         for (Future<String> result : results) {
@@ -73,4 +92,4 @@ public class PDFProcessingService {
         document.close();
         return pdfString;
     }
-} 
+}

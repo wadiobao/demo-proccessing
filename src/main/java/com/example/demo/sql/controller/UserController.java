@@ -7,13 +7,22 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.sql.dto.otp.RegistrationOtpRequest;
+import com.example.demo.sql.dto.otp.RegistrationOtpRequest;
+import com.example.demo.sql.dto.user.ChangePasswordRequest;
+import com.example.demo.sql.dto.user.ForgotPasswordRequest;
+import com.example.demo.sql.dto.user.ResetPasswordRequest;
 import com.example.demo.sql.dto.user.UserRequest;
 import com.example.demo.sql.service.iservice.IOTPMailService;
 import com.example.demo.sql.service.iservice.IUserService;
@@ -67,5 +76,30 @@ public class UserController {
 	@GetMapping("/myinfor")
 	public ResponseEntity<StateResponse<Object>> getMyInfor() {
 		return ResponseEntity.ok(StateResponse.builder().result(service.myInfor()).build());
+	}
+
+	@PostMapping("/forgot-password")
+	public ResponseEntity<StateResponse<Object>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+		mailService.sendForgotPasswordOtp(request.getEmail());
+		return ResponseEntity.ok(StateResponse.builder().message("OTP khôi phục đã được gửi").build());
+	}
+
+	@PostMapping("/reset-password")
+	public ResponseEntity<StateResponse<Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+		mailService.verifyOtp(request.getEmail(), request.getOtp());
+		service.resetPassword(request);
+		return ResponseEntity.ok(StateResponse.builder().message("Mật khẩu đã được đặt lại thành công").build());
+	}
+
+	@PutMapping("/profile")
+	public ResponseEntity<StateResponse<Object>> updateProfile(
+			@RequestPart(value = "avatar", required = false) MultipartFile avatar) throws IOException {
+		return ResponseEntity.ok(StateResponse.builder().result(service.updateProfile(avatar)).build());
+	}
+
+	@PutMapping("/change-password")
+	public ResponseEntity<StateResponse<Object>> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
+		service.changePassword(request);
+		return ResponseEntity.ok(StateResponse.builder().message("Đổi mật khẩu thành công").build());
 	}
 }

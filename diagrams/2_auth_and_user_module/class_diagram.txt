@@ -1,63 +1,86 @@
-```mermaid
-classDiagram
-    title Module: Authentication & User Management
+@startuml
+title Module: Authentication & User Management
 
+package "Controller" {
     class AuthenticationController {
         -AuthenticationService authService
-        +login(LoginRequest) : AuthenticationResponse
-        +introspect(IntrospectRequest) : IntrospectResponse
-        +logout(LogoutRequest) : void
+        +authenticate(AuthenticationUser) : ResponseEntity
+        +introspect(Introspect) : IntrospectResponse
+        +refreshToken(HttpServletRequest, String) : ResponseEntity
+        +logout(HttpServletResponse, String) : void
     }
 
     class UserController {
         -UserService userService
-        +createUser(UserCreationRequest) : UserResponse
-        +getMyInfo() : UserResponse
+        +getAll(Pageable) : Page~User~
+        +registerUser(UserRequest) : UserResponse
+        +getInfor(String) : UserResponse
+        +myInfor() : UserResponse
     }
+}
 
+package "Service" {
     class AuthenticationService {
-        -UserRepository userRepository
-        -InvalidatedTokenRepository invalidatedTokenRepo
-        +authenticate(LoginRequest) : AuthenticationResponse
-        +introspect(IntrospectRequest) : IntrospectResponse
+        -UserRepository repository
+        -InvalidatedTokenRepository invalidatedTokenRepository
+        -JwtUtils jwtUtils
+        +authenticate(AuthenticationUser) : ResponseEntity
+        +introspect(Introspect) : IntrospectResponse
+        +refreshToken(HttpServletResponse, String) : ResponseEntity
+        +logout(HttpServletResponse, String) : void
     }
 
     class UserService {
         -UserRepository userRepository
-        -UserMapper userMapper
-        +createUser(UserCreationRequest) : UserResponse
-        +getMyInfo() : UserResponse
+        -PasswordEncoder encoder
+        +getAll(Pageable) : Page~User~
+        +registerUser(UserRequest) : UserResponse
+        +getInfor(String) : UserResponse
+        +myInfor() : UserResponse
     }
+}
 
-    class UserRepository {
-        <<Interface>>
-        +findByUsername(String) : Optional~User~
+package "Repository" {
+    interface UserRepository {
+        +findByUserName(String) : Optional~User~
+        +existsByUserName(String) : boolean
+        +existsByEmail(String) : boolean
     }
+    interface InvalidatedTokenRepository {
+        +save(InvalidatedToken) : InvalidatedToken
+    }
+}
 
+package "Model/Entity" {
     class User {
-        <<SQL Entity>>
         -Long id
-        -String username
+        -String userName
         -String password
-        -Set~Role~ roles
+        -String email
+        -Set~String~ roles
     }
-    
-    class Role {
-        <<Enum>>
-        USER
-        ADMIN
+    class InvalidatedToken {
+        -String id
+        -Date expiryTime
     }
+}
 
-    class LoginRequest { <<DTO>> }
-    class UserCreationRequest { <<DTO>> }
-    class UserResponse { <<DTO>> }
-    class IntrospectResponse { <<DTO>> }
+package "Utils" {
+    class JwtUtils {
+        +generateToken(User, boolean) : String
+        +verifyToken(String) : SignedJWT
+        +generateAccessCookie(String) : ResponseCookie
+        +generateRefreshCookie(String) : ResponseCookie
+    }
+}
 
-    AuthenticationController o-- AuthenticationService
-    UserController o-- UserService
-    AuthenticationService o-- UserRepository
-    UserService o-- UserRepository
-    UserService o-- UserMapper
-    UserRepository ..> User
-    User *-- Role
-```
+AuthenticationController o-- AuthenticationService
+UserController o-- UserService
+AuthenticationService o-- UserRepository
+AuthenticationService o-- InvalidatedTokenRepository
+AuthenticationService o-- JwtUtils
+UserService o-- UserRepository
+UserRepository ..> User
+InvalidatedTokenRepository ..> InvalidatedToken
+
+@enduml

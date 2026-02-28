@@ -89,7 +89,8 @@ public class QuizController {
             @RequestParam(defaultValue = "0") int level,
             @RequestParam(defaultValue = "0") int type,
             @RequestParam(defaultValue = "vietnamese") String language,
-            @RequestParam(defaultValue = "0") int imgQuest) throws Exception {
+            @RequestParam(defaultValue = "0") int imgQuest,
+            @RequestParam(required = false) String topic) throws Exception {
 
         QuizConfig config = QuizConfig.builder()
                 .questionCount(questionCount)
@@ -97,6 +98,7 @@ public class QuizController {
                 .type(type)
                 .language(language)
                 .imgQuest(imgQuest)
+                .topic(topic)
                 .build();
 
         StateResponse<Object> response = quizService.processPrivateQuiz(file, config);

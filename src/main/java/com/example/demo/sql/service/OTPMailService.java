@@ -33,28 +33,28 @@ import lombok.experimental.FieldDefaults;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OTPMailService implements IOTPMailService {
-	
+
 	@Value("${demo.donatefile.path}")
 	String donateFile;
-	
+
 	@Autowired
 	JavaMailSender javaMailSender;
-	
+
 	@Autowired
 	RedisTemplate<String, String> redisTemplate;
-	
+
 	@Autowired
 	UserService userService;
-	
+
 	ObjectMapper mapper = new ObjectMapper();
-	
-	Map<String,String> otpCache = new ConcurrentHashMap<>();
-	
+
+	Map<String, String> otpCache = new ConcurrentHashMap<>();
+
 	final String MY_MAIL = "dumabao69@gmail.com";
-	
+
 	@Override
 	public String generateAndSendOtp(UserRequest request) {
-		String otp = String.valueOf(ThreadLocalRandom.current().nextInt(100000,999999));
+		String otp = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 999999));
 		otpCache.put(request.getEmail(), otp);
 		String json = null;
 		try {
@@ -64,26 +64,26 @@ public class OTPMailService implements IOTPMailService {
 			e.printStackTrace();
 		}
 		redisTemplate.opsForValue().set(request.getEmail(), otp, 3, TimeUnit.MINUTES);
-		redisTemplate.opsForValue().set(request.getEmail()+otp, json, 3, TimeUnit.MINUTES);
-		
-		SimpleMailMessage mailMessage =  new SimpleMailMessage();
+		redisTemplate.opsForValue().set(request.getEmail() + otp, json, 3, TimeUnit.MINUTES);
+
+		SimpleMailMessage mailMessage = new SimpleMailMessage();
 		mailMessage.setTo(request.getEmail());
 		mailMessage.setSubject("Mã OTP");
-		mailMessage.setText("Mã OTP của bạn là: "+otp+" \n Mã sẽ hết hạn sau 3 phút");
+		mailMessage.setText("Mã OTP của bạn là: " + otp + " \n Mã sẽ hết hạn sau 3 phút");
 		javaMailSender.send(mailMessage);
-		
+
 		scheduleExpiry(request.getEmail(), 3, TimeUnit.MINUTES);
-		
+
 		return otp;
 	}
-	
+
 	@Override
 	public UserResponse verifyOtp(String email, String otp) {
 		String dbOtp = redisTemplate.opsForValue().get(email);
-		String json = redisTemplate.opsForValue().get(email+dbOtp);
+		String json = redisTemplate.opsForValue().get(email + dbOtp);
 		UserRequest request = null;
 		try {
-			 request = mapper.readValue(json, UserRequest.class);
+			request = mapper.readValue(json, UserRequest.class);
 		} catch (JsonMappingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -92,41 +92,60 @@ public class OTPMailService implements IOTPMailService {
 			e.printStackTrace();
 		}
 		if (otp != null && otp.equals(otp) && otp.equals(otpCache.get(email))) {
-            redisTemplate.delete(email);
-            redisTemplate.delete(email+dbOtp);
-            return userService.registerUser(request);
-        }
+			redisTemplate.delete(email);
+			redisTemplate.delete(email + dbOtp);
+			return userService.registerUser(request);
+		}
 		return userService.registerUser(request);
 	}
-	
+
 	private void scheduleExpiry(String email, long timeout, TimeUnit unit) {
-        Executors.newSingleThreadScheduledExecutor()
-            .schedule(() -> otpCache.remove(email), timeout, unit);
-    }
-	
-	@Override
-	public StateResponse<Object> sendDonatetoMyMail(String name,String note, MultipartFile file) throws IOException, MessagingException {
-		 byte[] files = file.getBytes();
-		 MimeMessage message = javaMailSender.createMimeMessage();
-		 MimeMessageHelper helper = new MimeMessageHelper(message,true);
-	     helper.setTo(MY_MAIL);
-	     helper.setSubject("Yêu cầu file từ người dùng");
-	     helper.setText("Bí danh người dùng: " + name +"\n"
-	    		 		+"Ghi chú: " +note);
-	     helper.addAttachment("file.pdf", new ByteArrayResource(files));
-	     javaMailSender.send(message);
-	     return StateResponse.builder().result(name).build();
+		Executors.newSingleThreadScheduledExecutor()
+				.schedule(() -> otpCache.remove(email), timeout, unit);
 	}
-	
+
 	@Override
-	public StateResponse<Object> sendBugtoMyMail(String name,String note) throws IOException, MessagingException {
-		 MimeMessage message = javaMailSender.createMimeMessage();
-		 MimeMessageHelper helper = new MimeMessageHelper(message,true);
-	     helper.setTo(MY_MAIL);
-	     helper.setSubject("Bug từ người dùng");
-	     helper.setText("Bí danh người dùng: " + name +"\n"
-	    		 		+"Ghi chú: " +note);
-	     javaMailSender.send(message);
-	     return StateResponse.builder().result(name).build();
+	public StateResponse<Object> sendDonatetoMyMail(String name, String note, MultipartFile file)
+			throws IOException, MessagingException {
+		byte[] files = file.getBytes();
+		MimeMessage message = javaMailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message, true);
+		helper.setTo(MY_MAIL);
+		helper.setSubject("Yêu cầu file từ người dùng");
+		helper.setText("Bí danh người dùng: " + name + "\n"
+				+ "Ghi chú: " + note);
+		helper.addAttachment("file.pdf", new ByteArrayResource(files));
+		javaMailSender.send(message);
+		return StateResponse.builder().result(name).build();
+	}
+
+	@Override
+	public StateResponse<Object> sendBugtoMyMail(String name, String note) throws IOException, MessagingException {
+		MimeMessage message = javaMailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message, true);
+		helper.setTo(MY_MAIL);
+		helper.setSubject("Bug từ người dùng");
+		helper.setText("Bí danh người dùng: " + name + "\n"
+				+ "Ghi chú: " + note);
+		javaMailSender.send(message);
+		return StateResponse.builder().result(name).build();
+	}
+
+	@Override
+	public String sendForgotPasswordOtp(String email) {
+		String otp = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 999999));
+		otpCache.put(email, otp);
+
+		redisTemplate.opsForValue().set(email + "_RESET", otp, 5, TimeUnit.MINUTES);
+
+		SimpleMailMessage mailMessage = new SimpleMailMessage();
+		mailMessage.setTo(email);
+		mailMessage.setSubject("Mã khôi phục mật khẩu");
+		mailMessage.setText("Mã OTP để khôi phục mật khẩu của bạn là: " + otp + " \n Mã sẽ hết hạn sau 5 phút");
+		javaMailSender.send(mailMessage);
+
+		scheduleExpiry(email, 5, TimeUnit.MINUTES);
+
+		return otp;
 	}
 }

@@ -1,50 +1,52 @@
-```mermaid
-packageDiagram
-    title Kiến trúc tổng thể của ứng dụng
+@startuml
+title Kiến trúc tổng thể của ứng dụng (demo-processing)
 
-    package "Controller (API Layer)" {
-        class AuthenticationController
-        class QuizController
-        class UserController
+package "Frontend (React)" <<Cloud>> {
+  [React UI]
+}
+
+package "Backend (Spring Boot)" {
+  package "Controller Layer" {
+    [AuthenticationController]
+    [QuizController]
+    [UserController]
+    [CommentController]
+  }
+
+  package "Service Layer" {
+    package "SQL Services" {
+      [AuthenticationService]
+      [UserService]
+      [CommentService]
     }
-
-    package "Service (Business Logic)" {
-        class AuthenticationService
-        class QuizService
-        class UserService
+    package "Mongo Services" {
+      [QuizService]
+      [QuizProcessor]
+      [QuizPersistenceManager]
     }
+  }
 
-    package "Repository (Data Access)" {
-        class UserRepository
-        class TopicRepository
-        class PdfStoreRepository
-    }
+  package "Repository Layer" {
+    [UserRepository]
+    [InvalidatedTokenRepository]
+    [PdfStoreRepository]
+    [TopicRepository]
+  }
+}
 
-    package "Entity (Database Models)" {
-        package "SQL Entities" {
-            class User
-            class Topic
-        }
-        package "Mongo Entities" {
-            class PdfStore
-        }
-    }
+package "Persistence" {
+  database "PostgreSQL (SQL)" {
+    [User Table]
+    [Token Table]
+  }
+  database "MongoDB (NoSQL)" {
+    [PdfStore Collection]
+  }
+}
 
-    package "Model (DTOs & View Models)" {
-        class LoginRequest
-        class UserResponse
-        class Question
-        class FileGenerateResponse
-    }
+[React UI] --> [Controller Layer] : REST API
+[Controller Layer] --> [Service Layer]
+[Service Layer] --> [Repository Layer]
+[Repository Layer] --> "Persistence"
 
-    package "Configuration" {
-        class SecurityConfig
-    }
-
-    Controller --> Service : uses
-    Service --> Repository : uses
-    Service --> Model : uses/creates
-    Repository --> Entity : manages
-    Controller --> Model : uses
-    Configuration --> Service : configures
-```
+@enduml

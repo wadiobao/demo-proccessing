@@ -36,6 +36,7 @@ public enum ErrorCode {
 	INVALID_PASSWORD(3004, "Mật khẩu ít nhất 8 kí tự", HttpStatus.BAD_REQUEST),
 	EMAIL_EXISTED(3005, "Email đã tồn tại", HttpStatus.BAD_REQUEST),
 	INVALID_DATE(3006, "Độ tuổi tối thiều là {min}", HttpStatus.BAD_REQUEST),
+	PASSWORD_INVALID(3007, "Mật khẩu hiện tại không chính xác", HttpStatus.BAD_REQUEST),
 
 	// 4xxx: Resource & Data Errors
 	RESOURCE_NOT_FOUND(4001, "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
@@ -43,7 +44,7 @@ public enum ErrorCode {
 	FILE_TOO_LARGE(4003, "Tệp quá lớn", HttpStatus.PAYLOAD_TOO_LARGE),
 	INVALID_FILE_TYPE(4004, "Loại tệp không hợp lệ", HttpStatus.BAD_REQUEST),
 	DATABASE_ERROR(4005, "Lỗi cơ sở dữ liệu", HttpStatus.INTERNAL_SERVER_ERROR),
-	EVALUATED_QUESTIONS(4006,"Câu hỏi đã được đánh giá",HttpStatus.BAD_REQUEST),
+	EVALUATED_QUESTIONS(4006, "Câu hỏi đã được đánh giá", HttpStatus.BAD_REQUEST),
 
 	// 5xxx: AI & Quiz Errors
 	QUIZ_GENERATION_FAILED(5001, "Tạo bài trắc nghiệm thất bại", HttpStatus.INTERNAL_SERVER_ERROR),

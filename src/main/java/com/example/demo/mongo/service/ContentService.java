@@ -18,10 +18,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class ContentService implements IContentService {
-	
+
 	ContentRepository contentRepository;
 	VectorUtils vectorUtils;
 	GeminiAIUtils aiService;
@@ -46,13 +46,12 @@ public class ContentService implements IContentService {
 	public Content searchSimilar(List<Double> queryVector, int limit, String username) {
 		Content theMostSimilar = contentRepository.searchSimilar(queryVector, limit, username).get(0);
 		Double score = theMostSimilar.getVectorSearchScore();
-				
-		if(score >= 0.7) {
+
+		if (score >= 0.7) {
 			return theMostSimilar;
 		}
-		
+
 		return Content.builder().build();
 	}
-	
 
 }

@@ -49,6 +49,11 @@ public class QuizConfig {
     private int imgQuest = 0;
 
     /**
+     * Topic of the quiz (used for tracking learning progress)
+     */
+    private String topic;
+
+    /**
      * For adaptive mode: minimum difficulty threshold
      */
     private Double minDifficulty;

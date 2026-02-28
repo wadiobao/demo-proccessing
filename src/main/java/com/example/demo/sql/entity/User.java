@@ -30,7 +30,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Table(name = "user_data")
 public class User extends BaseModel {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -40,11 +40,12 @@ public class User extends BaseModel {
 	@Temporal(TemporalType.DATE)
 	@JsonFormat(pattern = "dd/MM/yyyy")
 	private Date date;
-	
+
+	private String avatarUrl;
+
 	private Set<String> roles;
-		
+
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Comment> comment;
-	
 
 }

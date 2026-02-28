@@ -14,7 +14,10 @@ import com.example.demo.sql.entity.PdfFile;
 @Repository
 public interface PdfFileRepository extends JpaRepository<PdfFile, Long> {
 	boolean existsByCloudinaryId(String cloudinaryId);
+
 	Optional<PdfFile> findByCloudinaryId(String publicId);
-	List<PdfFile> findAllByCloudinaryIdIn(List<String> publicIds);	
+
+	List<PdfFile> findAllByCloudinaryIdIn(List<String> publicIds);
+
 	Page<PdfFile> findAllByMajor(Major major, Pageable pageable);
 }

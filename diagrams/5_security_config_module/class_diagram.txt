@@ -1,27 +1,33 @@
-```mermaid
-classDiagram
-    title Module: Security Configuration
+@startuml
+title Module: Security Configuration
 
+package "Configuration" {
     class SecurityConfig {
         -CustomJwtDecoder customJwtDecoder
         -JwtAuthenticationEntryPoint jwtEntryPoint
-        +securityFilterChain(HttpSecurity http) : SecurityFilterChain
+        +securityFilterChain(HttpSecurity) : SecurityFilterChain
     }
+}
 
+package "Security Utils" {
     class CustomJwtDecoder {
-        -UserService userService
-        +decode(String token) : Jwt
+        -JwtUtils jwtUtils
+        +decode(String) : Jwt
     }
 
     class JwtAuthenticationEntryPoint {
         +commence(...) : void
     }
+}
 
+package "Service" {
     class AuthenticationService {
-        +generateToken(Authentication) : String
+        +authenticate(...)
     }
+}
 
-    SecurityConfig o-- CustomJwtDecoder
-    SecurityConfig o-- JwtAuthenticationEntryPoint
-    CustomJwtDecoder ..> AuthenticationService : (uses nimbusds)
-```
+SecurityConfig o-- CustomJwtDecoder
+SecurityConfig o-- JwtAuthenticationEntryPoint
+CustomJwtDecoder ..> JwtUtils : uses
+
+@enduml

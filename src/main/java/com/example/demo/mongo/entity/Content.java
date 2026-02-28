@@ -34,4 +34,3 @@ public class Content extends BaseModel {
 	@Transient
 	Double vectorSearchScore;
 }
-

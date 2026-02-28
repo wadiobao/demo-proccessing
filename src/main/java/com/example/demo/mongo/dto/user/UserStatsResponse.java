@@ -57,4 +57,11 @@ public class UserStatsResponse {
      * Answer history (recent answers)
      */
     private List<UserAnswer> recentHistory;
+
+    /**
+     * Statistics for Bloom's Taxonomy levels (Skill Map)
+     * Key: Bloom level (e.g., "Remembering", "Understanding")
+     * Value: Accuracy percentage for that level
+     */
+    private java.util.Map<String, Double> bloomStats;
 }

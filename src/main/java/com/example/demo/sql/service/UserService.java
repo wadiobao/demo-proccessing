@@ -1,6 +1,6 @@
 package com.example.demo.sql.service;
 
-import java.util.HashSet;
+import java.io.IOException;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -10,9 +10,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.sql.dto.user.ChangePasswordRequest;
+import com.example.demo.sql.dto.user.ResetPasswordRequest;
 import com.example.demo.sql.dto.user.UserRequest;
 import com.example.demo.sql.dto.user.UserResponse;
+import com.example.demo.utils.CloudinaryUtils;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.enums.Role;
 import com.example.demo.exception.HandleException;
@@ -32,6 +36,7 @@ public class UserService implements IUserService {
 
 	UserRepository userRepository;
 	PasswordEncoder encoder;
+	CloudinaryUtils cloudinaryUtils;
 
 	@Override
 	@PreAuthorize("hasRole('ADMIN')")
@@ -57,7 +62,7 @@ public class UserService implements IUserService {
 			throw new HandleException(ErrorCode.USER_EXISTED);
 		}
 
-		Set<String> role = new HashSet<String>();
+		Set<String> role = new java.util.HashSet<String>();
 		role.add(Role.USER.name());
 
 		User user = User.builder()
@@ -105,6 +110,54 @@ public class UserService implements IUserService {
 				.date(user.getDate())
 				.roles(user.getRoles())
 				.build();
+	}
+
+	@Override
+	@Transactional
+	public void resetPassword(ResetPasswordRequest request) {
+		User user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+		user.setPassword(encoder.encode(request.getNewPassword()));
+		userRepository.save(user);
+	}
+
+	@Override
+	@Transactional
+	public UserResponse updateProfile(MultipartFile avatar) throws IOException {
+		var context = SecurityContextHolder.getContext();
+		String name = context.getAuthentication().getName();
+		User user = userRepository.findByUserName(name)
+				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+
+		if (avatar != null && !avatar.isEmpty()) {
+			String avatarUrl = cloudinaryUtils.uploadAvatar(avatar);
+			user.setAvatarUrl(avatarUrl);
+		}
+
+		userRepository.save(user);
+		return UserResponse.builder()
+				.userName(user.getUserName())
+				.email(user.getEmail())
+				.date(user.getDate())
+				.avatarUrl(user.getAvatarUrl())
+				.roles(user.getRoles())
+				.build();
+	}
+
+	@Override
+	@Transactional
+	public void changePassword(ChangePasswordRequest request) {
+		var context = SecurityContextHolder.getContext();
+		String name = context.getAuthentication().getName();
+		User user = userRepository.findByUserName(name)
+				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+
+		if (!encoder.matches(request.getOldPassword(), user.getPassword())) {
+			throw new HandleException(ErrorCode.PASSWORD_INVALID);
+		}
+
+		user.setPassword(encoder.encode(request.getNewPassword()));
+		userRepository.save(user);
 	}
 
 }

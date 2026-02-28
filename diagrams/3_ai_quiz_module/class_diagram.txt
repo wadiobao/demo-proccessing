@@ -1,63 +1,77 @@
-```mermaid
-classDiagram
-    title Module: AI-Powered Quiz Generation
+@startuml
+title Module: AI-Powered Quiz Generation
 
+package "Controller" {
     class QuizController {
-        -QuizService quizService
-        +handlePdf(MultipartFile, int, int, int) : StateResponse~Object~
+        -IQuizService quizService
+        +handlePdf(MultipartFile, QuizConfig) : StateResponse~Object~
+    }
+}
+
+package "Service" {
+    class QuizService {
+        -QuizProcessor quizProcessor
+        -QuizPersistenceManager persistenceManager
+        +processPublicQuiz(MultipartFile, QuizConfig) : StateResponse~Object~
+        +processPrivateQuiz(MultipartFile, QuizConfig) : StateResponse~Object~
     }
 
-    class QuizService {
+    class QuizProcessor {
         -PDFProcessingService pdfProcessingService
-        -GeminiAIService geminiAIService
-        -FileGenerationService fileGenerationService
-        -PdfStoreService pdfStoreService
-        +handlePdf(MultipartFile, ...) : StateResponse~Object~
+        -GeminiAIUtils geminiAIUtils
+        -QuizPromptBuilder promptBuilder
+        -QuizResponseBuilder responseBuilder
+        -WordPdfGeneration wordPdfGeneration
+        +processQuiz(MultipartFile, QuizConfig) : StateResponse~Object~
+    }
+
+    class QuizPersistenceManager {
+        -PdfStoreRepository pdfStoreRepo
+        -UserResourceService userResourceService
+        +persistQuizData(FileGenerateResponse, String, String, String) : FileGenerateResponse
     }
 
     class PDFProcessingService {
         +extractTextFromPdf(MultipartFile) : String
-        +renderPdfToPngToString(MultipartFile) : String
     }
 
-    class GeminiAIService {
-        +generateQuestionWithGemini(String) : GeminiResponse
-        +generateImageWithGemini(String, String) : String[]
+    class GeminiAIUtils {
+        +generateQuestionWithGemini(String) : String
     }
-
-    class FileGenerationService {
+    
+    class WordPdfGeneration {
         +generateWordAndPdfBase64(List~Question~) : String[]
     }
+}
 
-    class PdfStoreService {
-        -PdfStoreRepository pdfStoreRepo
+package "Repository" {
+    interface PdfStoreRepository {
+        <<Mongo>>
         +save(PdfStore) : PdfStore
     }
+}
 
-    class PdfStoreRepository {
-        <<Interface>>
-        +save(PdfStore) : PdfStore
-    }
-
+package "Model" {
     class PdfStore {
-        <<Mongo Entity>>
         -String id
         -String author
         -String content
         -String wordBase64
     }
+    class Question {
+        -String question
+        -List~Answer~ answers
+    }
+}
 
-    class Question { <<Model>> }
-    class Answer { <<Model>> }
-    class FileGenerateResponse { <<DTO>> }
+QuizController o-- QuizService
+QuizService o-- QuizProcessor
+QuizService o-- QuizPersistenceManager
+QuizProcessor o-- PDFProcessingService
+QuizProcessor o-- GeminiAIUtils
+QuizProcessor o-- WordPdfGeneration
+QuizPersistenceManager o-- PdfStoreRepository
+PdfStoreRepository ..> PdfStore
+QuizProcessor ..> Question
 
-    QuizController o-- QuizService
-    QuizService o-- PDFProcessingService
-    QuizService o-- GeminiAIService
-    QuizService o-- FileGenerationService
-    QuizService o-- PdfStoreService
-    PdfStoreService o-- PdfStoreRepository
-    PdfStoreRepository ..> PdfStore
-    QuizService ..> Question
-    Question "1" *-- "many" Answer
-```
+@enduml

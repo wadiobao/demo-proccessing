@@ -15,7 +15,10 @@ public interface IOTPMailService {
 
     UserResponse verifyOtp(String email, String otp);
 
-    StateResponse<Object> sendDonatetoMyMail(String name, String note, MultipartFile file) throws IOException, MessagingException;
+    StateResponse<Object> sendDonatetoMyMail(String name, String note, MultipartFile file)
+            throws IOException, MessagingException;
 
     StateResponse<Object> sendBugtoMyMail(String name, String note) throws IOException, MessagingException;
+
+    String sendForgotPasswordOtp(String email);
 }

@@ -1,42 +1,43 @@
-```mermaid
-classDiagram
-    title Layer: Data Persistence
+@startuml
+title Layer: Data Persistence
 
-    package "JPA / SQL" {
-        class UserRepository {
-            <<Interface>>
-            +findByUsername(String) : Optional~User~
-        }
-        class TopicRepository {
-            <<Interface>>
-        }
-        class User {
-            <<@Entity>>
-            -Long id
-            -String username
-            -String password
-        }
-        class Topic {
-            <<@Entity>>
-            -Long id
-            -String name
-        }
-        UserRepository ..> User
-        TopicRepository ..> Topic
+package "JPA / SQL (PostgreSQL)" {
+    class User {
+        <<@Entity>>
+        -Long id
+        -String userName
+        -String password
+        -String email
+        -Set<String> roles
     }
+    class Topic {
+        <<@Entity>>
+        -Long id
+        -String name
+    }
+    interface UserRepository {
+        +findByUserName(String) : Optional<User>
+    }
+    interface TopicRepository {
+    }
+    
+    UserRepository ..> User
+    TopicRepository ..> Topic
+}
 
-    package "Mongo" {
-        class PdfStoreRepository {
-            <<Interface>>
-            +save(PdfStore) : PdfStore
-        }
-        class PdfStore {
-            <<@Document>>
-            -String id
-            -String title
-            -String author
-            -String content
-        }
-        PdfStoreRepository ..> PdfStore
+package "Mongo (NoSQL)" {
+    class PdfStore {
+        <<@Document>>
+        -String id
+        -String author
+        -String content
+        -String wordBase64
     }
-```
+    interface PdfStoreRepository {
+        +save(PdfStore) : PdfStore
+    }
+    
+    PdfStoreRepository ..> PdfStore
+}
+
+@enduml

@@ -6,41 +6,36 @@ start
 :Gửi yêu cầu đăng nhập (username, password);
 
 |AuthenticationController|
-:Nhận LoginRequest;
+:Nhận AuthenticationUser DTO;
 :Gọi AuthenticationService.authenticate();
 
 |AuthenticationService|
-:Sử dụng AuthenticationManager của Spring Security;
-note right: Spring Security sẽ dùng UserDetailsService
-để tìm user trong DB và so sánh password.
-
+:Tìm người dùng trong DB qua UserRepository;
 |UserRepository|
-:Tìm người dùng theo username;
+:findByUserName(username);
 
 |AuthenticationService|
-if (Xác thực thành công?) then (yes)
-    :Tạo JSON Web Token (JWT);
-    :Tạo AuthenticationResponse chứa token;
+if (Tìm thấy user?) then (yes)
+    :Sử dụng BCryptPasswordEncoder;
+    :So khớp password nhập vào với password trong DB;
+    if (Khớp?) then (yes)
+        :Tạo Access Token và Refresh Token (JWT);
+        :Tạo Access Cookie và Refresh Cookie;
+        :Trả về ResponseEntity chứa kết quả;
+    else (no)
+        :Ném HandleException(UNAUTHENTICATED);
+    endif
 else (no)
-    :Ném ra AuthenticationException;
+    :Ném HandleException;
 endif
 
 |AuthenticationController|
-if (Nhận được AuthenticationResponse?) then (yes)
-    :Trả về HTTP 200 OK với token;
-else (no)
-    |HandleException|
-    :Bắt exception;
-    :Trả về HTTP 401 Unauthorized;
-endif
+:Nhận kết quả;
+:Trả về HTTP 200 OK kèm Cookies;
 
 |Client|
-:Nhận phản hồi;
-if (Thành công?) then (yes)
-    :Lưu token và chuyển hướng;
-else (no)
-    :Hiển thị thông báo lỗi;
-endif
+:Nhận Cookies;
+:Chuyển hướng người dùng;
 stop
 
 @enduml
