@@ -140,4 +140,18 @@ public class QuizController {
         StateResponse<Object> response = quizAnswerService.getUserStats(username, topic);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Retrieves global user overview statistics for the learning dashboard.
+     *
+     * @return StateResponse containing comprehensive user statistics
+     */
+    @GetMapping("/stats/overview")
+    public ResponseEntity<StateResponse<Object>> getUserOverviewStats() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        StateResponse<Object> response = quizAnswerService.getOverviewStats(username);
+        return ResponseEntity.ok(response);
+    }
 }

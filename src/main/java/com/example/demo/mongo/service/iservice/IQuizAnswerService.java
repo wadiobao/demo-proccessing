@@ -27,4 +27,14 @@ public interface IQuizAnswerService {
      * @return StateResponse containing user statistics
      */
     StateResponse<Object> getUserStats(String username, String topic);
+
+    /**
+     * Retrieves global overview statistics for the radar chart and top-level
+     * dashboard.
+     *
+     * @param username Authenticated user's username
+     * @return StateResponse containing overview statistics
+     *         (UserOverviewStatsResponse)
+     */
+    StateResponse<Object> getOverviewStats(String username);
 }

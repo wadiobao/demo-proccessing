@@ -21,12 +21,13 @@ import com.google.gson.reflect.TypeToken;
 
 @Component
 public class HandleTextFromGeminiUtils {
-	
-	public List<Question> parseQuestions(String inputText) {
+
+    public List<Question> parseQuestions(String inputText) {
         List<Question> questions = new ArrayList<>();
         // Regex để tìm từng khối câu hỏi
         // Pattern này tìm:
-        // {Câu hỏi (\d+): (.*?) A\. (.*?) B\. (.*?) C\. (.*?) D\. (.*?) Đáp án đúng: ([A-D])}
+        // {Câu hỏi (\d+): (.*?) A\. (.*?) B\. (.*?) C\. (.*?) D\. (.*?) Đáp án đúng:
+        // ([A-D])}
         // Group 1: ID câu hỏi (số)
         // Group 2: Nội dung câu hỏi (trước A.)
         // Group 3: Đáp án A (giữa A. và B.)
@@ -35,12 +36,9 @@ public class HandleTextFromGeminiUtils {
         // Group 6: Đáp án D (giữa D. và Đáp án đúng:)
         // Group 7: Đáp án đúng (A, B, C, hoặc D)
         Pattern pattern = Pattern.compile(
-        	    "\\{?Câu hỏi\\s*(?:\\[?(\\d+)\\]?):\\s*(.*?)\\s*A\\.\\s*(.*?)\\s*B\\.\\s*(.*?)\\s*C\\.\\s*(.*?)\\s*D\\.\\s*(.*?)\\s*Đáp án đúng:\\s*([A-D])\\s*Giải thích:\\s*(.*?)(?=\\s*\\{?Câu hỏi|$)\\}?",
-        	    Pattern.DOTALL
-        	);
+                "\\{?Câu hỏi\\s*(?:\\[?(\\d+)\\]?):\\s*(.*?)\\s*A\\.\\s*(.*?)\\s*B\\.\\s*(.*?)\\s*C\\.\\s*(.*?)\\s*D\\.\\s*(.*?)\\s*Đáp án đúng:\\s*([A-D])\\s*Giải thích:\\s*(.*?)(?=\\s*\\{?Câu hỏi|$)\\}?",
+                Pattern.DOTALL);
 
-
-        
         Matcher matcher = pattern.matcher(inputText);
 
         while (matcher.find()) {
@@ -54,7 +52,8 @@ public class HandleTextFromGeminiUtils {
                 String correctAns = matcher.group(7).trim();
                 String explain = matcher.group(8).trim();
 
-                Answer answer = Answer.builder().A(ansA).B(ansB).C(ansC).D(ansD).correct(correctAns).explain(explain).build();
+                Answer answer = Answer.builder().A(ansA).B(ansB).C(ansC).D(ansD).correct(correctAns).explain(explain)
+                        .build();
                 Question question = Question.builder().id(id).question(questionText).answer(answer).build();
                 questions.add(question);
             } catch (NumberFormatException e) {
@@ -67,26 +66,145 @@ public class HandleTextFromGeminiUtils {
 
         return questions;
     }
-	
-	public List<Question> parseQuestionsV4(String inputText) {
-		String clean = extractJsonArrayString(inputText);
-		//System.out.println(clean);
-		Gson gson = new Gson();
-		Type questionListType = new TypeToken<ArrayList<Question>>(){}.getType();
-		List<Question> questions = gson.fromJson(clean, questionListType);
-		//System.out.println(questions.toString());
-        return questions;
+
+    public List<Question> parseQuestionsV4(String inputText) {
+        if (inputText == null || inputText.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Gson gson = new com.google.gson.GsonBuilder().setStrictness(com.google.gson.Strictness.LENIENT).create();
+        Type questionListType = new TypeToken<ArrayList<Question>>() {
+        }.getType();
+
+        try {
+            // First, try parsing the entire input as a JsonElement
+            String cleanText = inputText.trim();
+            // Remove markdown code blocks if gemini returned them despite the mime type
+            if (cleanText.startsWith("```json")) {
+                cleanText = cleanText.substring(7);
+            }
+            if (cleanText.startsWith("```")) {
+                cleanText = cleanText.substring(3);
+            }
+            if (cleanText.endsWith("```")) {
+                cleanText = cleanText.substring(0, cleanText.length() - 3);
+            }
+            cleanText = cleanText.trim();
+
+            JsonElement rootElement = JsonParser.parseString(cleanText);
+            JsonArray targetArray = null;
+
+            if (rootElement.isJsonArray()) {
+                targetArray = rootElement.getAsJsonArray();
+            } else if (rootElement.isJsonObject()) {
+                // If it's an object, look for a standard key like "questions" or just take the
+                // first array we find
+                JsonObject obj = rootElement.getAsJsonObject();
+                if (obj.has("questions") && obj.get("questions").isJsonArray()) {
+                    targetArray = obj.getAsJsonArray("questions");
+                } else if (obj.has("data") && obj.get("data").isJsonArray()) {
+                    targetArray = obj.getAsJsonArray("data");
+                } else {
+                    // Fallback: finding the first JsonArray value in the object
+                    for (java.util.Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                        if (entry.getValue().isJsonArray()) {
+                            targetArray = entry.getValue().getAsJsonArray();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (targetArray != null) {
+                return gson.fromJson(targetArray, questionListType);
+            } else {
+                System.err.println("Could not find a JSON array in the response.");
+                // Last resort: try the old naive string extraction just in case
+                String fallbackStr = extractJsonArrayString(inputText);
+                if (fallbackStr != null) {
+                    return gson.fromJson(fallbackStr, questionListType);
+                }
+                return new ArrayList<>();
+            }
+
+        } catch (com.google.gson.JsonSyntaxException e) {
+            System.err.println("JSON Parse Error (possibly truncated), attempting to salvage: " + e.getMessage());
+            // Salvage logic using the old naive string extraction when JSON is totally
+            // broken
+            String clean = extractJsonArrayString(inputText);
+            if (clean == null)
+                return new ArrayList<>();
+
+            int lastBrace = clean.lastIndexOf('}');
+            if (lastBrace > 0) {
+                int secondLastBrace = clean.lastIndexOf('}', lastBrace - 1);
+                if (secondLastBrace > 0) {
+                    String salvaged = clean.substring(0, secondLastBrace + 1) + "]";
+                    try {
+                        List<Question> result = gson.fromJson(salvaged, questionListType);
+                        System.out.println("Successfully salvaged " + result.size() + " questions.");
+                        return result;
+                    } catch (Exception ex) {
+                        System.err.println("Salvage failed: " + ex.getMessage());
+                    }
+                } else {
+                    String salvaged = clean.substring(0, lastBrace + 1) + "]";
+                    try {
+                        return gson.fromJson(salvaged, questionListType);
+                    } catch (Exception ex) {
+                    }
+                }
+            }
+            throw e; // rethrow if we couldn't salvage
+        }
     }
-	
-	public TopicAndTags parseTopicAndTags(String inputText) {
-		String clean = extractJsonObject(inputText);
-		Gson gson = new Gson();
-		Type type = new TypeToken<TopicAndTags>(){}.getType();
-		TopicAndTags topicAndTags = gson.fromJson(clean, type);
-        return topicAndTags;
+
+    public TopicAndTags parseTopicAndTags(String inputText) {
+        if (inputText == null || inputText.trim().isEmpty()) {
+            return new TopicAndTags();
+        }
+
+        Gson gson = new com.google.gson.GsonBuilder().setStrictness(com.google.gson.Strictness.LENIENT).create();
+        Type type = new TypeToken<TopicAndTags>() {
+        }.getType();
+
+        try {
+            String cleanText = inputText.trim();
+            if (cleanText.startsWith("```json")) {
+                cleanText = cleanText.substring(7);
+            }
+            if (cleanText.startsWith("```")) {
+                cleanText = cleanText.substring(3);
+            }
+            if (cleanText.endsWith("```")) {
+                cleanText = cleanText.substring(0, cleanText.length() - 3);
+            }
+            cleanText = cleanText.trim();
+
+            JsonElement rootElement = JsonParser.parseString(cleanText);
+
+            if (rootElement.isJsonObject()) {
+                return gson.fromJson(rootElement, type);
+            } else if (rootElement.isJsonArray() && !rootElement.getAsJsonArray().isEmpty()) {
+                return gson.fromJson(rootElement.getAsJsonArray().get(0), type);
+            }
+        } catch (com.google.gson.JsonSyntaxException e) {
+            System.err.println("JSON Parse Error for TopicAndTags, attempting fallback: " + e.getMessage());
+        }
+
+        String clean = extractJsonObject(inputText);
+        if (clean != null) {
+            try {
+                return gson.fromJson(clean, type);
+            } catch (Exception ex) {
+                System.err.println("Fallback failed: " + ex.getMessage());
+            }
+        }
+
+        return new TopicAndTags();
     }
-	
-	public static String extractJsonArrayString(String rawInput) {
+
+    public static String extractJsonArrayString(String rawInput) {
         int startIndex = rawInput.indexOf('[');
         int endIndex = rawInput.lastIndexOf(']');
 
@@ -97,26 +215,24 @@ public class HandleTextFromGeminiUtils {
 
         return null; // Không tìm thấy JSON array hợp lệ
     }
-	
-	public static String extractJsonObject(String input) {
-	    if (input == null) {
-			return null;
-		}
 
-	    int start = input.indexOf('{');
-	    int end = input.lastIndexOf('}');
+    public static String extractJsonObject(String input) {
+        if (input == null) {
+            return null;
+        }
 
-	    if (start == -1 || end == -1 || start > end) {
-	        throw new IllegalArgumentException("Không tìm thấy JSON hợp lệ");
-	    }
+        int start = input.indexOf('{');
+        int end = input.lastIndexOf('}');
 
-	    return input.substring(start, end + 1);
-	}
+        if (start == -1 || end == -1 || start > end) {
+            throw new IllegalArgumentException("Không tìm thấy JSON hợp lệ");
+        }
 
-	
-	
-	public static String extractDataFromGemini(GenerateContentResponse response) {
-		String base64Data = null;
+        return input.substring(start, end + 1);
+    }
+
+    public static String extractDataFromGemini(GenerateContentResponse response) {
+        String base64Data = null;
 
         try {
             // Bước 1: Phân tích chuỗi JSON thành một cây đối tượng
@@ -131,27 +247,25 @@ public class HandleTextFromGeminiUtils {
                 // Bước 3: Lặp qua mảng "parts" để tìm phần tử chứa "inlineData"
                 for (JsonElement partElement : parts) {
                     JsonObject partObject = partElement.getAsJsonObject();
-                    
+
                     // KIỂM TRA xem phần tử này có chứa "inlineData" không
                     if (partObject.has("inlineData")) {
                         // Nếu có, đi vào và lấy chuỗi "data"
                         JsonObject inlineDataObject = partObject.getAsJsonObject("inlineData");
                         base64Data = inlineDataObject.get("data").getAsString();
-                        
+
                         // Đã tìm thấy, thoát khỏi vòng lặp
-                        break; 
+                        break;
                     }
                 }
             }
-            
+
             return base64Data;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-    
+
     }
-	
-	
-	
+
 }

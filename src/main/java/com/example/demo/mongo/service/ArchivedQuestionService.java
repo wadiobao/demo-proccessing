@@ -26,18 +26,18 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ArchivedQuestionService implements IArchivedQuestionService {
 	ArchivedQuestionRepository archivedQuestionRepository;
-	
+
 	CloudinaryUtils cloudinaryUtils;
-	
+
 	@Override
 	public ArchivedQuestion save(ArchivedQuestion pdfStore) throws Exception {
-		if(archivedQuestionRepository.countByAuthor(pdfStore.getAuthor())>=6) {
+		if (archivedQuestionRepository.countByAuthor(pdfStore.getAuthor()) >= 6) {
 			delete(pdfStore.getAuthor());
 		}
 		pdfStore.setCreatedAt(LocalDateTime.now());
 		return archivedQuestionRepository.save(pdfStore);
 	}
-	
+
 	@Override
 	public StateResponse<Object> findByAuthor(String author) {
 		List<ArchivedQuestion> authorPdfs = archivedQuestionRepository.findAllByAuthorOrderByCreatedAtDesc(author);
@@ -54,27 +54,30 @@ public class ArchivedQuestionService implements IArchivedQuestionService {
 		}
 		return StateResponse.builder().result(responses).build();
 	}
-	
+
 	@Override
 	@PreAuthorize("hasRole('ADMIN')")
 	public List<ArchivedQuestion> findAll() {
 		List<ArchivedQuestion> authorPdfs = archivedQuestionRepository.findAll();
 		return authorPdfs;
 	}
-	
+
 	@Override
 	public void delete(String author) throws Exception {
-		ArchivedQuestion pdfStore = archivedQuestionRepository.findFirstByAuthorOrderByCreatedAtAsc(author).orElseThrow(()-> new HandleException(ErrorCode.USER_NOT_EXISTED));
+		ArchivedQuestion pdfStore = archivedQuestionRepository.findFirstByAuthorOrderByCreatedAtAsc(author)
+				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
 		List<String> deleteImgList = new ArrayList<String>();
 		List<Question> questions = pdfStore.getQuestions();
-		for (Question question : questions) {
-			if(question.getImgPublicId()!=null) {
-				deleteImgList.add(question.getImgPublicId());
+		if (questions != null) {
+			for (Question question : questions) {
+				if (question.getImgPublicId() != null) {
+					deleteImgList.add(question.getImgPublicId());
+				}
 			}
 		}
-		if(!deleteImgList.isEmpty()) {
+		if (!deleteImgList.isEmpty()) {
 			cloudinaryUtils.delete(deleteImgList);
-			System.out.println("đã xóa ảnh id"+ deleteImgList.toString());
+			System.out.println("đã xóa ảnh id" + deleteImgList.toString());
 		}
 		archivedQuestionRepository.deleteById(pdfStore.getId());
 	}
@@ -87,10 +90,8 @@ public class ArchivedQuestionService implements IArchivedQuestionService {
 	@Override
 	public boolean isEvaluated(String id) {
 		ArchivedQuestion archivedQuestion = archivedQuestionRepository.findById(id)
-				.orElseThrow(() ->  new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
+				.orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
 		return archivedQuestion.isEvaluated();
 	}
-	
-	
-	
+
 }

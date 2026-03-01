@@ -47,8 +47,20 @@ public class QuizProcessor {
             // Select processor and extract text
             IDocumentProcessor processor = documentProcessorFactory.getProcessor(file);
             String pdfText = processor.extractText(file);
+            return processQuiz(file, pdfText, config);
+        } catch (Exception e) {
+            log.error("Error processing quiz: {}", e.getMessage(), e);
+            return responseBuilder.buildFileGenerationError();
+        }
+    }
 
-            log.info("Processing file: {} with {} characters", file.getOriginalFilename(), pdfText.length());
+    /**
+     * Processes pre-extracted text and generates a quiz.
+     */
+    public StateResponse<Object> processQuiz(MultipartFile file, String pdfText, QuizConfig config) {
+        try {
+            log.info("Processing content for file: {} with {} characters", file.getOriginalFilename(),
+                    pdfText.length());
 
             // Generate questions using AI
             GeminiResponse geminiResponse = generateQuestions(config, pdfText);

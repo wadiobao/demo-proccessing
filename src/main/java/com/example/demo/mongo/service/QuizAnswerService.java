@@ -11,6 +11,8 @@ import com.example.demo.mongo.dto.question.UserAnswer;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionResponse;
 import com.example.demo.mongo.dto.user.UserStatsResponse;
+import com.example.demo.mongo.dto.user.UserOverviewStatsResponse;
+import com.example.demo.mongo.dto.user.UserOverviewStatsResponse.TopicMastery;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.UserResourceRepository;
 import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
@@ -190,6 +192,93 @@ public class QuizAnswerService implements IQuizAnswerService {
                 return StateResponse.builder()
                                 .result(stats)
                                 .message("Lấy thông tin thành công")
+                                .build();
+        }
+
+        @Override
+        public StateResponse<Object> getOverviewStats(String username) {
+                log.info("Retrieving overview stats for user: {}", username);
+
+                // Assuming userResourceRepository.findByUserName is returning
+                // Optional<UserResource> by accident,
+                // or if we must pull all, we can fallback to standard mongo operations.
+                // Let's use userResourceRepository.findAllByUserName(username) if exist, or we
+                // can just iterate findAll() and filter.
+                // Since I can't guess the repository, I'll fetch all and filter for now to be
+                // safe and fix the compile error.
+                List<UserResource> allResources = userResourceRepository.findAll();
+                List<UserResource> userResources = new java.util.ArrayList<>();
+                for (UserResource ur : allResources) {
+                        if (username.equals(ur.getUserName())) {
+                                userResources.add(ur);
+                        }
+                }
+
+                if (userResources == null || userResources.isEmpty()) {
+                        log.warn("No resources found for user: {}", username);
+                        return StateResponse.builder()
+                                        .message("Chưa có dữ liệu học tập")
+                                        .result(UserOverviewStatsResponse.builder()
+                                                        .username(username)
+                                                        .totalTopicsMastered(0)
+                                                        .overallSkillLevel(0.0)
+                                                        .overallAccuracyPercentage(0.0)
+                                                        .totalQuestionsAnswered(0)
+                                                        .radarChartData(new java.util.ArrayList<>())
+                                                        .build())
+                                        .build();
+                }
+
+                int totalTopicsCount = userResources.size();
+                int totalQuestionsAnswered = 0;
+                int totalCorrectAnswers = 0;
+                double sumTheta = 0.0;
+
+                List<TopicMastery> radarChartData = new java.util.ArrayList<>();
+
+                for (UserResource resource : userResources) {
+                        List<UserAnswer> history = resource.getHistory();
+                        if (history != null && !history.isEmpty()) {
+                                totalQuestionsAnswered += history.size();
+                                totalCorrectAnswers += (int) history.stream().filter(UserAnswer::isTrue).count();
+                        }
+
+                        sumTheta += resource.getTheta();
+
+                        // Convert theta to a 0-100 mastery scale.
+                        // Assuming theta ranges from roughly -3.0 to +3.0
+                        double masteryScale = Math.max(0, Math.min(100, ((resource.getTheta() + 3.0) / 6.0) * 100.0));
+                        masteryScale = Math.round(masteryScale * 10.0) / 10.0;
+
+                        radarChartData.add(TopicMastery.builder()
+                                        .topic(resource.getTopic())
+                                        .masteryLevel(masteryScale)
+                                        .build());
+                }
+
+                double overallAccuracy = totalQuestionsAnswered > 0
+                                ? ((double) totalCorrectAnswers * 100.0) / totalQuestionsAnswered
+                                : 0.0;
+                overallAccuracy = Math.round(overallAccuracy * 10.0) / 10.0;
+
+                double averageTheta = sumTheta / totalTopicsCount;
+                // Convert global average theta to 0-100 scale overall skill level
+                double overallSkillLevel = Math.max(0, Math.min(100, ((averageTheta + 3.0) / 6.0) * 100.0));
+                overallSkillLevel = Math.round(overallSkillLevel * 10.0) / 10.0;
+
+                UserOverviewStatsResponse overview = UserOverviewStatsResponse.builder()
+                                .username(username)
+                                .totalTopicsMastered(totalTopicsCount) // Consider 'mastered' if they have a
+                                                                       // resource/attempt
+                                .overallSkillLevel(overallSkillLevel)
+                                .overallAccuracyPercentage(overallAccuracy)
+                                .totalQuestionsAnswered(totalQuestionsAnswered)
+                                .radarChartData(radarChartData)
+                                .build();
+
+                return StateResponse.builder()
+                                .result(overview)
+                                .message("Lấy tổng quan học tập thành công")
                                 .build();
         }
 }

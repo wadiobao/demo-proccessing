@@ -8,5 +8,7 @@ import com.example.demo.mongo.entity.Content;
 public interface IContentService {
 	public Content save(String content, String owner) throws IOException;
 
+	public Content findOrCreateMetadata(String content, String owner) throws IOException;
+
 	public Content searchSimilar(List<Double> queryVector, int limit, String username);
 }

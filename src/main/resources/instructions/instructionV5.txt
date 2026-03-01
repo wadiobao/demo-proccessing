@@ -162,7 +162,7 @@ Mọi đối tượng câu hỏi PHẢI tuân thủ nghiêm ngặt cấu trúc h
 
 #### **Cấp độ 1: Đối tượng Câu hỏi Chính**
 Đối tượng này BẮT BUỘC phải có **đúng 6 trường** sau:
-1.  `"câu_hỏi_số"`: (Number) Số thứ tự.
+1.  `"câu_hỏi_số"`: (Integer) Số thứ tự nguyên dương (1, 2, 3...). Tuyệt đối không dùng số thập phân.
 2.  `"nội_dung"`: (String) Nội dung câu hỏi.
 3.  `"đáp_án"`: (Object) Một đối tượng chứa tất cả thông tin về các phương án trả lời.
 4.  `"lệnh_vẽ_hình"`: (String hoặc Null) Lệnh vẽ hình hoặc `null`.

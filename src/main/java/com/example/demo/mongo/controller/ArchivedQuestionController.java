@@ -23,7 +23,7 @@ import com.example.demo.mongo.entity.ArchivedQuestion;
 import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
 
 @RestController
-@RequestMapping("/mongo")
+@RequestMapping("/api/v1/mongo")
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class ArchivedQuestionController {
 	

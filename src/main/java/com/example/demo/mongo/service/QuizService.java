@@ -7,15 +7,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.mongo.dto.TopicAndTags;
 import com.example.demo.mongo.dto.question.FileGenerateResponse;
 import com.example.demo.mongo.dto.quiz.QuizConfig;
+import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.UserResourceRepository;
+import com.example.demo.mongo.service.iservice.IContentService;
 import com.example.demo.mongo.service.iservice.IQuizService;
-import com.example.demo.mongo.service.quiz.GeminiAIUtils;
 import com.example.demo.mongo.service.quiz.QuizPersistenceManager;
 import com.example.demo.mongo.service.quiz.QuizProcessor;
+import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
 import com.example.demo.utils.IRTCalculator;
 
 import lombok.AccessLevel;
@@ -38,7 +39,8 @@ public class QuizService implements IQuizService {
     QuizPersistenceManager persistenceManager;
     UserResourceRepository userResourceRepository;
     IRTCalculator irtCalculator;
-    GeminiAIUtils geminiAIUtils;
+    DocumentProcessorContext documentProcessorFactory;
+    IContentService iContentService;
 
     /**
      * Processes a quiz for public (unauthenticated) users.
@@ -65,39 +67,37 @@ public class QuizService implements IQuizService {
 
         String username = authentication.getName();
 
-        // 1. Topic handling
-        String topic = config.getTopic();
-        if (topic == null || topic.trim().isEmpty()) {
-            log.info("Topic not provided, extracting from content using AI...");
-            // Extract text temporarily for topic detection if needed,
-            // but we'll let QuizProcessor handle extraction later for the actual quiz.
-            // For now, assume we need a snippet to detect topic.
-            // Simplified: Use filename as fallback if extraction is too heavy here,
-            // but the plan says use AI Topic Extraction.
-            // We can call IDocumentProcessor here but that's redundant.
-            // Better: Extract topic from a small sample or wait for QuizProcessor.
-            // Actually, let's just use filename normalized if AI fails.
-            topic = "General: " + file.getOriginalFilename().replace(".pdf", "");
-        }
-        topic = topic.trim().toLowerCase();
-        config.setTopic(topic);
+        // 1. Extract text early
+        String pdfText = documentProcessorFactory.getProcessor(file).extractText(file);
 
-        // 2. Fetch or Create User Resource
-        UserResource userResource = userResourceRepository.findByUserNameAndTopic(username, topic)
+        // 2. Topic handling - Call ContentService to find metadata without saving yet
+        // (One Search)
+        Content metadata = iContentService.findOrCreateMetadata(pdfText, username);
+
+        String detectedTopic = config.getTopic();
+        if (detectedTopic == null || detectedTopic.trim().isEmpty()) {
+            detectedTopic = metadata.getTopic();
+        }
+
+        final String finalTopic = detectedTopic.trim().toLowerCase();
+        config.setTopic(finalTopic);
+
+        // 3. Fetch or Create User Resource using detected Topic
+        UserResource userResource = userResourceRepository.findByUserNameAndTopic(username, finalTopic)
                 .orElseGet(() -> {
-                    log.info("Cold start: Creating new UserResource for user: {}, topic: {}", username,
-                            config.getTopic());
+                    log.info("Cold start: Creating new UserResource for user: {}, topic: {}", username, finalTopic);
                     UserResource newUser = UserResource.builder()
                             .userName(username)
-                            .topic(config.getTopic())
+                            .topic(finalTopic)
                             .theta(0.0) // Average level
                             .build();
                     return userResourceRepository.save(newUser);
                 });
 
-        // 3. Adaptive Difficulty Adjustment (Level 2)
+        // 4. Adaptive Difficulty Adjustment (Level 2)
         if (config.getLevel() == 2) {
-            log.info("Adaptive mode enabled. Current user theta: {} for topic: {}", userResource.getTheta(), topic);
+            log.info("Adaptive mode enabled. Current user theta: {} for topic: {}", userResource.getTheta(),
+                    finalTopic);
 
             // Calculate suggested difficulty (b) targeting P_correct = 0.8
             double suggestedB = irtCalculator.suggestDifficultyB(userResource.getTheta(), 0.8);
@@ -110,35 +110,19 @@ public class QuizService implements IQuizService {
                     suggestedB, config.getMinDifficulty(), config.getMaxDifficulty());
         }
 
-        // 4. Generate quiz
-        StateResponse<Object> response = quizProcessor.processQuiz(file, config);
+        // 5. Generate quiz using pre-extracted text
+        StateResponse<Object> response = quizProcessor.processQuiz(file, pdfText, config);
 
         if (response.getResult() instanceof FileGenerateResponse) {
             FileGenerateResponse fileGenerateResponse = (FileGenerateResponse) response.getResult();
 
-            // AI Topic Extraction Fallback: If topic was "General", try to get a better one
-            // from extracted text
-            if (config.getTopic().startsWith("general:")) {
-                try {
-                    TopicAndTags detected = geminiAIUtils.detectTopicAndTags(fileGenerateResponse.getContentPdf());
-                    if (detected != null && detected.getTopicId() != null) {
-                        String betterTopic = detected.getTopicId().trim().toLowerCase();
-                        log.info("AI detected better topic: {} (replacing {})", betterTopic, config.getTopic());
-                        userResource.setTopic(betterTopic);
-                        userResourceRepository.save(userResource);
-                        config.setTopic(betterTopic);
-                    }
-                } catch (Exception e) {
-                    log.warn("AI Topic extraction failed: {}", e.getMessage());
-                }
-            }
-
-            // 5. Persist quiz data
+            // 6. Persist quiz data (Save Content here ONLY if it's new - One Save)
             fileGenerateResponse = persistenceManager.persistQuizData(
                     fileGenerateResponse,
                     username,
                     file.getOriginalFilename(),
-                    fileGenerateResponse.getContentPdf());
+                    pdfText,
+                    metadata);
 
             response.setResult(fileGenerateResponse);
         }

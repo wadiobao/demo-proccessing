@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class QuizPersistenceManager  {
+public class QuizPersistenceManager {
 
     IContentService contentService;
     IUserResourceService userResourceService;
@@ -41,14 +41,19 @@ public class QuizPersistenceManager  {
      * @throws Exception if persistence fails
      */
     @Transactional
-    public FileGenerateResponse persistQuizData(FileGenerateResponse response, String username, String filename, String pdfContent)
+    public FileGenerateResponse persistQuizData(FileGenerateResponse response, String username, String filename,
+            String pdfContent, Content content)
             throws Exception {
 
         log.info("Starting quiz data persistence for user: {}, file: {}", username, filename);
 
-        // Step 1: Save Content (with AI-generated metadata)
-        Content content = contentService.save(pdfContent, username);
-        log.debug("Content saved with ID: {}", content.getId());
+        // Step 1: Save Content only if it's new (doesn't have an ID yet)
+        if (content.getId() == null) {
+            content = contentService.save(pdfContent, username);
+            log.info("New content saved with ID: {}", content.getId());
+        } else {
+            log.info("Using existing content/idempotent record: {}", content.getId());
+        }
 
         // Step 2: Save UserResource (linked to Content via topic)
         userResourceService.save(filename, pdfContent, username, content);
@@ -66,11 +71,11 @@ public class QuizPersistenceManager  {
 
         archivedQuestionService.save(archivedQuestion);
         log.info("Quiz data persistence completed successfully for user: {}", username);
-        
+
         FileGenerateResponse fileGenerateResponse = response;
         fileGenerateResponse.setTopic(content.getTopic());
         fileGenerateResponse.setArchivedQuestionId(archivedQuestion.getId());
-        
+
         return fileGenerateResponse;
     }
 }
