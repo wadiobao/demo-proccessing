@@ -9,8 +9,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Processor for Microsoft Word (DOCX) files.
- * Uses Apache POI for text extraction.
+ * Implementation of document processor for Microsoft Word (DOCX) files.
+ * 
+ * <p>
+ * Sử dụng thư viện Apache POI để phân tích cấu trúc tệp XML của Word
+ * và trích xuất toàn bộ nội dung văn bản bên trong.
+ *
+ * @since 1.0
  */
 @Component
 public class DocxProcessor implements IDocumentProcessor {

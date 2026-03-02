@@ -11,8 +11,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 /**
- * Builds standardized responses for quiz operations.
- * Follows Single Responsibility Principle.
+ * Builder for constructing uniform API responses for quiz operations.
+ * 
+ * <p>
+ * Chuẩn hóa dữ liệu đầu ra từ qúa trình tạo bài tập thành các
+ * phản hồi trạng thái (StateResponse) nhất quán cho phía Frontend.
+ *
+ * @since 1.0
  */
 @Component
 @RequiredArgsConstructor

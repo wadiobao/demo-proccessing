@@ -12,8 +12,16 @@ package "Service" {
     class QuizService {
         -QuizProcessor quizProcessor
         -QuizPersistenceManager persistenceManager
+        -QuizAnswerService quizAnswerService
         +processPublicQuiz(MultipartFile, QuizConfig) : StateResponse~Object~
         +processPrivateQuiz(MultipartFile, QuizConfig) : StateResponse~Object~
+    }
+
+    class QuizAnswerService {
+        -UserResourceRepository userResourceRepository
+        -IRTCalculator irtCalculator
+        -QuestionBankRepository questionBankRepository
+        +submitQuizAnswers(QuizSubmissionRequest, String) : StateResponse~Object~
     }
 
     class QuizProcessor {
@@ -22,13 +30,16 @@ package "Service" {
         -QuizPromptBuilder promptBuilder
         -QuizResponseBuilder responseBuilder
         -WordPdfGeneration wordPdfGeneration
-        +processQuiz(MultipartFile, QuizConfig) : StateResponse~Object~
+        -QuestionBankRepository questionBankRepository
+        +processQuiz(MultipartFile, QuizConfig, String contentId) : StateResponse~Object~
     }
 
     class QuizPersistenceManager {
         -PdfStoreRepository pdfStoreRepo
         -UserResourceService userResourceService
-        +persistQuizData(FileGenerateResponse, String, String, String) : FileGenerateResponse
+        -QuestionBankRepository questionBankRepository
+        -GeneralUtils generalUtils
+        +persistQuizData(FileGenerateResponse, String, String, String contentId) : FileGenerateResponse
     }
 
     class PDFProcessingService {
@@ -49,6 +60,16 @@ package "Repository" {
         <<Mongo>>
         +save(PdfStore) : PdfStore
     }
+    interface QuestionBankRepository {
+        <<Mongo>>
+        +countByContentId(String) : long
+        +save(QuestionBank) : QuestionBank
+        +findByContentIdAndQuestionHash(String, String) : Optional~QuestionBank~
+    }
+    interface UserResourceRepository {
+        <<Mongo>>
+        +findByUserNameAndTopic(String, String) : Optional~UserResource~
+    }
 }
 
 package "Model" {
@@ -58,7 +79,18 @@ package "Model" {
         -String content
         -String wordBase64
     }
+    class QuestionBank {
+        -String id
+        -String contentId
+        -String questionHash
+        -Question questionData
+        -int attempts
+        -int correctCount
+        -double difficulty
+    }
     class Question {
+        -String id
+        -String bankId
         -String question
         -List~Answer~ answers
     }
@@ -67,11 +99,14 @@ package "Model" {
 QuizController o-- QuizService
 QuizService o-- QuizProcessor
 QuizService o-- QuizPersistenceManager
-QuizProcessor o-- PDFProcessingService
-QuizProcessor o-- GeminiAIUtils
-QuizProcessor o-- WordPdfGeneration
-QuizPersistenceManager o-- PdfStoreRepository
-PdfStoreRepository ..> PdfStore
+QuizService o-- QuizAnswerService
+QuizAnswerService o-- IRTCalculator
+QuizAnswerService o-- UserResourceRepository
+QuizAnswerService o-- QuestionBankRepository
+QuizProcessor o-- QuestionBankRepository
+QuizPersistenceManager o-- QuestionBankRepository
+QuestionBankRepository ..> QuestionBank
+QuestionBank o-- Question
 QuizProcessor ..> Question
 
 @enduml

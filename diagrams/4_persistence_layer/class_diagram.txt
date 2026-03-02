@@ -33,11 +33,28 @@ package "Mongo (NoSQL)" {
         -String content
         -String wordBase64
     }
+    class QuestionBank {
+        <<@Document>>
+        -String id
+        -String contentId
+        -String questionHash
+        -Question questionData
+        -int attempts
+        -int correctCount
+        -double difficulty
+    }
     interface PdfStoreRepository {
         +save(PdfStore) : PdfStore
     }
+    interface QuestionBankRepository {
+        <<Mongo>>
+        +countByContentId(String) : long
+        +save(QuestionBank) : QuestionBank
+        +findByContentIdAndQuestionHash(String, String) : Optional<QuestionBank>
+    }
     
     PdfStoreRepository ..> PdfStore
+    QuestionBankRepository ..> QuestionBank
 }
 
 @enduml

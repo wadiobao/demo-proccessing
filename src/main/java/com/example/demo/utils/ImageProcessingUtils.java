@@ -12,12 +12,29 @@ import java.util.Arrays;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * Digital image processing toolkit for preprocessing and augmentation.
+ * 
+ * <p>
+ * Cung cấp các bộ lọc làm mịn, cân bằng histogram, nhị phân hóa (Otsu)
+ * và các kỹ thuật tăng cường dữ liệu (Xoay, Chỉnh sáng) phục vụ cho OCR.
+ *
+ * @since 1.0
+ */
 @Component
 public class ImageProcessingUtils {
 
     /**
      * Resizing (thay đổi kích thước)
      * Đưa tệp về kích thước chuẩn.
+     */
+    /**
+     * Standardizes image size to target dimensions using bilinear interpolation.
+     * 
+     * @param originalImage source buffer / ảnh nguồn
+     * @param targetWidth   desired px width / chiều rộng đích
+     * @param targetHeight  desired px height / chiều cao đích
+     * @return resized image / ảnh đã thay đổi kích thước
      */
     public BufferedImage resize(BufferedImage originalImage, int targetWidth, int targetHeight) {
         BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
@@ -32,7 +49,8 @@ public class ImageProcessingUtils {
      * Grayscale Conversion (chuyển sang ảnh xám)
      */
     public BufferedImage toGrayscale(BufferedImage colorImage) {
-        BufferedImage grayscaleImage = new BufferedImage(colorImage.getWidth(), colorImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        BufferedImage grayscaleImage = new BufferedImage(colorImage.getWidth(), colorImage.getHeight(),
+                BufferedImage.TYPE_BYTE_GRAY);
         Graphics2D graphics = grayscaleImage.createGraphics();
         graphics.drawImage(colorImage, 0, 0, null);
         graphics.dispose();
@@ -44,23 +62,24 @@ public class ImageProcessingUtils {
      */
     public BufferedImage reduceNoise(BufferedImage image) {
         float[] matrix = {
-            1/16f, 1/8f, 1/16f,
-            1/8f, 1/4f, 1/8f,
-            1/16f, 1/8f, 1/16f
+                1 / 16f, 1 / 8f, 1 / 16f,
+                1 / 8f, 1 / 4f, 1 / 8f,
+                1 / 16f, 1 / 8f, 1 / 16f
         };
         Kernel kernel = new Kernel(3, 3, matrix);
         ConvolveOp op = new ConvolveOp(kernel, ConvolveOp.EDGE_NO_OP, null);
         return op.filter(image, null);
     }
-    
+
     /**
-     * Median Filter for Noise Reduction (Vượt trội trong việc loại bỏ nhiễu 'muối tiêu')
+     * Median Filter for Noise Reduction (Vượt trội trong việc loại bỏ nhiễu 'muối
+     * tiêu')
      */
     public BufferedImage medianFilter(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
         BufferedImage result = new BufferedImage(width, height, image.getType());
-        
+
         for (int x = 2; x < width - 2; x++) {
             for (int y = 2; y < height - 2; y++) {
                 int[] pixels = new int[9];
@@ -91,12 +110,15 @@ public class ImageProcessingUtils {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int gray = new Color(image.getRGB(x, y)).getRed();
-                if (gray < min) min = gray;
-                if (gray > max) max = gray;
+                if (gray < min)
+                    min = gray;
+                if (gray > max)
+                    max = gray;
             }
         }
 
-        if (max == min) return image;
+        if (max == min)
+            return image;
 
         BufferedImage normalized = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         for (int y = 0; y < height; y++) {
@@ -150,6 +172,13 @@ public class ImageProcessingUtils {
     /**
      * Thresholding (nhị phân hóa) - Otsu's Method
      */
+    /**
+     * Converts grayscale image to binary (black/white) using Otsu's optimal
+     * threshold.
+     * 
+     * @param image grayscale source / ảnh xám nguồn
+     * @return binarized image / ảnh nhị phân
+     */
     public BufferedImage binaryThreshold(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
@@ -161,7 +190,8 @@ public class ImageProcessingUtils {
         }
 
         double sum = 0;
-        for (int i = 0; i < 256; i++) sum += i * histogram[i];
+        for (int i = 0; i < 256; i++)
+            sum += i * histogram[i];
 
         double sumB = 0;
         int wB = 0;
@@ -173,9 +203,11 @@ public class ImageProcessingUtils {
 
         for (int i = 0; i < 256; i++) {
             wB += histogram[i];
-            if (wB == 0) continue;
+            if (wB == 0)
+                continue;
             wF = total - wB;
-            if (wF == 0) break;
+            if (wF == 0)
+                break;
 
             sumB += (double) (i * histogram[i]);
             double mB = sumB / wB;
@@ -209,14 +241,14 @@ public class ImageProcessingUtils {
         BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
 
         int[][] sobelX = {
-            {-1, 0, 1},
-            {-2, 0, 2},
-            {-1, 0, 1}
+                { -1, 0, 1 },
+                { -2, 0, 2 },
+                { -1, 0, 1 }
         };
         int[][] sobelY = {
-            {-1, -2, -1},
-            { 0,  0,  0},
-            { 1,  2,  1}
+                { -1, -2, -1 },
+                { 0, 0, 0 },
+                { 1, 2, 1 }
         };
 
         for (int x = 1; x < width - 1; x++) {
@@ -224,12 +256,12 @@ public class ImageProcessingUtils {
                 int pX = 0, pY = 0;
                 for (int i = -1; i <= 1; i++) {
                     for (int j = -1; j <= 1; j++) {
-                        int gray = new Color(image.getRGB(x+i, y+j)).getRed();
-                        pX += gray * sobelX[i+1][j+1];
-                        pY += gray * sobelY[i+1][j+1];
+                        int gray = new Color(image.getRGB(x + i, y + j)).getRed();
+                        pX += gray * sobelX[i + 1][j + 1];
+                        pY += gray * sobelY[i + 1][j + 1];
                     }
                 }
-                int magnitude = (int) Math.sqrt(pX*pX + pY*pY);
+                int magnitude = (int) Math.sqrt(pX * pX + pY * pY);
                 magnitude = Math.min(255, magnitude);
                 result.setRGB(x, y, new Color(magnitude, magnitude, magnitude).getRGB());
             }
@@ -239,6 +271,14 @@ public class ImageProcessingUtils {
 
     /**
      * Data Augmentation: Rotation (xoay ảnh)
+     */
+    /**
+     * Rotates image by a specified angle while expanding canvas to prevent
+     * clipping.
+     * 
+     * @param image source buffer / ảnh nguồn
+     * @param angle rotation in degrees / góc xoay tính theo độ
+     * @return rotated image with expanded bounds / ảnh đã xoay
      */
     public BufferedImage rotate(BufferedImage image, double angle) {
         double rads = Math.toRadians(angle);

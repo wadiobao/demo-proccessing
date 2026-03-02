@@ -3,7 +3,13 @@ package com.example.demo.mongo.service.quiz.processor;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Strategy interface for processing different document formats.
+ * Strategy interface for multi-format document text extraction.
+ * 
+ * <p>
+ * Định nghĩa các tiêu chuẩn chung cho việc trích xuất nội dung văn bản
+ * từ các định dạng tệp khác nhau (Strategy Pattern).
+ *
+ * @since 1.0
  */
 public interface IDocumentProcessor {
 

@@ -32,6 +32,15 @@ import com.nimbusds.jwt.SignedJWT;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.experimental.NonFinal;
 
+/**
+ * Core utility for JSON Web Token (JWT) lifecycle management.
+ * 
+ * <p>
+ * Chịu trách nhiệm mã hóa, ký và xác thực token bảo mật,
+ * hỗ trợ cơ chế Stateless Authentication cho toàn bộ hệ thống.
+ *
+ * @since 1.0
+ */
 @Component
 public class JwtUtils {
 
@@ -50,6 +59,15 @@ public class JwtUtils {
 	@Value("${demo.time.token.access}")
 	int ACCESS_TiME;
 
+	/**
+	 * Generates a signed JWT with specific claims for a user.
+	 * 
+	 * @param user      candidate entity for identity / thực thể người dùng cần cấp
+	 *                  token
+	 * @param isRefresh true for long-lived refresh token / true nếu là token làm
+	 *                  mới
+	 * @return serialized signed JWT string / chuỗi JWT đã được ký và tuần tự hóa
+	 */
 	public String generateToken(User user, boolean isRefresh) {
 		JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 		JWTClaimsSet claimsSet;
@@ -80,6 +98,13 @@ public class JwtUtils {
 
 	}
 
+	/**
+	 * Aggregates user roles into a space-separated scope string.
+	 * 
+	 * @param user source entity / người dùng nguồn
+	 * @return space delimited role string / chuỗi chứa các quyền cách nhau bởi dấu
+	 *         cách
+	 */
 	public String buildScope(User user) {
 		StringJoiner joiner = new StringJoiner(" ");
 		if (!CollectionUtils.isEmpty(user.getRoles())) {
@@ -90,6 +115,14 @@ public class JwtUtils {
 
 	}
 
+	/**
+	 * Validates token signature and expiration.
+	 * 
+	 * @param token raw JWT string / chuỗi token thô
+	 * @return fully parsed SignedJWT if valid / đối tượng SignedJWT nếu hợp lệ
+	 * @throws JOSEException  for cryptographic failures / lỗi giải mật mã
+	 * @throws ParseException for malformed tokens / lỗi định dạng chuỗi
+	 */
 	public SignedJWT verifyToken(String token) throws JOSEException, ParseException {
 
 		try {
@@ -116,6 +149,12 @@ public class JwtUtils {
 		}
 	}
 
+	/**
+	 * Constructs a secure cookie for access token transport.
+	 * 
+	 * @param token source secret / mã bí mật nguồn
+	 * @return HTTP-only ResponseCookie / cookie bảo mật chỉ đọc bởi server
+	 */
 	public ResponseCookie generateAccessCookie(String token) {
 		return ResponseCookie.from("access-token", token).httpOnly(true).path("/").maxAge(ACCESS_TiME)
 				.sameSite("Lax").build();
@@ -126,6 +165,11 @@ public class JwtUtils {
 				.sameSite("Lax").build();
 	}
 
+	/**
+	 * Resets authentication state by clearing secure cookies.
+	 * 
+	 * @param response current servlet response / đối tượng phản hồi hiện tại
+	 */
 	public void clearToken(HttpServletResponse response) {
 		ResponseCookie accessTokenCookie = ResponseCookie.from("access-token", "").httpOnly(true).path("/").maxAge(0)
 				.build();

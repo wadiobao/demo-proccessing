@@ -25,9 +25,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Main orchestrator for quiz generation operations.
- * Coordinates between QuizProcessor and QuizPersistenceManager.
- * Follows Single Responsibility Principle and Open/Closed Principle.
+ * Main orchestrator for quiz generation and persistence workflows.
+ * 
+ * <p>
+ * Phối hợp giữa các thành phần xử lý tài liệu, AI và lưu trữ để tạo ra
+ * bài kiểm tra (Quiz) dựa trên file đầu vào, hỗ trợ chế độ thích ứng IRT.
+ *
+ * @since 1.0
  */
 @Service
 @RequiredArgsConstructor
@@ -43,8 +47,11 @@ public class QuizService implements IQuizService {
     IContentService iContentService;
 
     /**
-     * Processes a quiz for public (unauthenticated) users.
-     * No data persistence occurs.
+     * Processes a quiz request for guest users without storing data.
+     * 
+     * @param file   source document / tài liệu nguồn
+     * @param config generation settings / cấu hình tạo câu hỏi
+     * @return non-persistent quiz response / phản hồi bài tập (không lưu trữ)
      */
     @Override
     public StateResponse<Object> processPublicQuiz(MultipartFile file, QuizConfig config) {
@@ -53,8 +60,16 @@ public class QuizService implements IQuizService {
     }
 
     /**
-     * Processes a quiz for authenticated users.
-     * Persists quiz data and uses IRT for adaptive difficulty if requested.
+     * Orchestrates a full quiz lifecycle for registered users with adaptive logic.
+     * 
+     * <p>
+     * Bao gồm trích xuất văn bản, nhận diện chủ đề thông minh, điều chỉnh
+     * độ khó dựa trên năng thực (Theta) và lưu trữ lịch sử bài tập.
+     *
+     * @param file   source document / tài liệu nguồn
+     * @param config generation settings / cấu hình tạo câu hỏi
+     * @return persistent quiz response / phản hồi bài tập đã được lưu trữ
+     * @throws Exception for processing or security errors / lỗi xử lý hoặc bảo mật
      */
     @Override
     public StateResponse<Object> processPrivateQuiz(MultipartFile file, QuizConfig config) throws Exception {

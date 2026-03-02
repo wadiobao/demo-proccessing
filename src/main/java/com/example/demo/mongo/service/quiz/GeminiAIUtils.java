@@ -27,6 +27,15 @@ import com.google.genai.types.Part;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+/**
+ * Utility for interacting with Google Gemini AI models.
+ * 
+ * <p>
+ * Quản lý việc kết nối và gửi yêu cầu tới Gemini API để tạo câu hỏi,
+ * nhận diện chủ đề thông minh và tạo hình ảnh minh họa cho bài kiểm tra.
+ *
+ * @since 1.0
+ */
 @Component
 public class GeminiAIUtils {
 
@@ -69,6 +78,13 @@ public class GeminiAIUtils {
         }
     }
 
+    /**
+     * Generates a new set of questions based on a provided prompt.
+     * 
+     * @param userPrompt criteria for question generation / yêu cầu tạo câu hỏi
+     * @return structured AI response / phản hồi cấu trúc từ AI
+     * @throws IOException for API communication failures / lỗi kết nối API
+     */
     public GeminiResponse generateQuestionWithGemini(String userPrompt) throws IOException {
         makeInstruction();
         Client client = new Client.Builder().apiKey(geminiApiKey).build();
@@ -107,6 +123,15 @@ public class GeminiAIUtils {
         return new GeminiResponse(response.text(), parsedList);
     }
 
+    /**
+     * Analyzes content to identify its primary topic and relevant tags.
+     * 
+     * @param userPrompt     text to analyze / văn bản cần phân tích
+     * @param existingTopics user's current topic list for deduplication / danh sách
+     *                       chủ đề hiện có
+     * @return detected metadata / thông tin chủ đề và thẻ được nhận diện
+     * @throws IOException for interpretation errors / lỗi phân tích
+     */
     public TopicAndTags detectTopicAndTags(String userPrompt, List<String> existingTopics) throws IOException {
         makeTopicTagsInstruction();
 
@@ -119,7 +144,6 @@ public class GeminiAIUtils {
         }
         enhancedPrompt.append("Nội dung tài liệu:\n").append(userPrompt);
 
-        
         Client client = new Client.Builder().apiKey(topicGeminiApiKey).build();
         List<Part> parts = new ArrayList<Part>();
         Part part = Part.builder().text(systemInstuction.toString()).build();
@@ -137,6 +161,15 @@ public class GeminiAIUtils {
         return topicAndTags;
     }
 
+    /**
+     * Generates an image asset based on a descriptive prompt.
+     * 
+     * @param imgPrompt visual description / mô tả hình ảnh
+     * @param id        temporary file identifier / mã định danh file tạm
+     * @return Cloudinary metadata [publicId, url] / thông tin định danh và URL ảnh
+     * @throws IOException image processing or upload failures / lỗi xử lý hoặc tải
+     *                     ảnh
+     */
     public String[] generateImageWithGemini(String imgPrompt, int id) throws IOException {
         Client client = new Client.Builder().apiKey(imageGeminiApiKey).build();
 

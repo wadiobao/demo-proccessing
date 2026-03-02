@@ -12,8 +12,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 /**
- * Responsible for building AI prompts for quiz generation.
- * Follows Single Responsibility Principle.
+ * Builder for constructing dynamic AI prompts for quiz generation.
+ * 
+ * <p>
+ * Chuyển đổi các cấu hình người dùng và nội dung văn bản thành các
+ * chỉ dẫn (Prompt) tối ưu cho mô hình ngôn ngữ lớn (LLM).
+ *
+ * @since 1.0
  */
 @Component
 @RequiredArgsConstructor
@@ -21,11 +26,11 @@ import lombok.experimental.FieldDefaults;
 public class QuizPromptBuilder {
 
         /**
-         * Builds a standard prompt for quiz generation.
+         * Builds a standard prompt for comprehensive quiz generation.
          *
-         * @param config  Quiz configuration
-         * @param pdfText Extracted text from PDF
-         * @return Formatted prompt string for AI
+         * @param config  generation settings / cấu hình tạo câu hỏi
+         * @param pdfText source text / nội dung văn bản gốc
+         * @return formatted prompt / chuỗi prompt hoàn chỉnh
          */
         public String buildStandardPrompt(QuizConfig config, String pdfText) {
                 return String.format(Locale.US,
@@ -44,11 +49,11 @@ public class QuizPromptBuilder {
         }
 
         /**
-         * Builds a prompt for adaptive quiz regeneration (IRT-based).
+         * Builds a specialized prompt for adaptive difficulty adjustment (IRT).
          *
-         * @param config  Quiz configuration with difficulty thresholds
-         * @param pdfText Extracted text from PDF
-         * @return Formatted prompt string for AI
+         * @param config  adaptive settings / cấu hình thích ứng
+         * @param pdfText source text / nội dung văn bản gốc
+         * @return targeted prompt / prompt tối ưu cho độ khó thích ứng
          */
         public String buildRegenerationPrompt(QuizConfig config, String pdfText) {
                 return String.format(Locale.US,

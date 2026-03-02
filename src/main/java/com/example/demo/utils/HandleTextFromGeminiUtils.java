@@ -19,6 +19,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
+/**
+ * Specialized parser for AI-generated response content.
+ * 
+ * <p>
+ * Chứa các logic phức tạp để bóc tách dữ liệu từ phản hồi của Gemini AI,
+ * bao gồm việc làm sạch JSON, sửa lỗi cú pháp tự động và Regex cho định dạng
+ * văn bản thô.
+ *
+ * @since 1.0
+ */
 @Component
 public class HandleTextFromGeminiUtils {
 
@@ -67,6 +77,16 @@ public class HandleTextFromGeminiUtils {
         return questions;
     }
 
+    /**
+     * Parses a list of questions from highly variable JSON or raw text formats.
+     * 
+     * <p>
+     * Sử dụng cơ chế "Salvage" để cố gắng khôi phục dữ liệu ngay cả khi
+     * phản hồi JSON bị cắt cụt hoặc chứa lỗi cú pháp từ AI.
+     *
+     * @param inputText raw AI output / kết quả thô từ AI
+     * @return list of validated Questions / danh sách câu hỏi hợp lệ
+     */
     public List<Question> parseQuestionsV4(String inputText) {
         if (inputText == null || inputText.trim().isEmpty()) {
             return new ArrayList<>();
@@ -159,6 +179,13 @@ public class HandleTextFromGeminiUtils {
         }
     }
 
+    /**
+     * Extracts topic and metadata tags from AI response.
+     * 
+     * @param inputText raw AI output / kết quả thô từ AI
+     * @return DTO containing topic and tag list / đối tượng chứa chủ đề và danh
+     *         sách thẻ
+     */
     public TopicAndTags parseTopicAndTags(String inputText) {
         if (inputText == null || inputText.trim().isEmpty()) {
             return new TopicAndTags();

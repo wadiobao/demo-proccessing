@@ -14,8 +14,13 @@ start
 
 |QuizProcessor|
 :PDFProcessingService.extractTextFromPdf();
-:Xây dựng Prompt với PromptBuilder;
-:Gọi GeminiAIUtils.generateQuestionWithGemini();
+if (Số lượng câu hỏi trong Bank >= 100?) then (yes)
+    :Lấy 50% từ QuestionBank;
+    :Gọi Gemini tạo 50% còn lại;
+    :Hợp nhất và đánh lại số ID;
+else (no)
+    :Gọi Gemini tạo 100% câu hỏi;
+endif
 :Phân tích phản hồi với ResponseBuilder;
 :Gọi WordPdfGeneration.generateWordAndPdfBase64();
 :Tạo StateResponse;
@@ -25,7 +30,8 @@ start
 :Lấy Authentication từ SecurityContextHolder;
 if (Người dùng đã đăng nhập?) then (yes)
     |QuizPersistenceManager|
-    :Lưu dữ liệu vào MongoDB;
+    :Lưu dữ liệu ArchivedQuestion vào MongoDB;
+    :Lưu câu hỏi mới vào QuestionBank (Auto-Harvesting);
     :Cập nhật Response với metadata;
 endif
 

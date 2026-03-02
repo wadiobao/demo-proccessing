@@ -24,6 +24,15 @@ import lombok.experimental.FieldDefaults;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
+/**
+ * Service for extracting text from PDF documents using multiple strategies.
+ * 
+ * <p>
+ * Hỗ trợ trích xuất văn bản trực tiếp từ PDF dạng text và sử dụng
+ * OCR (Tesseract) cho các tài liệu dạng scan đã qua xử lý hình ảnh.
+ *
+ * @since 1.0
+ */
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -31,6 +40,13 @@ public class PDFProcessingService {
 
     ImageProcessingUtils imageProcessingUtils;
 
+    /**
+     * Extracts raw text from a standard (non-scanned) PDF file.
+     * 
+     * @param pdfFile uploaded document / file tải lên
+     * @return plain text content / nội dung văn bản thô
+     * @throws IOException for reading errors / lỗi đọc file
+     */
     public String extractTextFromPdf(MultipartFile pdfFile) throws IOException {
         try (PDDocument document = PDDocument.load(pdfFile.getInputStream())) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -51,6 +67,18 @@ public class PDFProcessingService {
         }
     }
 
+    /**
+     * Performs Optical Character Recognition (OCR) on a scanned PDF.
+     * 
+     * <p>
+     * Chuyển đổi các trang PDF thành hình ảnh độ phân giải cao (300 DPI),
+     * áp dụng các bộ lọc xử lý ảnh và trích xuất chữ bằng Tesseract.
+     *
+     * @param pdfFile scanned document / tài liệu dạng scan
+     * @return OCR-extracted text / văn bản trích xuất từ OCR
+     * @throws Exception for multi-threading or OCR failures / lỗi đa luồng hoặc lỗi
+     *                   nhận diện
+     */
     public String renderPdfToPngToString(MultipartFile pdfFile)
             throws IOException, TesseractException, InterruptedException, ExecutionException {
         PDDocument document = PDDocument.load(pdfFile.getInputStream());

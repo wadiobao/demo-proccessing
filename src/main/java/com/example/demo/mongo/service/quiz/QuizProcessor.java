@@ -20,9 +20,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Processes PDF files and generates quizzes using AI.
- * Handles both base (text-based) and scanned PDFs.
- * Follows Single Responsibility Principle.
+ * Engine for automated quiz construction and format processing.
+ * 
+ * <p>
+ * Chịu trách nhiệm điều phối việc trích xuất văn bản, gọi AI tạo câu hỏi
+ * theo mô hình kết hợp (Hybrid) và tạo các tệp tài liệu đi kèm (Word/PDF).
+ *
+ * @since 1.0
  */
 @Component
 @RequiredArgsConstructor
@@ -45,7 +49,15 @@ public class QuizProcessor {
     }
 
     /**
-     * Processes a PDF file and generates a quiz with optional contentId.
+     * Standard entry point for quiz generation from raw file and config.
+     * 
+     * <p>
+     * Xử lý đồng bộ từ khâu tiền xử lý file đến khi ra kết quả câu hỏi cuối cùng.
+     * 
+     * @param file      source document / tài liệu nguồn
+     * @param config    user preferences / cấu hình mong muốn
+     * @param contentId optional existing reference / mã định danh nội dung (nếu có)
+     * @return standardized state response / phản hồi trạng thái chuẩn
      */
     public StateResponse<Object> processQuiz(MultipartFile file, QuizConfig config, String contentId) {
         try {

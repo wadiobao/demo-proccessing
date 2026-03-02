@@ -19,10 +19,15 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Manages persistence of quiz-related data.
- * Handles the correct order of saving: Content -> UserResource ->
- * ArchivedQuestion
- * Follows Single Responsibility Principle.
+ * Coordinator for transactional persistence of quiz-related entities.
+ * 
+ * <p>
+ * Quản lý việc lưu trữ dữ liệu theo thứ tự ưu tiên: Nội dung (Content) ->
+ * Tài nguyên người dùng (UserResource) -> Kho lưu trữ câu hỏi
+ * (ArchivedQuestion)
+ * và cập nhật Ngân hàng câu hỏi.
+ *
+ * @since 1.0
  */
 @Component
 @RequiredArgsConstructor
@@ -37,14 +42,18 @@ public class QuizPersistenceManager {
     GeneralUtils generalUtils;
 
     /**
-     * Persists all quiz-related data for authenticated users.
+     * Persists all generated quiz data for authenticated users within a
+     * transaction.
      * 
-     * @param response   Generated quiz response
-     * @param username   Authenticated user's username
-     * @param filename   Original PDF filename
-     * @param pdfContent Extracted text from PDF
-     * @param content    Found/Proposed metadata
-     * @throws Exception if persistence fails
+     * @param response   generated quiz content / nội dung bài tập đã tạo
+     * @param username   author identification / tên người dùng thực hiện
+     * @param filename   source file identifier / tên file nguồn
+     * @param pdfContent source text / nội dung văn bản gốc
+     * @param content    semantic metadata / thông tin chủ đề liên quan
+     * @return enriched response with persistence IDs / phản hồi kèm theo mã định
+     *         danh lưu trữ
+     * @throws Exception if any step of the sequence fails / lỗi trong chuỗi tiến
+     *                   trình lưu trữ
      */
     @Transactional
     public FileGenerateResponse persistQuizData(FileGenerateResponse response, String username, String filename,

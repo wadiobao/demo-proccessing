@@ -4,7 +4,13 @@ import com.example.demo.dto.StateResponse;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
 
 /**
- * Interface for quiz answer submission and evaluation.
+ * Interface contract for quiz submission and evaluation services.
+ * 
+ * <p>
+ * Định nghĩa các tiêu chuẩn cho việc chấm điểm, cập nhật tham số IRT
+ * và truy xuất số liệu thống kê học tập của người dùng.
+ *
+ * @since 1.0
  */
 public interface IQuizAnswerService {
 

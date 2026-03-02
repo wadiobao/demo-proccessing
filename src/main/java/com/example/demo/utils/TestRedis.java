@@ -12,6 +12,15 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 
+/**
+ * Experimental playground for Redis and AI model integration.
+ * 
+ * <p>
+ * Lớp thử nghiệm dành cho việc kiểm tra kết nối Redis và các mô hình
+ * nhúng (embedding) của LangChain4j trước khi đưa vào sản xuất.
+ *
+ * @since 1.0
+ */
 public class TestRedis {
     public static void connectBasic() {
         RedisURI uri = RedisURI.Builder
@@ -30,7 +39,7 @@ public class TestRedis {
 
         client.shutdown();
     }
-    
+
     public static String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -45,7 +54,7 @@ public class TestRedis {
             throw new RuntimeException("SHA-256 not supported", e);
         }
     }
-    
+
     public static void main(String[] args) {
         // 1. Khởi tạo mô hình (Tự động tải model về máy trong lần đầu)
         EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
@@ -55,7 +64,6 @@ public class TestRedis {
 
         // 3. Tạo Vector (Embedding)
         Embedding embedding = embeddingModel.embed(text).content();
-        
 
         // 4. In kết quả ra màn hình
         float[] vector = embedding.vector();
@@ -63,7 +71,6 @@ public class TestRedis {
         for (int i = 0; i < 5; i++) { // In thử 5 số đầu tiên
             System.out.print(vector[i] + ", ");
         }
-        
-        
+
     }
 }

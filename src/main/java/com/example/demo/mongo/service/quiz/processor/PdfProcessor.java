@@ -11,9 +11,13 @@ import com.example.demo.mongo.service.quiz.PDFProcessingService;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Processor for PDF files.
- * Supports both standard text PDFs and scanned images (via Refactored
- * PDFProcessingService).
+ * Implementation of document processor for PDF documents.
+ * 
+ * <p>
+ * Tích hợp hai chiến lược: Trích xuất trực tiếp cho PDF văn bản và
+ * kích hoạt luồng OCR cho PDF dạng ảnh chụp/scan.
+ *
+ * @since 1.0
  */
 @Component
 @RequiredArgsConstructor

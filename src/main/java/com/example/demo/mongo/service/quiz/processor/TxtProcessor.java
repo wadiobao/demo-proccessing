@@ -9,7 +9,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Processor for Plain text (TXT) files.
+ * Implementation of document processor for Plain Text (TXT) files.
+ * 
+ * <p>
+ * Trích xuất nội dung từ các tệp văn bản thuần túy sử dụng bảng mã
+ * UTF-8 để đảm bảo hiển thị đúng các ký tự tiếng Việt.
+ *
+ * @since 1.0
  */
 @Component
 public class TxtProcessor implements IDocumentProcessor {

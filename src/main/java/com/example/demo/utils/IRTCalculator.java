@@ -8,6 +8,16 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.mongo.dto.question.UserAnswer;
 
+/**
+ * Mathematical engine for Item Response Theory (IRT) and adaptive testing.
+ * 
+ * <p>
+ * Triển khai các thuật toán ước lượng năng lực người dùng (Theta)
+ * bằng phương pháp MAP (Maximum A Posteriori) và hiệu chỉnh độ khó
+ * câu hỏi (b) dựa trên phản hồi thực tế.
+ *
+ * @since 1.0
+ */
 @Component
 public class IRTCalculator {
 	public double p(double theta, double b) {
@@ -75,6 +85,19 @@ public class IRTCalculator {
 	/**
 	 * Cập nhật Theta theo phương pháp Newton-Raphson cho MAP.
 	 */
+	/**
+	 * Estimates user ability (Theta) using Maximum A Posteriori (MAP) with
+	 * Newton-Raphson.
+	 * 
+	 * @param answers       list of recent user interactions / danh sách câu trả lời
+	 *                      của người dùng
+	 * @param thetaInit     starting value for optimization / giá trị theta khởi tạo
+	 * @param sigma         prior standard deviation / độ lệch chuẩn của phân phối
+	 *                      tiên nghiệm
+	 * @param dampingFactor learning deceleration to prevent divergence / hệ số giảm
+	 *                      tốc
+	 * @return optimized ability estimate (Theta) / năng lực ước lượng tối ưu
+	 */
 	public double estimateThetaMAP(
 			List<UserAnswer> answers,
 			double thetaInit,
@@ -130,6 +153,17 @@ public class IRTCalculator {
 	 * @param correct      Whether user got it right
 	 * @param learningRate Adjustment factor (e.g., 0.1)
 	 * @return Updated difficulty parameter
+	 */
+	/**
+	 * Recalibrates a question's difficulty (b) based on an empirical user
+	 * interaction.
+	 * 
+	 * @param currentB     Current difficulty parameter / độ khó hiện tại của câu
+	 *                     hỏi
+	 * @param userTheta    User's latent ability / năng lực thực tế của người dùng
+	 * @param correct      binary outcome of the attempt / kết quả (đúng/sai)
+	 * @param learningRate weight of this specific interaction / hệ số học tập
+	 * @return adjusted difficulty (b) / độ khó mới đã được hiệu chỉnh
 	 */
 	public double recalibrateItemDifficulty(double currentB, double userTheta, boolean correct, double learningRate) {
 		double pv = p(userTheta, currentB);

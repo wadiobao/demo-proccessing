@@ -8,7 +8,13 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Factory for selecting the appropriate document processor based on file type.
+ * Factory and Context for selecting the appropriate document processor.
+ * 
+ * <p>
+ * Tự động nhận diện và lựa chọn trình xử lý (Processor) phù hợp dựa trên
+ * định dạng file (MIME type) để trích xuất văn bản phục vụ tạo bài tập.
+ *
+ * @since 1.0
  */
 @Component
 @RequiredArgsConstructor
@@ -17,11 +23,12 @@ public class DocumentProcessorContext {
     private final List<IDocumentProcessor> processors;
 
     /**
-     * Gets the appropriate processor for the given file.
+     * Resolves the correct processor implementation for the provided file.
      *
-     * @param file File to process
-     * @return Supporting IDocumentProcessor
-     * @throws IllegalArgumentException if no processor supports the file type
+     * @param file source file / tệp tin nguồn
+     * @return supported IDocumentProcessor / trình xử lý tương ứng
+     * @throws IllegalArgumentException if format is unsupported / lỗi nếu định dạng
+     *                                  không được hỗ trợ
      */
     public IDocumentProcessor getProcessor(MultipartFile file) {
         String contentType = file.getContentType();

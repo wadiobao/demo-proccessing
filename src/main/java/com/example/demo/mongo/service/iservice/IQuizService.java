@@ -5,7 +5,13 @@ import com.example.demo.mongo.dto.quiz.QuizConfig;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Interface for quiz orchestration operations.
+ * Interface contract for quiz orchestration services.
+ * 
+ * <p>
+ * Định nghĩa các tiêu chuẩn cho dịch vụ xử lý bài tập, phân tách giữa
+ * chế độ công khai (Public) và chế độ riêng tư (Private).
+ *
+ * @since 1.0
  */
 public interface IQuizService {
 

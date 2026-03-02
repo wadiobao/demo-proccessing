@@ -27,6 +27,16 @@ import com.example.demo.mongo.dto.quiz.FileCompareResult;
 
 import jakarta.annotation.PostConstruct;
 
+/**
+ * Local text analyzer for keyword and topic extraction.
+ * 
+ * <p>
+ * Sử dụng thuật toán phân tích tần suất từ (TF) và so sánh từ điển cục bộ
+ * để trích xuất các từ khóa quan trọng và tính toán độ tương đồng giữa các tài
+ * liệu.
+ *
+ * @since 1.0
+ */
 @Component
 public class FileBasedKeywordExtractor {
 
@@ -113,6 +123,12 @@ public class FileBasedKeywordExtractor {
 	}
 
 	// --- PHẦN 2: XỬ LÝ TÁCH TỪ ---
+	/**
+	 * Breaks down raw text into a list of meaningful syllables and compound words.
+	 * 
+	 * @param text raw input string / văn bản thô đầu vào
+	 * @return list of extracted tokens / danh sách các từ đã tách
+	 */
 	public List<String> tokenize(String text) {
 		List<String> tokens = new ArrayList<>();
 		String cleanText = text
@@ -189,6 +205,13 @@ public class FileBasedKeywordExtractor {
 		return freqMap;
 	}
 
+	/**
+	 * Retrieves the most frequent keywords from a document string.
+	 * 
+	 * @param content document text / nội dung văn bản
+	 * @param limit   maximum number of keywords to return / số lượng từ khóa tối đa
+	 * @return ordered list of top keywords / danh sách các từ khóa hàng đầu
+	 */
 	public List<String> getTopKeywords(String content, int limit) {
 		try {
 			Map<String, Integer> freqMap = getFrequencyMapFromDocument(content);
@@ -204,6 +227,14 @@ public class FileBasedKeywordExtractor {
 
 	// --- PHẦN 4: HÀM SO SÁNH HAI FILE ---
 
+	/**
+	 * Performs a similarity comparison between two files.
+	 * 
+	 * @param filePath1 path to first file / đường dẫn file thứ nhất
+	 * @param filePath2 path to second file / đường dẫn file thứ hai
+	 * @return comparison result including cosine and jaccard similarity / kết quả
+	 *         so sánh bao gồm độ tương đồng
+	 */
 	public FileCompareResult compareFiles(String filePath1, String filePath2) {
 		try {
 			Map<String, Integer> map1 = getFrequencyMapFromFile(filePath1);

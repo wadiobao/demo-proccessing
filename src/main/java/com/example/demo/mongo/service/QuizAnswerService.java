@@ -27,8 +27,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service for processing quiz answer submissions.
- * Handles scoring, IRT parameter updates, and history tracking.
+ * Service for processing user quiz submissions and tracking learning progress.
+ * 
+ * <p>
+ * Xử lý kết quả làm bài của người dùng, tự động cập nhật năng lực (Theta)
+ * qua IRT, đánh giá lại độ khó câu hỏi và tạo báo cáo thống kê Topic Mastery.
+ *
+ * @since 1.0
  */
 @Service
 @RequiredArgsConstructor
@@ -41,6 +46,19 @@ public class QuizAnswerService implements IQuizAnswerService {
         IArchivedQuestionService iArchivedQuestionService;
         QuestionBankRepository questionBankRepository;
 
+        /**
+         * Processes a full quiz submission including IRT recalibration.
+         * 
+         * <p>
+         * Thực hiện chấm điểm, cập nhật chỉ số Theta cho người dùng
+         * và điều chỉnh tham số độ khó thực tế cho Ngân hàng câu hỏi.
+         *
+         * @param request  user answers and context / danh sách câu trả lời
+         * @param username student identification / tên người dùng thực hiện
+         * @return detailed evaluation response / kết quả đánh giá chi tiết
+         * @throws Exception if submission is invalid or duplicate / lỗi nếu bài nộp
+         *                   không hợp lệ hoặc đã đánh giá
+         */
         @Override
         @Transactional
         public StateResponse<Object> submitQuizAnswers(QuizSubmissionRequest request, String username)
