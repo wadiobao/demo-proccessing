@@ -150,7 +150,12 @@ public class IRTCalculator {
 				boolean correct = pickCorrect(pattern, i);
 				String bloom = BLOOM_LEVELS[random.nextInt(BLOOM_LEVELS.length)];
 
-				answers.add(new UserAnswer("Q" + i, correct, diff, bloom));
+				answers.add(UserAnswer.builder()
+						.id("Q" + i)
+						.isTrue(correct)
+						.difficulty(diff)
+						.bloomLevel(bloom)
+						.build());
 			}
 
 			return answers;
@@ -236,26 +241,34 @@ public class IRTCalculator {
 		List<UserAnswer> history = new ArrayList<>();
 		List<UserAnswer> userAnswers = new ArrayList<UserAnswer>();
 		boolean temp = true;
-		userAnswers.add(new UserAnswer("1", temp, -1.85, "Remembering"));
-		userAnswers.add(new UserAnswer("2", temp, -0.75, "Understanding"));
-		userAnswers.add(new UserAnswer("3", temp, -1.55, "Remembering"));
-		userAnswers.add(new UserAnswer("4", temp, -0.92, "Understanding"));
-		userAnswers.add(new UserAnswer("5", temp, -2.1, "Remembering"));
-		userAnswers.add(new UserAnswer("6", temp, -0.68, "Understanding"));
-		userAnswers.add(new UserAnswer("7", temp, -2.5, "Remembering"));
-		userAnswers.add(new UserAnswer("8", temp, -1.05, "Understanding"));
-		userAnswers.add(new UserAnswer("9", temp, -1.33, "Remembering"));
-		userAnswers.add(new UserAnswer("10", temp, -1.98, "Remembering"));
-		userAnswers.add(new UserAnswer("11", temp, -1.45, "Remembering"));
-		userAnswers.add(new UserAnswer("12", false, -0.88, "Understanding"));
-		userAnswers.add(new UserAnswer("13", temp, -2.3, "Remembering"));
-		userAnswers.add(new UserAnswer("14", temp, -1.2, "Remembering"));
-		userAnswers.add(new UserAnswer("15", false, -2.05, "Remembering"));
-		userAnswers.add(new UserAnswer("16", false, -0.5, "Understanding"));
-		userAnswers.add(new UserAnswer("17", temp, -2.4, "Remembering"));
-		userAnswers.add(new UserAnswer("18", temp, -1.25, "Remembering"));
-		userAnswers.add(new UserAnswer("19", false, -1.7, "Remembering"));
-		userAnswers.add(new UserAnswer("20", temp, -0.6, "Understanding"));
+		userAnswers.add(UserAnswer.builder().id("1").isTrue(temp).difficulty(-1.85).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("2").isTrue(temp).difficulty(-0.75).bloomLevel("Understanding").build());
+		userAnswers.add(UserAnswer.builder().id("3").isTrue(temp).difficulty(-1.55).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("4").isTrue(temp).difficulty(-0.92).bloomLevel("Understanding").build());
+		userAnswers.add(UserAnswer.builder().id("5").isTrue(temp).difficulty(-2.1).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("6").isTrue(temp).difficulty(-0.68).bloomLevel("Understanding").build());
+		userAnswers.add(UserAnswer.builder().id("7").isTrue(temp).difficulty(-2.5).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("8").isTrue(temp).difficulty(-1.05).bloomLevel("Understanding").build());
+		userAnswers.add(UserAnswer.builder().id("9").isTrue(temp).difficulty(-1.33).bloomLevel("Remembering").build());
+		userAnswers.add(UserAnswer.builder().id("10").isTrue(temp).difficulty(-1.98).bloomLevel("Remembering").build());
+		userAnswers.add(UserAnswer.builder().id("11").isTrue(temp).difficulty(-1.45).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("12").isTrue(false).difficulty(-0.88).bloomLevel("Understanding").build());
+		userAnswers.add(UserAnswer.builder().id("13").isTrue(temp).difficulty(-2.3).bloomLevel("Remembering").build());
+		userAnswers.add(UserAnswer.builder().id("14").isTrue(temp).difficulty(-1.2).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("15").isTrue(false).difficulty(-2.05).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("16").isTrue(false).difficulty(-0.5).bloomLevel("Understanding").build());
+		userAnswers.add(UserAnswer.builder().id("17").isTrue(temp).difficulty(-2.4).bloomLevel("Remembering").build());
+		userAnswers.add(UserAnswer.builder().id("18").isTrue(temp).difficulty(-1.25).bloomLevel("Remembering").build());
+		userAnswers.add(UserAnswer.builder().id("19").isTrue(false).difficulty(-1.7).bloomLevel("Remembering").build());
+		userAnswers
+				.add(UserAnswer.builder().id("20").isTrue(temp).difficulty(-0.6).bloomLevel("Understanding").build());
 		double thetaCurrent = 2.0;
 		double sigma = 1.0;
 		double alpha = 0.5;

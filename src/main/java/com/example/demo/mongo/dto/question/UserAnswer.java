@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserAnswer {
 	String id;
+	String bankId;
 	boolean isTrue;
 	double difficulty;
 	String bloomLevel;

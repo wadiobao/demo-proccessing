@@ -5,9 +5,12 @@ import org.springframework.stereotype.Component;
 import com.example.demo.mongo.dto.question.FileGenerateResponse;
 import com.example.demo.mongo.entity.ArchivedQuestion;
 import com.example.demo.mongo.entity.Content;
+import com.example.demo.mongo.entity.QuestionBank;
+import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.mongo.service.ArchivedQuestionService;
 import com.example.demo.mongo.service.iservice.IContentService;
 import com.example.demo.mongo.service.iservice.IUserResourceService;
+import com.example.demo.utils.GeneralUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -30,6 +33,8 @@ public class QuizPersistenceManager {
     IContentService contentService;
     IUserResourceService userResourceService;
     ArchivedQuestionService archivedQuestionService;
+    QuestionBankRepository questionBankRepository;
+    GeneralUtils generalUtils;
 
     /**
      * Persists all quiz-related data for authenticated users.
@@ -38,6 +43,7 @@ public class QuizPersistenceManager {
      * @param username   Authenticated user's username
      * @param filename   Original PDF filename
      * @param pdfContent Extracted text from PDF
+     * @param content    Found/Proposed metadata
      * @throws Exception if persistence fails
      */
     @Transactional
@@ -55,6 +61,8 @@ public class QuizPersistenceManager {
             log.info("Using existing content/idempotent record: {}", content.getId());
         }
 
+        final String contentId = content.getId();
+
         // Step 2: Save UserResource (linked to Content via topic)
         userResourceService.save(filename, pdfContent, username, content);
         log.debug("UserResource updated for topic: {}", content.getTopic());
@@ -66,10 +74,34 @@ public class QuizPersistenceManager {
                 .pdfBase64(response.getPdfBase64())
                 .wordBase64(response.getWordBase64())
                 .title(filename)
-                .resourceId(content.getId())
+                .resourceId(contentId)
                 .build();
 
         archivedQuestionService.save(archivedQuestion);
+
+        // Step 4: Populate Question Bank (New Feature - Phase 1)
+        if (response.getQuestions() != null) {
+            for (com.example.demo.mongo.dto.question.Question q : response.getQuestions()) {
+                String qHash = generalUtils.sha256(q.getQuestion());
+                java.util.Optional<com.example.demo.mongo.entity.QuestionBank> existingBanked = questionBankRepository
+                        .findByContentIdAndQuestionHash(contentId, qHash);
+
+                if (existingBanked.isEmpty()) {
+                    QuestionBank bankedQ = QuestionBank.builder()
+                            .contentId(contentId)
+                            .questionHash(qHash)
+                            .questionData(q)
+                            .difficulty(q.getDifficulty()) // Use AI predicted difficulty as starting point
+                            .build();
+                    bankedQ = questionBankRepository.save(bankedQ);
+                    q.setBankId(bankedQ.getId()); // Injected ID for future IRT calibration
+                } else {
+                    q.setBankId(existingBanked.get().getId());
+                }
+            }
+            log.info("Question Bank processed for content: {}", contentId);
+        }
+
         log.info("Quiz data persistence completed successfully for user: {}", username);
 
         FileGenerateResponse fileGenerateResponse = response;

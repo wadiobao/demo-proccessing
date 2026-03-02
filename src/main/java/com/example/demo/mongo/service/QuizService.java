@@ -110,8 +110,8 @@ public class QuizService implements IQuizService {
                     suggestedB, config.getMinDifficulty(), config.getMaxDifficulty());
         }
 
-        // 5. Generate quiz using pre-extracted text
-        StateResponse<Object> response = quizProcessor.processQuiz(file, pdfText, config);
+        // 5. Generate quiz using pre-extracted text (Supports Hybrid Generation)
+        StateResponse<Object> response = quizProcessor.processQuiz(file, pdfText, config, metadata.getId());
 
         if (response.getResult() instanceof FileGenerateResponse) {
             FileGenerateResponse fileGenerateResponse = (FileGenerateResponse) response.getResult();
