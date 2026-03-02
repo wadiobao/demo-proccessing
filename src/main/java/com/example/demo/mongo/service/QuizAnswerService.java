@@ -14,6 +14,7 @@ import com.example.demo.mongo.dto.user.UserStatsResponse;
 import com.example.demo.mongo.dto.user.UserOverviewStatsResponse;
 import com.example.demo.mongo.dto.user.UserOverviewStatsResponse.TopicMastery;
 import com.example.demo.mongo.entity.UserResource;
+import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.mongo.repository.UserResourceRepository;
 import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
 import com.example.demo.mongo.service.iservice.IQuizAnswerService;
@@ -38,6 +39,7 @@ public class QuizAnswerService implements IQuizAnswerService {
         UserResourceRepository userResourceRepository;
         IRTCalculator irtCalculator;
         IArchivedQuestionService iArchivedQuestionService;
+        QuestionBankRepository questionBankRepository;
 
         @Override
         @Transactional
@@ -81,8 +83,33 @@ public class QuizAnswerService implements IQuizAnswerService {
 
                 userResourceRepository.save(userResource);
 
+                // NEW Feature: Calibrate Question Bank (Phase 3)
+                for (UserAnswer ans : answers) {
+                        if (ans.getBankId() != null) {
+                                questionBankRepository.findById(ans.getBankId()).ifPresent(bankedQ -> {
+                                        // 1. Update primitive stats
+                                        bankedQ.setAttempts(bankedQ.getAttempts() + 1);
+                                        if (ans.isTrue()) {
+                                                bankedQ.setCorrectCount(bankedQ.getCorrectCount() + 1);
+                                        }
+
+                                        // 2. Perform IRT Item Recalibration
+                                        // Learning Rate: 0.1 (Target: capture empirical signal)
+                                        double calibratedB = irtCalculator.recalibrateItemDifficulty(
+                                                        bankedQ.getDifficulty(),
+                                                        userResource.getTheta(),
+                                                        ans.isTrue(),
+                                                        0.1);
+                                        bankedQ.setDifficulty(calibratedB);
+
+                                        questionBankRepository.save(bankedQ);
+                                });
+                        }
+                }
+
                 log.info("Updated IRT parameters for user: {} - theta: {}, difficulty: {}",
                                 username, newTheta, newDifficulty);
+                log.info("Recalibrated {} banked questions for topic: {}", answers.size(), request.getTopic());
 
                 // Build response
                 QuizSubmissionResponse response = QuizSubmissionResponse.builder()

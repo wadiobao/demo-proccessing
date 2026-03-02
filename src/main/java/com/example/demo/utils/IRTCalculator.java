@@ -121,6 +121,25 @@ public class IRTCalculator {
 		return thetaCurrent + logitTerm;
 	}
 
+	/**
+	 * Recalibrates a question's difficulty (b) based on a single user interaction.
+	 * Moves b in the direction that maximizes Likelihood.
+	 * 
+	 * @param currentB     Current difficulty parameter
+	 * @param userTheta    User's theta (ability)
+	 * @param correct      Whether user got it right
+	 * @param learningRate Adjustment factor (e.g., 0.1)
+	 * @return Updated difficulty parameter
+	 */
+	public double recalibrateItemDifficulty(double currentB, double userTheta, boolean correct, double learningRate) {
+		double pv = p(userTheta, currentB);
+		double score = correct ? 1.0 : 0.0;
+		// Gradient of Log-Likelihood with respect to b is (p - score)
+		double newB = currentB + learningRate * (pv - score);
+		// Boundary check for difficulty
+		return Math.max(Math.min(newB, 3.0), -3.0);
+	}
+
 	public static class UserAnswerGenerator {
 
 		private static final Random random = new Random();
