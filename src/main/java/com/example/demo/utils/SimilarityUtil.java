@@ -9,15 +9,18 @@ import java.util.Set;
 
 import org.springframework.core.io.ClassPathResource;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Statistical text comparison utility.
  * 
  * <p>
- * Triển khai thuật toán Cosine Similarity để so sánh mức độ tương đồng
+ * Triểu khai thuật toán Cosine Similarity để so sánh mức độ tương đồng
  * giữa hai chuỗi văn bản dựa trên vectơ tần suất từ (Term Frequency).
  *
  * @since 1.0
  */
+@Slf4j
 public class SimilarityUtil {
 
     /**
@@ -37,6 +40,8 @@ public class SimilarityUtil {
 
         double dot = 0.0, mag1 = 0.0, mag2 = 0.0;
 
+        // map frequencies to shared word space and calculate cumulative product
+        // / ánh xạ tần suất vào không gian từ vựng chung và tính tích tích lũy
         for (String w : allWords) {
             int v1 = tf1.getOrDefault(w, 0);
             int v2 = tf2.getOrDefault(w, 0);
@@ -69,7 +74,7 @@ public class SimilarityUtil {
         String f2 = new String(resource2.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
         double score = SimilarityUtil.similarity(f1, f2);
-        System.out.println("Similarity: " + score);
+        log.info("Similarity score: {}", score);
 
     }
 }

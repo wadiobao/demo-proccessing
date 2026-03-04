@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.sql.entity.PdfFile;
 import com.example.demo.sql.repository.PdfFileRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
 @RequestMapping("/api/webhook/cloudinary")
+@Slf4j
 public class CloudinaryWebhookController {
 	private final PdfFileRepository pdfFileRepository;
 
@@ -25,7 +28,7 @@ public class CloudinaryWebhookController {
 
 	@PostMapping
 	public void handleCloudinaryWebhook(@RequestBody Map<String, Object> payload) {
-		System.out.println("📩 Received Webhook: " + payload);
+		log.info("📩 Received Webhook: {}", payload);
 
 		String assetFolder = (String) payload.get("asset_folder");
 		if ("pdf_store".equals(assetFolder)) {
@@ -41,7 +44,7 @@ public class CloudinaryWebhookController {
 
 				PdfFile newFile = PdfFile.builder().title(title).cloudinaryId(publicId).pdfUrl(url).build();
 				pdfFileRepository.save(newFile);
-				System.out.println("✅ Đã thêm file mới vào database: " + title);
+				log.info("✅ Đã thêm file mới vào database: {}", title);
 			}
 
 			// Nếu là file bị xóa
@@ -53,7 +56,7 @@ public class CloudinaryWebhookController {
 
 				existingFile.ifPresent(pdfFile -> {
 					pdfFileRepository.delete(pdfFile);
-					System.out.println("❌ Đã xóa file khỏi database: " + publicId);
+					log.info("❌ Đã xóa file khỏi database: {}", publicId);
 				});
 			}
 
@@ -69,13 +72,13 @@ public class CloudinaryWebhookController {
 						String publicId = (String) resourceData.get("public_id");
 						String newDisplayName = (String) resourceData.get("new_display_name");
 
-						System.out.println("🔄 File có ID: " + publicId + " đã đổi tên thành: " + newDisplayName);
+						log.info("🔄 File có ID: {} đã đổi tên thành: {}", publicId, newDisplayName);
 
 						Optional<PdfFile> existingFile = pdfFileRepository.findByCloudinaryId(publicId);
 						existingFile.ifPresent(pdfFile -> {
 							pdfFile.setTitle(newDisplayName);
 							pdfFileRepository.save(pdfFile);
-							System.out.println("✅ Đã cập nhật display name trong database.");
+							log.info("✅ Đã cập nhật display name trong database.");
 						});
 					}
 				}

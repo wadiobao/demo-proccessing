@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import com.example.demo.mongo.entity.Content;
@@ -22,10 +23,12 @@ public class ContentRepositoryCustomImpl implements ContentRepositoryCustom {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Value("${mongodb.atlas.vector-index:vector_index_content}")
+    private String indexName;
+
     @Override
     public List<Content> searchSimilar(List<Double> queryVector, int limit, String username) {
         try {
-            String indexName = "vector_index_content"; // Tên index trên Atlas
             FieldSearchPath fieldSearchPath = SearchPath.fieldPath("embedding");
 
             // Sử dụng Aggregates.vectorSearch chuẩn của Driver mới
@@ -36,8 +39,8 @@ public class ContentRepositoryCustomImpl implements ContentRepositoryCustom {
                     limit,
                     VectorSearchOptions.exactVectorSearchOptions().option("owner", username)),
                     Aggregates.project(Projections.metaSearchScore("vectorSearchScore")));
-            
-            log.info("vector searching");
+
+            log.info("Executing vector search on index: {}", indexName);
 
             return mongoTemplate.getCollection("content")
                     .aggregate(pipeline)
@@ -45,9 +48,8 @@ public class ContentRepositoryCustomImpl implements ContentRepositoryCustom {
                     .into(new ArrayList<>());
         } catch (Exception e) {
             // Trường hợp MongoDB local không hỗ trợ Vector Search ($vectorSearch)
-            System.err.println("Vector search failed (likely local MongoDB): " + e.getMessage());
+            log.error("Vector search failed (likely local MongoDB): {}", e.getMessage());
             return new ArrayList<>();
         }
     }
-
 }

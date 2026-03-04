@@ -18,6 +18,7 @@ import com.example.demo.mongo.dto.TopicAndTags;
 import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.utils.FileGeneratorUtils;
 import com.example.demo.utils.HandleTextFromGeminiUtils;
+import com.example.demo.utils.PromptSanitizer;
 import com.google.genai.Client;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
@@ -26,6 +27,8 @@ import com.google.genai.types.Part;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility for interacting with Google Gemini AI models.
@@ -37,8 +40,11 @@ import lombok.Data;
  * @since 1.0
  */
 @Component
+@Slf4j
 public class GeminiAIUtils {
 
+    // separate key per model to isolate quota consumption per feature
+    // / tách key theo model để kiểm soát ngân sách API độc lập cho từng tính năng
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
@@ -65,7 +71,8 @@ public class GeminiAIUtils {
     @Autowired
     private FileGeneratorUtils fileGeneratorUtils;
 
-    private List<String> systemInstuction = new ArrayList<String>();
+    @Autowired
+    private PromptSanitizer promptSanitizer;
 
     @Data
     @AllArgsConstructor
@@ -86,11 +93,12 @@ public class GeminiAIUtils {
      * @throws IOException for API communication failures / lỗi kết nối API
      */
     public GeminiResponse generateQuestionWithGemini(String userPrompt) throws IOException {
-        makeInstruction();
+        // load per-call to avoid shared mutable state between concurrent requests
+        // / load mỗi lần gọi để tránh chia sẻ trạng thái giữa các request đồng thời
+        List<String> instructions = loadInstruction(instructionPath);
         Client client = new Client.Builder().apiKey(geminiApiKey).build();
         List<Part> parts = new ArrayList<Part>();
-        Part part = Part.builder().text(systemInstuction.toString()).build();
-        parts.add(part);
+        parts.add(Part.builder().text(instructions.toString()).build());
         Content content = Content.builder().parts(parts).build();
 
         GenerateContentConfig config = GenerateContentConfig.builder()
@@ -98,18 +106,25 @@ public class GeminiAIUtils {
                 .responseMimeType("application/json")
                 .build();
 
-        GenerateContentResponse response = client.models.generateContent(MODEL, userPrompt, config);
+        // sanitize user input to prevent instruction override
+        // / lọc nội dung người dùng để ngăn chặn ghi đè tập lệnh hệ thống
+        String sanitizedPrompt = promptSanitizer.sanitize(userPrompt);
+
+        GenerateContentResponse response = client.models.generateContent(MODEL, sanitizedPrompt, config);
         List<Question> parsedList = handleTextFromGeminiUtils.parseQuestionsV4(response.text());
 
         return new GeminiResponse(response.text(), parsedList);
     }
 
     public GeminiResponse reGenerateQuestionWithGemini(String userPrompt) throws IOException {
-        makeReGenInstruction();
+        // regen instruction differs: targets specific difficulty tier rather than full
+        // question set
+        // / instruction regen khác: chỉ nhắm vào mức độ khó cụ thể thay vì toàn bộ bộ
+        // câu hỏi
+        List<String> instructions = loadInstruction(instructionRegenPath);
         Client client = new Client.Builder().apiKey(geminiApiKey).build();
         List<Part> parts = new ArrayList<Part>();
-        Part part = Part.builder().text(systemInstuction.toString()).build();
-        parts.add(part);
+        parts.add(Part.builder().text(instructions.toString()).build());
         Content content = Content.builder().parts(parts).build();
 
         GenerateContentConfig config = GenerateContentConfig.builder()
@@ -117,7 +132,11 @@ public class GeminiAIUtils {
                 .responseMimeType("application/json")
                 .build();
 
-        GenerateContentResponse response = client.models.generateContent(MODEL, userPrompt, config);
+        // sanitize user input to prevent instruction override
+        // / lọc nội dung người dùng để ngăn chặn ghi đè tập lệnh hệ thống
+        String sanitizedPrompt = promptSanitizer.sanitize(userPrompt);
+
+        GenerateContentResponse response = client.models.generateContent(MODEL, sanitizedPrompt, config);
         List<Question> parsedList = handleTextFromGeminiUtils.parseQuestionsV4(response.text());
 
         return new GeminiResponse(response.text(), parsedList);
@@ -133,7 +152,7 @@ public class GeminiAIUtils {
      * @throws IOException for interpretation errors / lỗi phân tích
      */
     public TopicAndTags detectTopicAndTags(String userPrompt, List<String> existingTopics) throws IOException {
-        makeTopicTagsInstruction();
+        List<String> instructions = loadInstruction(topicAndTagsPath);
 
         // Inject existing topics into the prompt to guide deduplication
         StringBuilder enhancedPrompt = new StringBuilder();
@@ -142,12 +161,14 @@ public class GeminiAIUtils {
                     .append(existingTopics.toString())
                     .append(".\nNếu nội dung tài liệu trùng khớp hoặc thuộc về một trong các chủ đề trên, hãy ưu tiên sử dụng đúng topicId đó.\n\n");
         }
-        enhancedPrompt.append("Nội dung tài liệu:\n").append(userPrompt);
+
+        // sanitize user input to prevent instruction override
+        // / lọc nội dung người dùng để ngăn chặn ghi đè tập lệnh hệ thống
+        enhancedPrompt.append("Nội dung tài liệu:\n").append(promptSanitizer.sanitize(userPrompt));
 
         Client client = new Client.Builder().apiKey(topicGeminiApiKey).build();
         List<Part> parts = new ArrayList<Part>();
-        Part part = Part.builder().text(systemInstuction.toString()).build();
-        parts.add(part);
+        parts.add(Part.builder().text(instructions.toString()).build());
         Content content = Content.builder().parts(parts).build();
 
         GenerateContentConfig config = GenerateContentConfig.builder()
@@ -156,9 +177,7 @@ public class GeminiAIUtils {
                 .build();
 
         GenerateContentResponse response = client.models.generateContent(MODEL, enhancedPrompt.toString(), config);
-        TopicAndTags topicAndTags = handleTextFromGeminiUtils.parseTopicAndTags(response.text());
-
-        return topicAndTags;
+        return handleTextFromGeminiUtils.parseTopicAndTags(response.text());
     }
 
     /**
@@ -177,7 +196,7 @@ public class GeminiAIUtils {
                 .build();
 
         GenerateContentResponse response = client.models.generateContent(IMAGE_MODEL, imgPrompt, config);
-        // System.out.println(response.toJson());
+        log.debug("Gemini Image generation triggered for prompt: {}", imgPrompt);
 
         String imgBase64 = HandleTextFromGeminiUtils.extractDataFromGemini(response);
 
@@ -187,53 +206,25 @@ public class GeminiAIUtils {
 
     }
 
-    private void makeInstruction() throws IOException {
-        systemInstuction.clear();
-        InputStream resource = new ClassPathResource(instructionPath).getInputStream();
+    /**
+     * Loads system instruction lines from a classpath resource file.
+     *
+     * <p>
+     * Thread-safe: returns a new List instance on each invocation,
+     * with no shared mutable state.
+     *
+     * @param path classpath path to the instruction file
+     * @return list of instruction lines / danh sách dòng lệnh hệ thống
+     * @throws IOException if the resource cannot be read
+     */
+    private List<String> loadInstruction(String path) throws IOException {
+        List<String> instructions = new ArrayList<>();
+        InputStream resource = new ClassPathResource(path).getInputStream();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
             for (String line; (line = reader.readLine()) != null;) {
-                systemInstuction.add(line);
+                instructions.add(line);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
-    }
-
-    private void makeReGenInstruction() throws IOException {
-        systemInstuction.clear();
-        InputStream resource = new ClassPathResource(instructionRegenPath).getInputStream();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                systemInstuction.add(line);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    private void makeTopicTagsInstruction() throws IOException {
-        systemInstuction.clear();
-        InputStream resource = new ClassPathResource(topicAndTagsPath).getInputStream();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                systemInstuction.add(line);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    public static void main(String[] args) throws IOException {
-        // GeminiAIUtils geminiResponse = new GeminiAIUtils();
-        // geminiResponse.generateImageWithGemini("generate 2 separate picture of
-        // dogs");
-
-        var resource1 = new ClassPathResource("file-test/test.txt");
-        String f1 = new String(resource1.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-        GeminiAIUtils aiService = new GeminiAIUtils();
-        TopicAndTags andTags = aiService.detectTopicAndTags(f1, null);
-        System.out.println(andTags.getTopicId());
-
+        return instructions;
     }
 }

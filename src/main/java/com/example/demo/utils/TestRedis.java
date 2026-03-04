@@ -12,15 +12,22 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Experimental playground for Redis and AI model integration.
+ * WARNING: This class contains sandbox code and credentials not intended for
+ * production environments.
  * 
  * <p>
  * Lớp thử nghiệm dành cho việc kiểm tra kết nối Redis và các mô hình
  * nhúng (embedding) của LangChain4j trước khi đưa vào sản xuất.
+ * CẢNH BÁO: Lớp này chứa mã sandbox và thông tin xác thực không dành cho môi
+ * trường chính thức.
  *
  * @since 1.0
  */
+@Slf4j
 public class TestRedis {
     public static void connectBasic() {
         RedisURI uri = RedisURI.Builder
@@ -33,7 +40,7 @@ public class TestRedis {
 
         commands.set("foo", "bar");
         String result = commands.get("foo");
-        System.out.println(result); // >>> bar
+        log.info("Redis GET result: {}", result); // >>> bar
 
         connection.close();
 
@@ -65,11 +72,11 @@ public class TestRedis {
         // 3. Tạo Vector (Embedding)
         Embedding embedding = embeddingModel.embed(text).content();
 
-        // 4. In kết quả ra màn hình
+        // 4. In kết quả ra màn hình (Sử dụng log thay cho System.out)
         float[] vector = embedding.vector();
-        System.out.println("Độ dài vector: " + vector.length);
-        for (int i = 0; i < 5; i++) { // In thử 5 số đầu tiên
-            System.out.print(vector[i] + ", ");
+        log.info("Vector length: {}", vector.length);
+        if (vector.length >= 5) {
+            log.debug("First 5 elements: {}, {}, {}, {}, {}", vector[0], vector[1], vector[2], vector[3], vector[4]);
         }
 
     }

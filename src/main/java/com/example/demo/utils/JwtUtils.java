@@ -138,6 +138,10 @@ public class JwtUtils {
 				throw new HandleException(ErrorCode.UNAUTHENTICATED);
 			}
 
+			// cross-reference against blacklist to enforce immediate session revocation
+			// (e.g., after logout)
+			// / kiểm tra chéo với danh sách đen để cưỡng chế hủy phiên ngay lập tức (ví dụ:
+			// sau khi đăng xuất)
 			if (invalidatedTokenRepository.existsById(jwtSignedJWT.getJWTClaimsSet().getJWTID())) {
 				throw new HandleException(ErrorCode.UNAUTHENTICATED);
 			}
@@ -156,6 +160,10 @@ public class JwtUtils {
 	 * @return HTTP-only ResponseCookie / cookie bảo mật chỉ đọc bởi server
 	 */
 	public ResponseCookie generateAccessCookie(String token) {
+		// SameSite=Lax balance: allows top-level navigation while blocking cross-site
+		// CSRF on subresources
+		// / Chế độ SameSite=Lax: cho phép điều hướng cấp cao nhất trong khi chặn CSRF
+		// chéo trang trên các tài nguyên con
 		return ResponseCookie.from("access-token", token).httpOnly(true).path("/").maxAge(ACCESS_TiME)
 				.sameSite("Lax").build();
 	}

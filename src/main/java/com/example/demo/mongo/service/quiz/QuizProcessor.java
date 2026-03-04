@@ -19,6 +19,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.query.Criteria;
+
+import com.example.demo.mongo.entity.QuestionBank;
+import com.example.demo.mongo.service.quiz.WordPdfGeneration;
+
 /**
  * Engine for automated quiz construction and format processing.
  * 
@@ -40,6 +47,7 @@ public class QuizProcessor {
     QuizPromptBuilder promptBuilder;
     QuizResponseBuilder responseBuilder;
     QuestionBankRepository questionBankRepository;
+    MongoTemplate mongoTemplate;
 
     /**
      * Processes a PDF file and generates a quiz.
@@ -137,13 +145,17 @@ public class QuizProcessor {
                 log.info("Hybrid Generation triggered for content {}: {} from Bank, {} from AI", contentId, fromBank,
                         fromAI);
 
-                // 1. Get questions from Bank (Randomly sampled)
-                List<com.example.demo.mongo.entity.QuestionBank> bankedItems = questionBankRepository
-                        .findAllByContentId(contentId);
-                java.util.Collections.shuffle(bankedItems);
+                // 1. Get questions from Bank (Randomly sampled via MongoDB aggregate)
+                // / Lấy câu hỏi từ Ngân hàng (Lấy mẫu ngẫu nhiên qua MongoDB aggregate để tối
+                // ưu bộ nhớ)
+                Aggregation aggregation = Aggregation.newAggregation(
+                        Aggregation.match(Criteria.where("contentId").is(contentId)),
+                        Aggregation.sample(fromBank));
+                List<QuestionBank> bankedItems = mongoTemplate
+                        .aggregate(aggregation, QuestionBank.class, QuestionBank.class).getMappedResults();
+
                 List<Question> selectedFromBank = bankedItems.stream()
-                        .limit(fromBank)
-                        .map(com.example.demo.mongo.entity.QuestionBank::getQuestionData)
+                        .map(QuestionBank::getQuestionData)
                         .collect(java.util.stream.Collectors.toList());
 
                 // 2. Get remaining from AI

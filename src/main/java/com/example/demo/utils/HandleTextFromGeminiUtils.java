@@ -19,6 +19,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Specialized parser for AI-generated response content.
  * 
@@ -30,6 +32,7 @@ import com.google.gson.reflect.TypeToken;
  * @since 1.0
  */
 @Component
+@Slf4j
 public class HandleTextFromGeminiUtils {
 
     public List<Question> parseQuestions(String inputText) {
@@ -99,7 +102,8 @@ public class HandleTextFromGeminiUtils {
         try {
             // First, try parsing the entire input as a JsonElement
             String cleanText = inputText.trim();
-            // Remove markdown code blocks if gemini returned them despite the mime type
+            // strip markdown artifacts to expose pure JSON payload
+            // / loại bỏ các thành phần markdown để truy xuất nội dung JSON thuần túy
             if (cleanText.startsWith("```json")) {
                 cleanText = cleanText.substring(7);
             }
@@ -149,8 +153,10 @@ public class HandleTextFromGeminiUtils {
 
         } catch (com.google.gson.JsonSyntaxException e) {
             System.err.println("JSON Parse Error (possibly truncated), attempting to salvage: " + e.getMessage());
-            // Salvage logic using the old naive string extraction when JSON is totally
-            // broken
+            // salvage mode: attempt recovery from truncated or syntactically invalid AI
+            // output
+            // / chế độ cứu hộ: cố gắng khôi phục dữ liệu từ kết quả AI bị cắt cụt hoặc sai
+            // cú pháp
             String clean = extractJsonArrayString(inputText);
             if (clean == null)
                 return new ArrayList<>();
@@ -162,7 +168,7 @@ public class HandleTextFromGeminiUtils {
                     String salvaged = clean.substring(0, secondLastBrace + 1) + "]";
                     try {
                         List<Question> result = gson.fromJson(salvaged, questionListType);
-                        System.out.println("Successfully salvaged " + result.size() + " questions.");
+                        log.info("Successfully salvaged {} questions.", result.size());
                         return result;
                     } catch (Exception ex) {
                         System.err.println("Salvage failed: " + ex.getMessage());

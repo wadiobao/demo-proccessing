@@ -41,6 +41,10 @@ public class CloudinaryUtils {
 		this.cloudName = cloudName;
 		this.apiKey = apiKey;
 		this.apiSecret = apiSecret;
+		// aggregate credentials into a single configuration block for the Cloudinary
+		// client
+		// / tập hợp các thông tin xác thực vào một khối cấu hình duy nhất cho
+		// Cloudinary client
 		Map<String, String> config = new HashMap<String, String>();
 		config.put("cloud_name", cloudName);
 		config.put("api_key", apiKey);

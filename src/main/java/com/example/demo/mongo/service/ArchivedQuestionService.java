@@ -20,10 +20,12 @@ import com.example.demo.utils.CloudinaryUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class ArchivedQuestionService implements IArchivedQuestionService {
 	ArchivedQuestionRepository archivedQuestionRepository;
 
@@ -77,7 +79,7 @@ public class ArchivedQuestionService implements IArchivedQuestionService {
 		}
 		if (!deleteImgList.isEmpty()) {
 			cloudinaryUtils.delete(deleteImgList);
-			System.out.println("đã xóa ảnh id" + deleteImgList.toString());
+			log.info("Deleted images from Cloudinary: {}", deleteImgList);
 		}
 		archivedQuestionRepository.deleteById(pdfStore.getId());
 	}

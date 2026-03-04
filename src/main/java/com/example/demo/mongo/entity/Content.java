@@ -6,8 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.example.demo.dto.basemodel.BaseModel;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -57,9 +57,10 @@ public class ImageProcessingUtils {
         return grayscaleImage;
     }
 
-    /**
-     * Noise Reduction (giảm nhiễu) - Simple Gaussian Blur (3x3)
-     */
+    // low-pass filter to dampen high-frequency noise that typically interferes with
+    // OCR character recognition
+    // / bộ lọc thông thấp để làm dịu nhiễu tần số cao thường gây cản trở nhận dạng
+    // ký tự OCR
     public BufferedImage reduceNoise(BufferedImage image) {
         float[] matrix = {
                 1 / 16f, 1 / 8f, 1 / 16f,
@@ -71,10 +72,10 @@ public class ImageProcessingUtils {
         return op.filter(image, null);
     }
 
-    /**
-     * Median Filter for Noise Reduction (Vượt trội trong việc loại bỏ nhiễu 'muối
-     * tiêu')
-     */
+    // non-linear filter effective at removing 'salt and pepper' noise while
+    // preserving sharp character edges
+    // / bộ lọc phi tuyến tính hiệu quả trong việc loại bỏ nhiễu 'muối tiêu' trong
+    // khi vẫn giữ được các cạnh ký tự sắc nét
     public BufferedImage medianFilter(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
@@ -98,15 +99,17 @@ public class ImageProcessingUtils {
         return result;
     }
 
-    /**
-     * Normalization (chuẩn hóa giá trị pixel)
-     * Thường dùng để đưa giá trị về khoảng [0, 255] tối ưu nhất.
-     */
+    // stretch contrast to full dynamic range [0, 255] to maximize separation
+    // between foreground (text) and background
+    // / kéo giãn độ tương phản sang toàn dải động [0, 255] để tối đa hóa sự phân
+    // tách giữa tiền cảnh (văn bản) và hậu cảnh
     public BufferedImage normalize(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
         int min = 255, max = 0;
 
+        // identify global brightness bounds for linear scaling
+        // / xác định các biên độ sáng toàn cục để thực hiện tỉ lệ tuyến tính
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int gray = new Color(image.getRGB(x, y)).getRed();
@@ -131,9 +134,8 @@ public class ImageProcessingUtils {
         return normalized;
     }
 
-    /**
-     * Histogram Equalization (cân bằng histogram)
-     */
+    // global contrast enhancement through cumulative distribution function mapping
+    // / tăng cường độ tương phản toàn cục thông qua ánh xạ hàm phân phối tích lũy
     public BufferedImage equalizeHistogram(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
@@ -201,6 +203,10 @@ public class ImageProcessingUtils {
 
         int total = width * height;
 
+        // iterate all possible thresholds to minimize intra-class variance (maximize
+        // inter-class variance)
+        // / lặp qua tất cả các ngưỡng khả thi để giảm thiểu phương sai trong lớp (tối
+        // đa hóa phương sai giữa các lớp)
         for (int i = 0; i < 256; i++) {
             wB += histogram[i];
             if (wB == 0)
@@ -240,6 +246,8 @@ public class ImageProcessingUtils {
         int height = image.getHeight();
         BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
 
+        // convolution kernels to calculate intensity gradients in X and Y directions
+        // / hạt nhân tích chập để tính toán gradient cường độ theo hướng X và Y
         int[][] sobelX = {
                 { -1, 0, 1 },
                 { -2, 0, 2 },

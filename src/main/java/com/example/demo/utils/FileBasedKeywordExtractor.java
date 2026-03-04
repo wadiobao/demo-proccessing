@@ -79,6 +79,9 @@ public class FileBasedKeywordExtractor {
 					String word = matcher.group(1).trim().toLowerCase();
 					if (!word.isEmpty()) {
 						dictionary.add(word);
+						// track longest entry length to limit the width of the sliding window during
+						// tokenization
+						// / theo dõi độ dài mục từ lớn nhất để giới hạn cửa sổ trượt khi tách từ
 						int len = word.split("\\s+").length;
 						if (len > maxSyllables) {
 							maxSyllables = len;
@@ -140,6 +143,10 @@ public class FileBasedKeywordExtractor {
 			String token = syllables[i];
 			int step = 1;
 			int maxLen = Math.min(maxSyllables, n - i);
+			// greedy approach: attempt to match the longest possible compound word found in
+			// the dictionary first
+			// / tiếp cận tham lam: cố gắng khớp các từ ghép dài nhất có thể tìm thấy trong
+			// từ điển trước
 			for (int len = maxLen; len >= 2; len--) {
 				StringBuilder sb = new StringBuilder();
 				for (int k = 0; k < len; k++) {
@@ -177,6 +184,8 @@ public class FileBasedKeywordExtractor {
 			while ((line = br.readLine()) != null) {
 				List<String> tokens = tokenize(line);
 				for (String token : tokens) {
+					// exclude single characters (high noise) and localized stop words
+					// / loại bỏ các ký tự đơn (nhiễu cao) và các từ dừng đã bản địa hóa
 					if (token.length() > 1 && !stopWords.contains(token)) {
 						if (Character.isLetter(token.charAt(0))) {
 							freqMap.put(token, freqMap.getOrDefault(token, 0) + 1);
@@ -216,6 +225,9 @@ public class FileBasedKeywordExtractor {
 		try {
 			Map<String, Integer> freqMap = getFrequencyMapFromDocument(content);
 			return freqMap.entrySet().stream()
+					// descending sort by frequency to extract the most descriptive topics first
+					// / sắp xếp giảm dần theo tần suất để trích xuất các chủ đề mang tính mô tả
+					// nhất trước
 					.sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
 					.limit(limit)
 					.map(Map.Entry::getKey)

@@ -1,7 +1,14 @@
 package com.example.demo.mongo.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
@@ -10,9 +17,10 @@ import com.example.demo.exception.HandleException;
 import com.example.demo.mongo.dto.question.UserAnswer;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionResponse;
-import com.example.demo.mongo.dto.user.UserStatsResponse;
 import com.example.demo.mongo.dto.user.UserOverviewStatsResponse;
 import com.example.demo.mongo.dto.user.UserOverviewStatsResponse.TopicMastery;
+import com.example.demo.mongo.dto.user.UserStatsResponse;
+import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.mongo.repository.UserResourceRepository;
@@ -45,6 +53,7 @@ public class QuizAnswerService implements IQuizAnswerService {
         IRTCalculator irtCalculator;
         IArchivedQuestionService iArchivedQuestionService;
         QuestionBankRepository questionBankRepository;
+        MongoTemplate mongoTemplate;
 
         /**
          * Processes a full quiz submission including IRT recalibration.
@@ -70,12 +79,12 @@ public class QuizAnswerService implements IQuizAnswerService {
                         throw new HandleException(ErrorCode.EVALUATED_QUESTIONS);
                 }
 
-                // Get or create user resource for this topic
+                // fallback: initialize a fresh profile when first dataset for this topic is
+                // submitted
                 UserResource userResource = userResourceRepository
                                 .findByUserNameAndTopic(username, request.getTopic())
                                 .orElseGet(() -> createNewUserResource(username, request.getTopic()));
 
-                // Calculate score
                 List<UserAnswer> answers = request.getAnswers();
                 int totalQuestions = answers.size();
                 int correctAnswers = (int) answers.stream().filter(UserAnswer::isTrue).count();
@@ -83,7 +92,7 @@ public class QuizAnswerService implements IQuizAnswerService {
 
                 log.debug("Score: {}/{} ({}%)", correctAnswers, totalQuestions, scorePercentage);
 
-                // Update IRT parameters
+                // IRT-MAP estimation: returns [newTheta, bMin, bMax] window from posterior
                 double[] irtResults = irtCalculator.reviewAnswer(
                                 answers,
                                 userResource.getTheta(),
@@ -92,42 +101,60 @@ public class QuizAnswerService implements IQuizAnswerService {
                 double newTheta = irtResults[0];
                 double bMin = irtResults[1];
                 double bMax = irtResults[2];
+                // midpoint of estimated difficulty interval for next quiz selection
                 double newDifficulty = (bMin + bMax) / 2;
 
-                // Update user resource
                 userResource.setTheta(newTheta);
                 userResource.setB(newDifficulty);
                 userResource.getHistory().addAll(answers);
 
                 userResourceRepository.save(userResource);
 
-                // NEW Feature: Calibrate Question Bank (Phase 3)
-                for (UserAnswer ans : answers) {
-                        if (ans.getBankId() != null) {
-                                questionBankRepository.findById(ans.getBankId()).ifPresent(bankedQ -> {
-                                        // 1. Update primitive stats
-                                        bankedQ.setAttempts(bankedQ.getAttempts() + 1);
-                                        if (ans.isTrue()) {
-                                                bankedQ.setCorrectCount(bankedQ.getCorrectCount() + 1);
-                                        }
+                // recalibrate banked questions using real-world performance signal
+                // / Hiệu chỉnh độ khó của câu hỏi dựa trên phản hồi thực tế (hiệu quả hơn với
+                // BulkOps)
+                List<String> bankIds = answers.stream()
+                                .map(UserAnswer::getBankId)
+                                .filter(java.util.Objects::nonNull)
+                                .collect(Collectors.toList());
 
-                                        // 2. Perform IRT Item Recalibration
-                                        // Learning Rate: 0.1 (Target: capture empirical signal)
+                if (!bankIds.isEmpty()) {
+                        List<QuestionBank> bankedQuestions = questionBankRepository.findAllById(bankIds);
+                        java.util.Map<String, QuestionBank> questionMap = bankedQuestions.stream()
+                                        .collect(Collectors.toMap(QuestionBank::getId, q -> q));
+
+                        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                        QuestionBank.class);
+                        boolean hasOps = false;
+
+                        for (UserAnswer ans : answers) {
+                                if (ans.getBankId() != null && questionMap.containsKey(ans.getBankId())) {
+                                        QuestionBank bankedQ = questionMap.get(ans.getBankId());
                                         double calibratedB = irtCalculator.recalibrateItemDifficulty(
                                                         bankedQ.getDifficulty(),
                                                         userResource.getTheta(),
                                                         ans.isTrue(),
                                                         0.1);
-                                        bankedQ.setDifficulty(calibratedB);
 
-                                        questionBankRepository.save(bankedQ);
-                                });
+                                        Query query = new Query(Criteria.where("_id").is(ans.getBankId()));
+                                        Update update = new Update()
+                                                        .inc("attempts", 1)
+                                                        .set("difficulty", calibratedB);
+                                        if (ans.isTrue()) {
+                                                update.inc("correctCount", 1);
+                                        }
+                                        bulkOps.updateOne(query, update);
+                                        hasOps = true;
+                                }
+                        }
+                        if (hasOps) {
+                                bulkOps.execute();
+                                log.info("Bulk updated {} questions in QuestionBank", bankIds.size());
                         }
                 }
 
                 log.info("Updated IRT parameters for user: {} - theta: {}, difficulty: {}",
                                 username, newTheta, newDifficulty);
-                log.info("Recalibrated {} banked questions for topic: {}", answers.size(), request.getTopic());
 
                 // Build response
                 QuizSubmissionResponse response = QuizSubmissionResponse.builder()
@@ -196,12 +223,15 @@ public class QuizAnswerService implements IQuizAnswerService {
                 int correctAnswers = (int) history.stream().filter(UserAnswer::isTrue).count();
                 double accuracy = totalAnswered > 0 ? (correctAnswers * 100.0) / totalAnswered : 0.0;
 
-                // Get recent history (last 20 answers)
+                // cap history to last 20 answers: older responses have low IRT signal value
+                // / giới hạn lịch sử 20 câu gần nhất: dữ liệu cũ ít ảnh hưởng đến ước tính IRT
                 List<UserAnswer> recentHistory = history.size() > 20
                                 ? history.subList(history.size() - 20, history.size())
                                 : history;
 
-                // Calculate stats per Bloom's taxonomy level
+                // aggregate per Bloom level to surface which cognitive tier the user struggles
+                // with
+                // / tổng hợp theo mức Bloom để lộ ra tầng nhận thức nào người dùng yếu nhất
                 java.util.Map<String, Double> bloomStats = new java.util.HashMap<>();
                 if (totalAnswered > 0) {
                         java.util.Map<String, int[]> bloomCounts = new java.util.HashMap<>();
@@ -240,24 +270,23 @@ public class QuizAnswerService implements IQuizAnswerService {
                                 .build();
         }
 
+        /**
+         * Retrieves aggregated learning statistics for all topics of the user.
+         * 
+         * <p>
+         * Sử dụng chỉ mục (index) trên trường {@code userName} để tránh
+         * quét toàn bộ collection. Tổng hợp dữ liệu Theta và độ chính xác cho
+         * biểu đồ radar (Radar Chart) và Dashboard tổng quan.
+         *
+         * @param username student identification / tên người dùng thực hiện
+         * @return aggregated overview statistics / thống kê tổng hợp toàn phần
+         */
         @Override
         public StateResponse<Object> getOverviewStats(String username) {
                 log.info("Retrieving overview stats for user: {}", username);
 
-                // Assuming userResourceRepository.findByUserName is returning
-                // Optional<UserResource> by accident,
-                // or if we must pull all, we can fallback to standard mongo operations.
-                // Let's use userResourceRepository.findAllByUserName(username) if exist, or we
-                // can just iterate findAll() and filter.
-                // Since I can't guess the repository, I'll fetch all and filter for now to be
-                // safe and fix the compile error.
-                List<UserResource> allResources = userResourceRepository.findAll();
-                List<UserResource> userResources = new java.util.ArrayList<>();
-                for (UserResource ur : allResources) {
-                        if (username.equals(ur.getUserName())) {
-                                userResources.add(ur);
-                        }
-                }
+                // P0 FIX: Use indexed query instead of findAll() full collection scan
+                List<UserResource> userResources = userResourceRepository.findAllByUserName(username);
 
                 if (userResources == null || userResources.isEmpty()) {
                         log.warn("No resources found for user: {}", username);
@@ -290,8 +319,7 @@ public class QuizAnswerService implements IQuizAnswerService {
 
                         sumTheta += resource.getTheta();
 
-                        // Convert theta to a 0-100 mastery scale.
-                        // Assuming theta ranges from roughly -3.0 to +3.0
+                        // Convert theta to a 0-100 mastery scale (theta range: -3.0 to +3.0)
                         double masteryScale = Math.max(0, Math.min(100, ((resource.getTheta() + 3.0) / 6.0) * 100.0));
                         masteryScale = Math.round(masteryScale * 10.0) / 10.0;
 
@@ -307,14 +335,12 @@ public class QuizAnswerService implements IQuizAnswerService {
                 overallAccuracy = Math.round(overallAccuracy * 10.0) / 10.0;
 
                 double averageTheta = sumTheta / totalTopicsCount;
-                // Convert global average theta to 0-100 scale overall skill level
                 double overallSkillLevel = Math.max(0, Math.min(100, ((averageTheta + 3.0) / 6.0) * 100.0));
                 overallSkillLevel = Math.round(overallSkillLevel * 10.0) / 10.0;
 
                 UserOverviewStatsResponse overview = UserOverviewStatsResponse.builder()
                                 .username(username)
-                                .totalTopicsMastered(totalTopicsCount) // Consider 'mastered' if they have a
-                                                                       // resource/attempt
+                                .totalTopicsMastered(totalTopicsCount)
                                 .overallSkillLevel(overallSkillLevel)
                                 .overallAccuracyPercentage(overallAccuracy)
                                 .totalQuestionsAnswered(totalQuestionsAnswered)

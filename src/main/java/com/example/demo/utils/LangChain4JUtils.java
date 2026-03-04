@@ -22,6 +22,10 @@ public class LangChain4JUtils {
 				language: Mã ngôn ngữ của tài liệu (ví dụ: 'vi', 'en').
 				Yêu cầu: Chỉ trả về kết quả định dạng JSON thuần túy, không giải thích gì thêm.
 				    		""")
+		// enforce strict structured output to ensure reliable parsing by downstream
+		// automated systems
+		// / cưỡng chế đầu ra có cấu trúc chặt chẽ để đảm bảo khả năng phân tích tin cậy
+		// của các hệ thống tự động ở hạ nguồn
 		String detectTopicAndTags(String code);
 	}
 

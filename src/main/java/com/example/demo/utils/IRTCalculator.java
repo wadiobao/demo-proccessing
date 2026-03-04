@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.mongo.dto.question.UserAnswer;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Mathematical engine for Item Response Theory (IRT) and adaptive testing.
  * 
@@ -19,6 +21,7 @@ import com.example.demo.mongo.dto.question.UserAnswer;
  * @since 1.0
  */
 @Component
+@Slf4j
 public class IRTCalculator {
 	public double p(double theta, double b) {
 		return 1.0 / (1.0 + Math.exp(-(theta - b)));
@@ -48,15 +51,19 @@ public class IRTCalculator {
 	 * G' = Likelihood' - (theta / sigma^2)
 	 */
 	public double gradientMAP(List<UserAnswer> answers, double theta, double sigma) {
-		// 1. Thành phần Likelihood (Giống MLE Gradient)
+		// Likelihood component: derivative of the probability of observed responses
+		// (same as MLE gradient)
+		// / Thành phần Likelihood: đạo hàm của xác suất các phản hồi đã quan sát (giống
+		// gradient MLE)
 		double g = 0;
 		for (UserAnswer a : answers) {
-			// Lưu ý: a.getDifficulty() là tham số b của câu hỏi
 			g += (a.isTrue() ? 1.0 : 0.0) - p(theta, a.getDifficulty());
 		}
 
-		// 2. Thành phần Tiên nghiệm (Prior Gradient)
-		// Tiên nghiệm' = d/d(theta) [ -theta^2 / (2*sigma^2) ] = -theta / sigma^2
+		// Prior component: gradient of Gaussian prior N(0, sigma^2) to prevent extreme
+		// theta estimates
+		// / Thành phần Tiên nghiệm: gradient của phân phối Gaussian N(0, sigma^2) để
+		// tránh các ước tính theta cực đoan
 		g -= theta / (sigma * sigma);
 
 		return g;
@@ -67,16 +74,16 @@ public class IRTCalculator {
 	 * H'' = Likelihood'' - (1 / sigma^2)
 	 */
 	public double hessianMAP(List<UserAnswer> answers, double theta, double sigma) {
-		// 1. Thành phần Likelihood (Giống MLE Hessian)
+		// Hessian of Likelihood: curvature of the log-likelihood function
+		// / Hessian của Likelihood: độ cong của hàm log-likelihood
 		double h = 0;
 		for (UserAnswer a : answers) {
 			double pv = p(theta, a.getDifficulty());
-			// Likelihood'' = -Sigma(P * Q)
 			h -= pv * (1 - pv);
 		}
 
-		// 2. Thành phần Tiên nghiệm (Prior Hessian)
-		// Tiên nghiệm'' = d/d(theta) [ -theta / sigma^2 ] = -1 / sigma^2
+		// Hessian of Prior: constant penalty for second derivative
+		// / Hessian của Tiên nghiệm: mức phạt hằng số cho đạo hàm bậc hai
 		h -= 1.0 / (sigma * sigma);
 
 		return h;
@@ -108,25 +115,27 @@ public class IRTCalculator {
 		int maxIter = 100;
 
 		for (int iter = 0; iter < maxIter; iter++) {
-			// Lấy Gradient và Hessian (đã bao gồm Prior MAP)
 			double g = gradientMAP(answers, theta, sigma);
 			double h = hessianMAP(answers, theta, sigma);
 
-			// Tính toán bước nhảy delta
+			// Newton step: -g / h (h is negative, so g/h moves towards the peak)
+			// / Bước nhảy Newton: -g / h (h âm, nên g/h di chuyển về phía đỉnh)
 			double step = g / h;
 
-			// Áp dụng Hệ số Giảm tốc ALPHA
+			// Dampen updates to enforce stability and avoid oscillating around the maximum
+			// / Giảm tốc cập nhật để đảm bảo tính ổn định và tránh dao động quanh giá trị
+			// cực đại
 			double dampened_step = dampingFactor * step;
 
-			// Cập nhật Theta (Theta_new = Theta_old - dampened_step)
 			theta -= dampened_step;
 
-			// Giới hạn theta để tránh giá trị quá lớn/nhỏ
+			// Floor/Ceiling constraints to keep theta within reasonable psychometric bounds
+			// / Giới hạn biên để giữ theta trong khoảng đo lường tâm lý học hợp lý
 			theta = Math.max(Math.min(theta, 4.0), -4.0);
 
+			// stop when the update magnitude falls below precision threshold
+			// / dừng khi độ lớn cập nhật rơi xuống dưới ngưỡng độ chính xác
 			if (Math.abs(dampened_step) < epsilon) {
-				// Kiểm tra hội tụ dựa trên bước nhảy ĐÃ GIẢM TỐC
-				// System.out.println("Hội tụ sau " + (iter + 1) + " lần lặp.");
 				break;
 			}
 		}
@@ -139,7 +148,9 @@ public class IRTCalculator {
 	}
 
 	public double suggestDifficultyB(double thetaCurrent, double pTarget) {
-		// b = theta + ln((1-P)/P)
+		// inversion of the Logistic function to find difficulty that yields target
+		// probability
+		// / nghịch đảo hàm Logistic để tìm độ khó mang lại xác suất mục tiêu
 		double logitTerm = Math.log((1.0 - pTarget) / pTarget);
 		return thetaCurrent + logitTerm;
 	}
@@ -168,9 +179,11 @@ public class IRTCalculator {
 	public double recalibrateItemDifficulty(double currentB, double userTheta, boolean correct, double learningRate) {
 		double pv = p(userTheta, currentB);
 		double score = correct ? 1.0 : 0.0;
-		// Gradient of Log-Likelihood with respect to b is (p - score)
+		// move b in the direction of the prediction error (stochastic gradient descent)
+		// / di chuyển b theo hướng sai số dự đoán (gradient descent ngẫu nhiên)
 		double newB = currentB + learningRate * (pv - score);
-		// Boundary check for difficulty
+		// sanitize output within valid IRT model range
+		// / làm sạch kết quả trong phạm vi mô hình IRT hợp lệ
 		return Math.max(Math.min(newB, 3.0), -3.0);
 	}
 
@@ -365,18 +378,18 @@ public class IRTCalculator {
 			double newTheta = calc.estimateThetaMAP(history, thetaCurrent, sigma, alpha);
 			actualB = newAnswer.getDifficulty();
 
-			System.out.println(calc.fisher(thetaCurrent, actualB));
-			System.out.println("theta cũ: " + thetaCurrent);
-			System.out.println("b câu hỏi đang thực hiện:" + actualB);
-			System.out.printf("Lặp %d: b đề xuất=%.2f, P_correct=%.2f, Trả lời=%s -> Theta mới=%.4f\n",
-					i + 1, suggestedB, probabilityOfCorrect, newAnswer.isTrue() ? "ĐÚNG" : "SAI", newTheta);
+			log.debug("Fisher information: {}", calc.fisher(thetaCurrent, actualB));
+			log.debug("Current Theta: {}", thetaCurrent);
+			log.debug("Current Item Difficulty (b): {}", actualB);
+			log.info("Iteration {}: suggestedB={}, P_correct={}, Result={}, New Theta={}",
+					i + 1, suggestedB, probabilityOfCorrect, newAnswer.isTrue() ? "CORRECT" : "WRONG", newTheta);
 
 			// 6. Cập nhật theta cho lần lặp tiếp theo
 			thetaCurrent = newTheta;
 
 			// Dừng khi theta quá cao (ví dụ)
 			if (thetaCurrent > 2) {
-				System.out.println("Đã đạt Theta > 2.0. Kết thúc.");
+				log.info("Theta threshold (> 2.0) reached. Terminating simulation.");
 				break;
 			}
 		}

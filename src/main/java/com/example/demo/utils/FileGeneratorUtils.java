@@ -16,6 +16,8 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+
 import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 import fr.opensagres.xdocreport.core.XDocReportException;
@@ -34,6 +36,7 @@ import fr.opensagres.xdocreport.template.TemplateEngineKind;
  * @since 1.0
  */
 @Component
+@Slf4j
 public class FileGeneratorUtils {
 
     @Autowired
@@ -56,6 +59,8 @@ public class FileGeneratorUtils {
             byte[] fileBytes = Files.readAllBytes(pdfFile.toPath());
             return Base64.getEncoder().encodeToString(fileBytes);
         } finally {
+            // enforce local cleanup to prevent storage accumulation on the server
+            // / cưỡng chế xóa file tạm để tránh tích tụ dữ liệu trên server
             safeDelete(wordFile);
             safeDelete(pdfFile);
         }
@@ -155,15 +160,13 @@ public class FileGeneratorUtils {
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64String);
             Files.write(Paths.get(fileName), imageBytes);
-            // System.out.println("Đã lưu ảnh thành công vào file: " + fileName);
             String imgAtt[] = cloudinaryUtils.upload(fileName);
-            // System.out.println("đã tải ảnh");
             if (Files.deleteIfExists(Paths.get(fileName)))
-                System.out.println("đã xóa ảnh khỏi local");
+                log.info("Temporary image file deleted from local storage.");
 
             return imgAtt;
         } catch (IOException e) {
-            System.err.println("Lỗi khi lưu file ảnh: " + e.getMessage());
+            log.error("Error saving image file: {}", e.getMessage());
         }
         return null;
     }

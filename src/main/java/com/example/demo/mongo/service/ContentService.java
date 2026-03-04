@@ -17,10 +17,12 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Slf4j
 public class ContentService implements IContentService {
 
 	ContentRepository contentRepository;
@@ -42,7 +44,7 @@ public class ContentService implements IContentService {
 		// 1. Check for EXACT match first (Fastest, avoids vector calc)
 		Optional<Content> exactMatch = contentRepository.findFirstByContentAndOwner(content, owner);
 		if (exactMatch.isPresent()) {
-			System.out.println("Exact content match found for user: " + owner + ". Reusing existing record.");
+			log.info("Exact content match found for user: {}. Reusing existing record.", owner);
 			return exactMatch.get();
 		}
 
@@ -57,8 +59,8 @@ public class ContentService implements IContentService {
 				// If similarity is extremely high (e.g., > 0.95), return existing to avoid
 				// duplicate save
 				if (similar.getVectorSearchScore() >= 0.95) {
-					System.out.println("Reusing existing content/topic (idempotent path) score: "
-							+ similar.getVectorSearchScore() + " topic: " + similar.getTopic());
+					log.info("Reusing existing content/topic (idempotent path) score: {} topic: {}",
+							similar.getVectorSearchScore(), similar.getTopic());
 					return similar;
 				}
 
@@ -66,11 +68,11 @@ public class ContentService implements IContentService {
 				// instance
 				detectedTopic = similar.getTopic();
 				tags = similar.getTags();
-				System.out.println("Reusing metadata from similar content (score: "
-						+ similar.getVectorSearchScore() + "): " + detectedTopic);
+				log.info("Reusing metadata from similar content (score: {}): {}",
+						similar.getVectorSearchScore(), detectedTopic);
 			}
 		} catch (Exception e) {
-			System.err.println("Similarity check failed in ContentService: " + e.getMessage());
+			log.error("Similarity check failed in ContentService: {}", e.getMessage());
 		}
 
 		// 3. Try Local Keyword Extraction if similarity failed or wasn't strong enough
@@ -79,10 +81,10 @@ public class ContentService implements IContentService {
 				tags = keywordExtractor.getTopKeywords(content, 10);
 				if (!tags.isEmpty()) {
 					detectedTopic = tags.get(0);
-					System.out.println("Extracted local topic: " + detectedTopic);
+					log.info("Extracted local topic: {}", detectedTopic);
 				}
 			} catch (Exception e) {
-				System.err.println("Local keyword extraction failed in ContentService: " + e.getMessage());
+				log.error("Local keyword extraction failed in ContentService: {}", e.getMessage());
 			}
 		}
 

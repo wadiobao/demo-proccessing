@@ -31,10 +31,15 @@ public class VectorUtils {
      *         biểu diễn vectơ
      */
     public List<Double> createVector(String text) {
-        // 1. Dùng model để tạo embedding (trả về float[])
+        // use embedding model to project text into high-dimensional semantic space
+        // / sử dụng mô hình embedding để ánh xạ văn bản vào không gian ngữ nghĩa đa
+        // chiều
         float[] vectorArray = embeddingModel.embed(text).content().vector();
 
-        // 2. Chuyển float[] sang List<Double> để tương thích với MongoDB Atlas
+        // convert float[] to List<Double> for strict alignment with MongoDB Atlas
+        // Vector Search storage requirements
+        // / chuyển float[] sang List<Double> để khớp hoàn toàn với yêu cầu lưu trữ của
+        // MongoDB Atlas Vector Search
         return DoubleStream.of(convertFloatsToDoubles(vectorArray))
                 .boxed()
                 .collect(Collectors.toList());
