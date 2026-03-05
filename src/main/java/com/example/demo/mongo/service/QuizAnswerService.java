@@ -1,9 +1,11 @@
 package com.example.demo.mongo.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -17,9 +19,6 @@ import com.example.demo.exception.HandleException;
 import com.example.demo.mongo.dto.question.UserAnswer;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionResponse;
-import com.example.demo.mongo.dto.user.UserOverviewStatsResponse;
-import com.example.demo.mongo.dto.user.UserOverviewStatsResponse.TopicMastery;
-import com.example.demo.mongo.dto.user.UserStatsResponse;
 import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.QuestionBankRepository;
@@ -28,7 +27,7 @@ import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
 import com.example.demo.mongo.service.iservice.IQuizAnswerService;
 import com.example.demo.utils.IRTCalculator;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -54,6 +53,7 @@ public class QuizAnswerService implements IQuizAnswerService {
         IArchivedQuestionService iArchivedQuestionService;
         QuestionBankRepository questionBankRepository;
         MongoTemplate mongoTemplate;
+        MessageSource messageSource;
 
         /**
          * Processes a full quiz submission including IRT recalibration.
@@ -69,9 +69,34 @@ public class QuizAnswerService implements IQuizAnswerService {
          *                   không hợp lệ hoặc đã đánh giá
          */
         @Override
-        @Transactional
         public StateResponse<Object> submitQuizAnswers(QuizSubmissionRequest request, String username)
                         throws Exception {
+                int maxRetries = 3;
+                int attempts = 0;
+
+                while (attempts < maxRetries) {
+                        try {
+                                return executeSubmit(request, username);
+                        } catch (OptimisticLockingFailureException e) {
+                                attempts++;
+                                log.warn("Optimistic locking failure for user: {}, attempt: {}/{}", username, attempts,
+                                                maxRetries);
+                                if (attempts >= maxRetries) {
+                                        throw e;
+                                }
+                                // Small delay before retry
+                                Thread.sleep(100 * attempts);
+                        }
+                }
+                throw new Exception(messageSource.getMessage("error.concurrency_failure", null,
+                                LocaleContextHolder.getLocale()));
+        }
+
+        /**
+         * Core logic for quiz submission execution, supporting retries.
+         */
+        @Transactional
+        private StateResponse<Object> executeSubmit(QuizSubmissionRequest request, String username) throws Exception {
                 log.info("Processing quiz submission for user: {}, topic: {}", username, request.getTopic());
 
                 if (iArchivedQuestionService.isEvaluated(request.getArchivedQuestionId())) {
@@ -106,7 +131,19 @@ public class QuizAnswerService implements IQuizAnswerService {
 
                 userResource.setTheta(newTheta);
                 userResource.setB(newDifficulty);
-                userResource.getHistory().addAll(answers);
+
+                // P1 FIX: Cap history to last 200 answers to prevent MongoDB 16MB document
+                // bloat.
+                // IRT performance is preserved as older signal is already baked into Theta.
+                List<UserAnswer> history = userResource.getHistory();
+                history.addAll(answers);
+                if (history.size() > 200) {
+                        log.info("Capping history for user: {} (size: {} -> 200)", username, history.size());
+                        userResource.setHistory(new java.util.ArrayList<>(
+                                        history.subList(history.size() - 200, history.size())));
+                } else {
+                        userResource.setHistory(history);
+                }
 
                 userResourceRepository.save(userResource);
 
@@ -166,9 +203,10 @@ public class QuizAnswerService implements IQuizAnswerService {
                                 .feedback(generateFeedback(scorePercentage, newTheta))
                                 .build();
 
-                return StateResponse.builder()
+                return StateResponse.<Object>builder()
                                 .result(response)
-                                .message("Quiz submitted successfully")
+                                .message(messageSource.getMessage("quiz.submit.success", null,
+                                                LocaleContextHolder.getLocale()))
                                 .build();
         }
 
@@ -191,165 +229,15 @@ public class QuizAnswerService implements IQuizAnswerService {
          * Generates personalized feedback based on score and ability.
          */
         private String generateFeedback(double scorePercentage, double theta) {
+                java.util.Locale locale = LocaleContextHolder.getLocale();
                 if (scorePercentage >= 90) {
-                        return "Xuất sắc! Bạn đã nắm vững kiến thức này.";
+                        return messageSource.getMessage("feedback.excellent", null, locale);
                 } else if (scorePercentage >= 70) {
-                        return "Tốt lắm! Hãy tiếp tục cố gắng.";
+                        return messageSource.getMessage("feedback.good", null, locale);
                 } else if (scorePercentage >= 50) {
-                        return "Khá tốt, nhưng bạn cần ôn tập thêm một số phần.";
+                        return messageSource.getMessage("feedback.fair", null, locale);
                 } else {
-                        return "Bạn cần dành thêm thời gian để học lại nội dung này.";
+                        return messageSource.getMessage("feedback.poor", null, locale);
                 }
-        }
-
-        @Override
-        public StateResponse<Object> getUserStats(String username, String topic) {
-                log.info("Retrieving stats for user: {}, topic: {}", username, topic);
-
-                UserResource userResource = userResourceRepository
-                                .findByUserNameAndTopic(username, topic)
-                                .orElse(null);
-
-                if (userResource == null) {
-                        log.warn("No stats found for user: {}, topic: {}", username, topic);
-                        return StateResponse.builder()
-                                        .message("Chưa có dữ liệu học tập cho chủ đề này")
-                                        .build();
-                }
-
-                // Calculate statistics
-                List<UserAnswer> history = userResource.getHistory();
-                int totalAnswered = history.size();
-                int correctAnswers = (int) history.stream().filter(UserAnswer::isTrue).count();
-                double accuracy = totalAnswered > 0 ? (correctAnswers * 100.0) / totalAnswered : 0.0;
-
-                // cap history to last 20 answers: older responses have low IRT signal value
-                // / giới hạn lịch sử 20 câu gần nhất: dữ liệu cũ ít ảnh hưởng đến ước tính IRT
-                List<UserAnswer> recentHistory = history.size() > 20
-                                ? history.subList(history.size() - 20, history.size())
-                                : history;
-
-                // aggregate per Bloom level to surface which cognitive tier the user struggles
-                // with
-                // / tổng hợp theo mức Bloom để lộ ra tầng nhận thức nào người dùng yếu nhất
-                java.util.Map<String, Double> bloomStats = new java.util.HashMap<>();
-                if (totalAnswered > 0) {
-                        java.util.Map<String, int[]> bloomCounts = new java.util.HashMap<>();
-                        for (UserAnswer answer : history) {
-                                String bloomLevel = answer.getBloomLevel() != null ? answer.getBloomLevel() : "Unknown";
-                                bloomCounts.putIfAbsent(bloomLevel, new int[] { 0, 0 }); // [total, correct]
-                                bloomCounts.get(bloomLevel)[0]++;
-                                if (answer.isTrue()) {
-                                        bloomCounts.get(bloomLevel)[1]++;
-                                }
-                        }
-
-                        for (java.util.Map.Entry<String, int[]> entry : bloomCounts.entrySet()) {
-                                double bloomAccuracy = (entry.getValue()[1] * 100.0) / entry.getValue()[0];
-                                // Round to 1 decimal place
-                                bloomAccuracy = Math.round(bloomAccuracy * 10.0) / 10.0;
-                                bloomStats.put(entry.getKey(), bloomAccuracy);
-                        }
-                }
-
-                UserStatsResponse stats = UserStatsResponse.builder()
-                                .username(username)
-                                .topic(topic)
-                                .theta(userResource.getTheta())
-                                .difficulty(userResource.getB())
-                                .totalQuizzes(userResource.getContentIds().size())
-                                .totalQuestionsAnswered(totalAnswered)
-                                .accuracyPercentage(accuracy)
-                                .recentHistory(recentHistory)
-                                .bloomStats(bloomStats)
-                                .build();
-
-                return StateResponse.builder()
-                                .result(stats)
-                                .message("Lấy thông tin thành công")
-                                .build();
-        }
-
-        /**
-         * Retrieves aggregated learning statistics for all topics of the user.
-         * 
-         * <p>
-         * Sử dụng chỉ mục (index) trên trường {@code userName} để tránh
-         * quét toàn bộ collection. Tổng hợp dữ liệu Theta và độ chính xác cho
-         * biểu đồ radar (Radar Chart) và Dashboard tổng quan.
-         *
-         * @param username student identification / tên người dùng thực hiện
-         * @return aggregated overview statistics / thống kê tổng hợp toàn phần
-         */
-        @Override
-        public StateResponse<Object> getOverviewStats(String username) {
-                log.info("Retrieving overview stats for user: {}", username);
-
-                // P0 FIX: Use indexed query instead of findAll() full collection scan
-                List<UserResource> userResources = userResourceRepository.findAllByUserName(username);
-
-                if (userResources == null || userResources.isEmpty()) {
-                        log.warn("No resources found for user: {}", username);
-                        return StateResponse.builder()
-                                        .message("Chưa có dữ liệu học tập")
-                                        .result(UserOverviewStatsResponse.builder()
-                                                        .username(username)
-                                                        .totalTopicsMastered(0)
-                                                        .overallSkillLevel(0.0)
-                                                        .overallAccuracyPercentage(0.0)
-                                                        .totalQuestionsAnswered(0)
-                                                        .radarChartData(new java.util.ArrayList<>())
-                                                        .build())
-                                        .build();
-                }
-
-                int totalTopicsCount = userResources.size();
-                int totalQuestionsAnswered = 0;
-                int totalCorrectAnswers = 0;
-                double sumTheta = 0.0;
-
-                List<TopicMastery> radarChartData = new java.util.ArrayList<>();
-
-                for (UserResource resource : userResources) {
-                        List<UserAnswer> history = resource.getHistory();
-                        if (history != null && !history.isEmpty()) {
-                                totalQuestionsAnswered += history.size();
-                                totalCorrectAnswers += (int) history.stream().filter(UserAnswer::isTrue).count();
-                        }
-
-                        sumTheta += resource.getTheta();
-
-                        // Convert theta to a 0-100 mastery scale (theta range: -3.0 to +3.0)
-                        double masteryScale = Math.max(0, Math.min(100, ((resource.getTheta() + 3.0) / 6.0) * 100.0));
-                        masteryScale = Math.round(masteryScale * 10.0) / 10.0;
-
-                        radarChartData.add(TopicMastery.builder()
-                                        .topic(resource.getTopic())
-                                        .masteryLevel(masteryScale)
-                                        .build());
-                }
-
-                double overallAccuracy = totalQuestionsAnswered > 0
-                                ? ((double) totalCorrectAnswers * 100.0) / totalQuestionsAnswered
-                                : 0.0;
-                overallAccuracy = Math.round(overallAccuracy * 10.0) / 10.0;
-
-                double averageTheta = sumTheta / totalTopicsCount;
-                double overallSkillLevel = Math.max(0, Math.min(100, ((averageTheta + 3.0) / 6.0) * 100.0));
-                overallSkillLevel = Math.round(overallSkillLevel * 10.0) / 10.0;
-
-                UserOverviewStatsResponse overview = UserOverviewStatsResponse.builder()
-                                .username(username)
-                                .totalTopicsMastered(totalTopicsCount)
-                                .overallSkillLevel(overallSkillLevel)
-                                .overallAccuracyPercentage(overallAccuracy)
-                                .totalQuestionsAnswered(totalQuestionsAnswered)
-                                .radarChartData(radarChartData)
-                                .build();
-
-                return StateResponse.builder()
-                                .result(overview)
-                                .message("Lấy tổng quan học tập thành công")
-                                .build();
         }
 }

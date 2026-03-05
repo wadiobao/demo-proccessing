@@ -1,0 +1,114 @@
+package com.example.demo.sql.service;
+
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.demo.enums.Role;
+import com.example.demo.sql.entity.Form;
+import com.example.demo.sql.entity.User;
+import com.example.demo.sql.entity.Vote;
+import com.example.demo.sql.repository.UserRepository;
+import com.example.demo.sql.repository.VoteRepository;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Service for managing user reputation and prestige-based roles.
+ */
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
+public class ReputationService {
+
+    UserRepository userRepository;
+    VoteRepository voteRepository;
+
+    private static final int UPVOTE_VALUE = 5;
+    private static final int DOWNVOTE_VALUE = -2;
+
+    /**
+     * Records a vote from one user to another's post and updates reputation.
+     * 
+     * @param voter user casting the vote
+     * @param post  the post being voted on
+     * @param value 1 for up, -1 for down
+     */
+    @Transactional
+    public void castVote(User voter, Form post, int value) {
+        if (value != 1 && value != -1) {
+            throw new IllegalArgumentException("Invalid vote value");
+        }
+
+        // 1. Handle Idempotency (Update if exists, or create new)
+        Vote vote = voteRepository.findByVoterAndTargetPost(voter, post)
+                .orElse(Vote.builder().voter(voter).targetPost(post).build());
+
+        int oldValue = vote.getId() != null ? vote.getValue() : 0;
+        if (oldValue == value) {
+            return; // No change
+        }
+
+        vote.setValue(value);
+        voteRepository.save(vote);
+
+        // 2. Resolve Author (tacGia is a string in Form, need to find User)
+        String authorName = post.getTacGia();
+        userRepository.findByUserName(authorName).ifPresent(author -> {
+            // Re-calculate author reputation based on delta
+            int delta = calculateReputationDelta(oldValue, value);
+            updateUserReputation(author, delta);
+        });
+    }
+
+    private int calculateReputationDelta(int oldVal, int newVal) {
+        int oldRep = (oldVal == 1) ? UPVOTE_VALUE : (oldVal == -1 ? DOWNVOTE_VALUE : 0);
+        int newRep = (newVal == 1) ? UPVOTE_VALUE : DOWNVOTE_VALUE;
+        return newRep - oldRep;
+    }
+
+    private void updateUserReputation(User user, int delta) {
+        int newScore = user.getReputationScore() + delta;
+        user.setReputationScore(newScore);
+
+        // Dynamic Role Promotion/Demotion
+        Role newTier = determineTier(newScore);
+        if (newTier != user.getCurrentTier()) {
+            log.info("User {} changed tier: {} -> {}", user.getUserName(), user.getCurrentTier(), newTier);
+            user.setCurrentTier(newTier);
+        }
+
+        userRepository.save(user);
+    }
+
+    private Role determineTier(int score) {
+        if (score < 0)
+            return Role.RESTRICTED;
+        if (score >= 2000)
+            return Role.MODERATOR;
+        if (score >= 500)
+            return Role.EXPERT;
+        return Role.CONTRIBUTOR;
+    }
+
+    /**
+     * Resets negative reputations to 0 monthly.
+     */
+    @Transactional
+    public void performMonthlyReset() {
+        log.info("Starting monthly reputation reset...");
+        userRepository.findAll().forEach(user -> {
+            if (user.getReputationScore() < 0) {
+                user.setReputationScore(0);
+                user.setCurrentTier(Role.CONTRIBUTOR);
+                user.setLastReputationReset(LocalDateTime.now());
+                userRepository.save(user);
+            }
+        });
+    }
+}

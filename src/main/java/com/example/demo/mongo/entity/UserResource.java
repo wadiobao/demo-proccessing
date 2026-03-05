@@ -9,6 +9,7 @@ import com.example.demo.dto.basemodel.BaseModel;
 import com.example.demo.mongo.dto.question.UserAnswer;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -43,5 +44,8 @@ public class UserResource extends BaseModel {
 	double theta = 0.0;
 	@Default
 	double b = 0.0;
+
+	@Version
+	Long version;
 
 }

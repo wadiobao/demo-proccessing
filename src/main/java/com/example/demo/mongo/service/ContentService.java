@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.repository.ContentRepository;
@@ -13,12 +14,14 @@ import com.example.demo.mongo.service.iservice.IContentService;
 import com.example.demo.utils.FileBasedKeywordExtractor;
 import com.example.demo.utils.VectorUtils;
 
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service for analyzing and managing document content metadata.
+ */
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -39,6 +42,15 @@ public class ContentService implements IContentService {
 		return contentRepository.save(metadata);
 	}
 
+	/**
+	 * Finds existing Content metadata based on text similarity or creates a new
+	 * block via AI analysis.
+	 *
+	 * @param content full text of the document / nội dung văn bản gốc
+	 * @param owner   identification of the owner / người sở hữu tài liệu
+	 * @return Content metadata (AI-enriched) / thông tin Metadata (đã qua AI xử lý)
+	 * @throws IOException if AI analysis fails / lỗi nếu phân tích AI thất bại
+	 */
 	@Override
 	public Content findOrCreateMetadata(String content, String owner) throws IOException {
 		// 1. Check for EXACT match first (Fastest, avoids vector calc)
@@ -56,23 +68,18 @@ public class ContentService implements IContentService {
 		try {
 			Content similar = searchSimilar(embedding, 1, owner);
 			if (similar != null) {
-				// If similarity is extremely high (e.g., > 0.95), return existing to avoid
-				// duplicate save
 				if (similar.getVectorSearchScore() >= 0.95) {
 					log.info("Reusing existing content/topic (idempotent path) score: {} topic: {}",
 							similar.getVectorSearchScore(), similar.getTopic());
 					return similar;
 				}
-
-				// Otherwise, just reuse metadata (Topic/Tags) but we will still save this new
-				// instance
 				detectedTopic = similar.getTopic();
 				tags = similar.getTags();
 				log.info("Reusing metadata from similar content (score: {}): {}",
 						similar.getVectorSearchScore(), detectedTopic);
 			}
 		} catch (Exception e) {
-			log.error("Similarity check failed in ContentService: {}", e.getMessage());
+			log.error("Similarity check failed in ContentService: {}", e.getMessage(), e);
 		}
 
 		// 3. Try Local Keyword Extraction if similarity failed or wasn't strong enough
@@ -84,7 +91,7 @@ public class ContentService implements IContentService {
 					log.info("Extracted local topic: {}", detectedTopic);
 				}
 			} catch (Exception e) {
-				log.error("Local keyword extraction failed in ContentService: {}", e.getMessage());
+				log.error("Local keyword extraction failed in ContentService: {}", e.getMessage(), e);
 			}
 		}
 
@@ -120,5 +127,4 @@ public class ContentService implements IContentService {
 
 		return null;
 	}
-
 }

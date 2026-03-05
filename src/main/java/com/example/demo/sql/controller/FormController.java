@@ -2,6 +2,7 @@ package com.example.demo.sql.controller;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,10 +12,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.sql.dto.form.FormRequest;
 import com.example.demo.sql.dto.form.TopicRequest;
+import com.example.demo.sql.entity.Form;
+import com.example.demo.sql.entity.User;
+import com.example.demo.sql.repository.FormRepository;
+import com.example.demo.sql.repository.UserRepository;
+import com.example.demo.sql.service.ReputationService;
+import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.service.iservice.IFormService;
 
 import lombok.AccessLevel;
@@ -29,6 +37,10 @@ import lombok.experimental.FieldDefaults;
 public class FormController {
 
 	IFormService formService;
+	UserRepository userRepository;
+	FormRepository formRepository;
+	ReputationService reputationService;
+	BulkQuestionUploadService bulkQuestionUploadService;
 
 	@GetMapping
 	public ResponseEntity<StateResponse<Object>> getAllTopic(
@@ -81,4 +93,36 @@ public class FormController {
 		return ResponseEntity.ok(formService.deleteForm(formid));
 	}
 
+	/**
+	 * Casts a vote on a community discussion post.
+	 */
+	@PostMapping("/{formId}/vote")
+	public ResponseEntity<StateResponse<Object>> vote(
+			@PathVariable("formId") String formId,
+			@RequestParam("value") int value) {
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		User voter = userRepository.findByUserName(username)
+				.orElseThrow(() -> new RuntimeException("User not found"));
+		Form post = formRepository.findById(formId)
+				.orElseThrow(() -> new RuntimeException("Post not found"));
+
+		reputationService.castVote(voter, post, value);
+
+		return ResponseEntity.ok(StateResponse.builder().message("Vote recorded successfully").build());
+	}
+
+	/**
+	 * Allows users to bulk-upload questions from an Excel file to the community
+	 * bank.
+	 */
+	@PostMapping("/upload-questions")
+	public ResponseEntity<StateResponse<Object>> bulkUpload(
+			@RequestParam("file") MultipartFile file,
+			@RequestParam("topic") String topic) throws Exception {
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		return ResponseEntity.ok(StateResponse.builder()
+				.result(bulkQuestionUploadService.uploadQuestionsFromExcel(file, username, topic))
+				.message("Bulk upload completed")
+				.build());
+	}
 }

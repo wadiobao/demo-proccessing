@@ -3,6 +3,8 @@ package com.example.demo.sql.dto.user;
 import java.util.Date;
 import java.util.Set;
 
+import com.example.demo.enums.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +20,6 @@ public class UserResponse {
 	private Date date;
 	private String avatarUrl;
 	private Set<String> roles;
+	private int reputationScore;
+	private Role currentTier;
 }

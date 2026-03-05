@@ -21,26 +21,8 @@ public interface IQuizAnswerService {
      * @param username Authenticated user's username
      * @return StateResponse containing submission results and updated IRT
      *         parameters
-     * @throws Exception if processing fails
+     * @throws Exception if submission is invalid or duplicate
      */
     StateResponse<Object> submitQuizAnswers(QuizSubmissionRequest request, String username) throws Exception;
 
-    /**
-     * Retrieves user's learning statistics for a specific topic.
-     *
-     * @param username Username
-     * @param topic    Topic/subject
-     * @return StateResponse containing user statistics
-     */
-    StateResponse<Object> getUserStats(String username, String topic);
-
-    /**
-     * Retrieves global overview statistics for the radar chart and top-level
-     * dashboard.
-     *
-     * @param username Authenticated user's username
-     * @return StateResponse containing overview statistics
-     *         (UserOverviewStatsResponse)
-     */
-    StateResponse<Object> getOverviewStats(String username);
 }

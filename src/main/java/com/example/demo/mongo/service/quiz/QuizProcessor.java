@@ -102,11 +102,14 @@ public class QuizProcessor {
                 return responseBuilder.buildFileGenerationError();
             }
 
-            // Process image generation if requested
+            // TODO: [ROADMAP] Synchronous image generation is disabled to prevent request
+            // timeouts.
+            // Future: implement async image generation via task queue (e.g., Spring @Async
+            // / event-driven).
+            // When re-enabling, replace code below:
+            // List<Question> questions = geminiResponse.getQuestions();
+            // if (config.getImgQuest() == 1) { generateQuestionImages(questions); }
             List<Question> questions = geminiResponse.getQuestions();
-            if (config.getImgQuest() == 1) {
-                generateQuestionImages(questions);
-            }
 
             // Build final response
             FileGenerateResponse response = FileGenerateResponse.builder()

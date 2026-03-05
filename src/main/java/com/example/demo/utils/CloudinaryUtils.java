@@ -1,9 +1,15 @@
 package com.example.demo.utils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility for media management via Cloudinary cloud service.
@@ -22,6 +29,7 @@ import com.cloudinary.utils.ObjectUtils;
  * @since 1.0
  */
 @Component
+@Slf4j
 public class CloudinaryUtils {
 
 	private String cloudName;
@@ -96,5 +104,38 @@ public class CloudinaryUtils {
 				"folder", "avatars",
 				"resource_type", "image"));
 		return (String) uploadResult.get("secure_url");
+	}
+
+	/**
+	 * Verifies the authenticity of a Cloudinary webhook notification by recomputing
+	 * the HMAC-SHA1 signature and comparing it against the provided header value.
+	 * Rejects spoofed requests that lack a valid signature.
+	 *
+	 * @param payloadBody raw request body string / nội dung body yêu cầu thô
+	 * @param timestamp   X-Cld-Timestamp header value / giá trị header timestamp
+	 * @param signature   X-Cld-Signature header value / giá trị chữ ký từ header
+	 * @param apiSecret   Cloudinary API secret / mã bí mật API của Cloudinary
+	 * @return true if signature is valid, false otherwise / true nếu chữ ký hợp lệ
+	 */
+	public static boolean verifyNotificationSignature(
+			String payloadBody, String timestamp, String signature, String apiSecret) {
+		try {
+			// Cloudinary spec: sign(payload_body + timestamp) with API_SECRET using
+			// HMAC-SHA1
+			// / Spec Cloudinary: ký (payload_body + timestamp) với API_SECRET bằng
+			// HMAC-SHA1
+			String message = payloadBody + timestamp;
+			Mac mac = Mac.getInstance("HmacSHA1");
+			mac.init(new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA1"));
+			byte[] hash = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
+			StringBuilder hex = new StringBuilder();
+			for (byte b : hash) {
+				hex.append(String.format("%02x", b));
+			}
+			return hex.toString().equals(signature);
+		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+			log.error("Webhook signature verification failed: {}", e.getMessage());
+			return false;
+		}
 	}
 }

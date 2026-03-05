@@ -2,10 +2,13 @@ package com.example.demo.mongo.service.quiz.processor;
 
 import java.util.List;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Factory and Context for selecting the appropriate document processor.
@@ -18,9 +21,11 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DocumentProcessorContext {
 
     private final List<IDocumentProcessor> processors;
+    private final MessageSource messageSource;
 
     /**
      * Resolves the correct processor implementation for the provided file.
@@ -47,6 +52,9 @@ public class DocumentProcessorContext {
             }
         }
 
-        throw new IllegalArgumentException("Định dạng file không được hỗ trợ: " + contentType);
+        log.error("Unsupported file format attempted: {}", contentType);
+        String errorMessage = messageSource.getMessage("error.unsupported_format", new Object[] { contentType },
+                LocaleContextHolder.getLocale());
+        throw new IllegalArgumentException(errorMessage);
     }
 }

@@ -48,6 +48,15 @@ public class QuestionBank {
     @Builder.Default
     double difficulty = 0.0; // The 'b' parameter in IRT
 
+    @Indexed
+    String contributorId; // ID of the user who uploaded/edited this
+
+    @Builder.Default
+    boolean isCommunitySourced = false;
+
+    @Builder.Default
+    String verificationStatus = "VERIFIED"; // VERIFIED, COMMUNITY, DRAFT
+
     @CreatedDate
     LocalDateTime createdAt;
 }

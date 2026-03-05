@@ -17,6 +17,7 @@ import com.example.demo.mongo.dto.quiz.QuizConfig;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
 import com.example.demo.mongo.service.iservice.IQuizAnswerService;
 import com.example.demo.mongo.service.iservice.IQuizService;
+import com.example.demo.mongo.service.iservice.IUserAnalyticsService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class QuizController {
 
     IQuizService quizService;
     IQuizAnswerService quizAnswerService;
+    IUserAnalyticsService userAnalyticsService;
 
     /**
      * Generates a quiz for public (unauthenticated) users.
@@ -137,7 +139,7 @@ public class QuizController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        StateResponse<Object> response = quizAnswerService.getUserStats(username, topic);
+        StateResponse<Object> response = userAnalyticsService.getUserStats(username, topic);
         return ResponseEntity.ok(response);
     }
 
@@ -151,7 +153,7 @@ public class QuizController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        StateResponse<Object> response = quizAnswerService.getOverviewStats(username);
+        StateResponse<Object> response = userAnalyticsService.getOverviewStats(username);
         return ResponseEntity.ok(response);
     }
 }
