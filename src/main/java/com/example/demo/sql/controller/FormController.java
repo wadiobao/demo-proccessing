@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.dto.form.FormRequest;
 import com.example.demo.sql.dto.form.TopicRequest;
 import com.example.demo.sql.entity.Form;
@@ -22,25 +23,21 @@ import com.example.demo.sql.entity.User;
 import com.example.demo.sql.repository.FormRepository;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.service.ReputationService;
-import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.service.iservice.IFormService;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 
 @RestController
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
 @RequestMapping("/api/v1/discussion")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FormController {
 
-	IFormService formService;
-	UserRepository userRepository;
-	FormRepository formRepository;
-	ReputationService reputationService;
-	BulkQuestionUploadService bulkQuestionUploadService;
+	private final IFormService formService;
+	private final UserRepository userRepository;
+	private final FormRepository formRepository;
+	private final ReputationService reputationService;
+	private final BulkQuestionUploadService bulkQuestionUploadService;
 
 	@GetMapping
 	public ResponseEntity<StateResponse<Object>> getAllTopic(
@@ -112,17 +109,35 @@ public class FormController {
 	}
 
 	/**
-	 * Allows users to bulk-upload questions from an Excel file to the community
-	 * bank.
+	 * Identifies and uploads questions from any document to the community bank.
+	 * 
+	 * <p>
+	 * Sử dụng AI để tự động trích xuất các câu hỏi trắc nghiệm từ file người dùng
+	 * cung cấp (PDF, Word, Ảnh) và nạp vào ngân hàng câu hỏi chung.
+	 *
+	 * @param file  tài liệu chứa câu hỏi
+	 * @param topic chủ đề của các câu hỏi
+	 * @return kết quả nạp câu hỏi
+	 * @throws Exception nếu xử lý hoặc phân quyền thất bại
 	 */
 	@PostMapping("/upload-questions")
 	public ResponseEntity<StateResponse<Object>> bulkUpload(
-			@RequestParam("file") MultipartFile file,
-			@RequestParam("topic") String topic) throws Exception {
+			@RequestParam("file") MultipartFile file) throws Exception {
 		String username = SecurityContextHolder.getContext().getAuthentication().getName();
 		return ResponseEntity.ok(StateResponse.builder()
-				.result(bulkQuestionUploadService.uploadQuestionsFromExcel(file, username, topic))
-				.message("Bulk upload completed")
+				.result(bulkQuestionUploadService.identifyAndUploadQuestions(file, username))
+				.message("AI identification and bulk upload completed")
 				.build());
+	}
+
+	/**
+	 * Search for discussions using Full-Text Search.
+	 */
+	@GetMapping("/search")
+	public ResponseEntity<StateResponse<Object>> search(
+			@RequestParam("keyword") String keyword,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+		return ResponseEntity.ok(formService.searchByKeyword(keyword, PageRequest.of(page, size)));
 	}
 }

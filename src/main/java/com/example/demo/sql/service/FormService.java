@@ -27,6 +27,10 @@ import com.example.demo.sql.repository.CommentRepository;
 import com.example.demo.sql.repository.FormContentRepository;
 import com.example.demo.sql.repository.FormRepository;
 import com.example.demo.sql.repository.TopicRepository;
+import com.example.demo.sql.repository.UserRepository;
+import com.example.demo.sql.repository.VoteRepository;
+import com.example.demo.sql.entity.User;
+import com.example.demo.sql.entity.Vote;
 
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -38,16 +42,32 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FormService implements IFormService {
 
-	FormRepository formRepository;
-	FormContentRepository contentRepository;
-	CommentRepository commentRepository;
-	TopicRepository topicRepository;
+	private final FormRepository formRepository;
+	private final FormContentRepository contentRepository;
+	private final CommentRepository commentRepository;
+	private final TopicRepository topicRepository;
+	private final UserRepository userRepository;
+	private final VoteRepository voteRepository;
 
 	@Override
 	public StateResponse<Object> getAllForm(Pageable pageable) {
 		Page<Form> all = formRepository.findAllByOrderByNgayDangDesc(pageable);
+		return StateResponse.builder().result(decorateWithVotes(all)).build();
+	}
 
-		Page<FormResponse> responses = all.map(form -> FormResponse.builder()
+	private Page<FormResponse> decorateWithVotes(Page<Form> forms) {
+		String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+		User currentUser = userRepository.findByUserName(currentUsername).orElse(null);
+
+		java.util.Map<String, Integer> userVotes = new java.util.HashMap<>();
+		if (currentUser != null && !forms.isEmpty()) {
+			List<Vote> votes = voteRepository.findAllByVoterAndTargetPostIn(currentUser, forms.getContent());
+			for (Vote v : votes) {
+				userVotes.put(v.getTargetPost().getFormId(), v.getValue());
+			}
+		}
+
+		return forms.map(form -> FormResponse.builder()
 				.formId(form.getFormId())
 				.tacGia(form.getTacGia())
 				.tieuDe(form.getTieuDe())
@@ -55,9 +75,9 @@ public class FormService implements IFormService {
 				.ngayDang(form.getNgayDang())
 				.noiDung(form.getContent().getNoiDung())
 				.topic(form.getTopic().getTopic())
+				.voteScore(form.getVoteScore())
+				.userVoteValue(userVotes.getOrDefault(form.getFormId(), 0))
 				.build());
-
-		return StateResponse.builder().result(responses).build();
 	}
 
 	@Override
@@ -90,7 +110,10 @@ public class FormService implements IFormService {
 				.result(FormResponse.builder().formId(form.getFormId()).tacGia(form.getTacGia())
 						.tieuDe(form.getTieuDe())
 						.tags(form.getTags()).ngayDang(form.getNgayDang()).noiDung(content.getNoiDung())
-						.topic(topic.getTopic()).build())
+						.topic(topic.getTopic())
+						.voteScore(0) // New post
+						.userVoteValue(0)
+						.build())
 				.build();
 
 	}
@@ -147,17 +170,7 @@ public class FormService implements IFormService {
 	@Override
 	public StateResponse<Object> getAllFormFromTopic(Long topicId, Pageable pageable) {
 		Page<Form> all = formRepository.findByTopic_TopicIdOrderByNgayDangDesc(topicId, pageable);
-		Page<FormResponse> responses = all.map(form -> FormResponse.builder()
-				.formId(form.getFormId())
-				.tacGia(form.getTacGia())
-				.tieuDe(form.getTieuDe())
-				.tags(form.getTags())
-				.ngayDang(form.getNgayDang())
-				.noiDung(form.getContent().getNoiDung())
-				.topic(form.getTopic().getTopic())
-				.build());
-
-		return StateResponse.builder().result(responses).build();
+		return StateResponse.builder().result(decorateWithVotes(all)).build();
 	}
 
 	@Override
@@ -169,5 +182,11 @@ public class FormService implements IFormService {
 		commentRepository.deleteAllByFormId(formId);
 
 		return StateResponse.builder().message("Xóa thành công form").build();
+	}
+
+	@Override
+	public StateResponse<Object> searchByKeyword(String keyword, Pageable pageable) {
+		Page<Form> results = formRepository.searchByKeyword(keyword, pageable);
+		return StateResponse.builder().result(decorateWithVotes(results)).build();
 	}
 }

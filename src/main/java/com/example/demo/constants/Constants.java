@@ -16,7 +16,7 @@ public final class Constants {
         public static final String TESSDATA_PATH = "./tessdata";
         public static final String TESSERACT_PATH = "src/main/resources/tesseract/tessdata";
         public static final String TEST_TEMPLATE = "/templates/test_template.docx";
-        public static final String IMAGE_TEMP  = "src/main/resources/static/";
+        public static final String IMAGE_TEMP = "src/main/resources/static/";
     }
 
     // File extensions
@@ -56,7 +56,27 @@ public final class Constants {
         public static final String LANGUAGE = "[ngôn ngữ]:%s\n";
         public static final String DOCUMENT_PROVIDED = "Tài liệu được cung cấp: %s";
         public static final String MIN_DIFFICULT = "[min_difficulty]: %f\n";
-        public static final String MAX_DIFFICULT = "[max_difficulty]: %f\n";		
+        public static final String MAX_DIFFICULT = "[max_difficulty]: %f\n";
+
+        public static final String IDENTIFY_INSTRUCTIONS = "Nhiệm vụ của bạn là trích xuất các câu hỏi TRẮC NGHIỆM có sẵn từ văn bản được cung cấp. "
+                + "KHÔNG được tự tạo câu hỏi mới. Hãy tìm chính xác nội dung câu hỏi, các lựa chọn (A, B, C, D), "
+                + "đáp án đúng và lời giải (nếu có) từ văn bản gốc.\n";
+
+        public static final String IDENTIFY_SCHEMA = "Trả về kết quả dưới dạng JSON với cấu trúc:\n"
+                + "{\n"
+                + "  \"questions\": [\n"
+                + "    {\n"
+                + "      \"câu_hỏi_số\": 1,\n"
+                + "      \"nội_dung\": \"Nội dung câu hỏi\",\n"
+                + "      \"đáp_án\": {\n"
+                + "        \"A\": \"Lựa chọn A\", \"B\": \"Lựa chọn B\", \"C\": \"Lựa chọn C\", \"D\": \"Lựa chọn D\",\n"
+                + "        \"đáp_án_đúng\": \"A hoặc B hoặc C hoặc D\",\n"
+                + "        \"giải_thích\": \"Lời giải trích xuất từ văn bản\"\n"
+                + "      },\n"
+                + "      \"bloom_level\": \"Phân loại Bloom (ví dụ: Understanding, Analysis)\"\n"
+                + "    }\n"
+                + "  ]\n"
+                + "}";
     }
 
     // Map keys
@@ -71,5 +91,5 @@ public final class Constants {
         public static final String EXPLAIN = "explain";
         public static final String QUESTIONS = "questions";
     }
-    
-} 
+
+}

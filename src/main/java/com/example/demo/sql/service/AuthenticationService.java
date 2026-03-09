@@ -78,7 +78,13 @@ public class AuthenticationService implements IAuthenticationService {
 		ResponseEntity<StateResponse<Object>> responseEntity = ResponseEntity.ok()
 				.header(HttpHeaders.SET_COOKIE, accessCookie.toString())
 				.header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-				.body(StateResponse.builder().result(AuthenticationResponse.builder().auth(auth).build()).build());
+				.body(StateResponse.builder()
+						.result(AuthenticationResponse.builder()
+								.auth(auth)
+								.reputationScore(user.getReputationScore())
+								.roleTier(user.getCurrentTier().name())
+								.build())
+						.build());
 
 		return responseEntity;
 
@@ -122,7 +128,13 @@ public class AuthenticationService implements IAuthenticationService {
 		ResponseEntity<StateResponse<Object>> responseEntity = ResponseEntity.ok()
 				.header(HttpHeaders.SET_COOKIE, accessCookie.toString())
 				.header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-				.body(StateResponse.builder().result(AuthenticationResponse.builder().auth(true).build()).build());
+				.body(StateResponse.builder()
+						.result(AuthenticationResponse.builder()
+								.auth(true)
+								.reputationScore(user.getReputationScore())
+								.roleTier(user.getCurrentTier().name())
+								.build())
+						.build());
 
 		return responseEntity;
 

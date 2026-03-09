@@ -28,7 +28,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Table(name = "vote_data")
+@Table(name = "vote_data", uniqueConstraints = {
+        @jakarta.persistence.UniqueConstraint(columnNames = { "voter_id", "form_id" })
+})
 public class Vote extends BaseModel {
 
     @Id

@@ -23,4 +23,6 @@ public class FormResponse {
 	Date ngayDang;
 	String noiDung;
 	String topic;
+	int voteScore;
+	Integer userVoteValue; // 1, -1, or 0 (optional based on auth)
 }

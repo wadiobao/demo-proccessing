@@ -41,8 +41,8 @@ public class ReputationService {
      */
     @Transactional
     public void castVote(User voter, Form post, int value) {
-        if (value != 1 && value != -1) {
-            throw new IllegalArgumentException("Invalid vote value");
+        if (value != 1 && value != -1 && value != 0) {
+            throw new IllegalArgumentException("Invalid vote value. Allowed: 1 (Up), -1 (Down), 0 (None)");
         }
 
         // 1. Handle Idempotency (Update if exists, or create new)
@@ -57,18 +57,24 @@ public class ReputationService {
         vote.setValue(value);
         voteRepository.save(vote);
 
-        // 2. Resolve Author (tacGia is a string in Form, need to find User)
+        // 2. Update Form Aggregate Counter (Total Vote Score)
+        int deltaVote = value - oldValue;
+        post.setVoteScore(post.getVoteScore() + deltaVote);
+        // Form is managed here so it will be saved if repository is called or
+        // transaction ends
+
+        // 3. Resolve Author (tacGia is a string in Form, need to find User)
         String authorName = post.getTacGia();
         userRepository.findByUserName(authorName).ifPresent(author -> {
             // Re-calculate author reputation based on delta
-            int delta = calculateReputationDelta(oldValue, value);
-            updateUserReputation(author, delta);
+            int deltaRep = calculateReputationDelta(oldValue, value);
+            updateUserReputation(author, deltaRep);
         });
     }
 
     private int calculateReputationDelta(int oldVal, int newVal) {
         int oldRep = (oldVal == 1) ? UPVOTE_VALUE : (oldVal == -1 ? DOWNVOTE_VALUE : 0);
-        int newRep = (newVal == 1) ? UPVOTE_VALUE : DOWNVOTE_VALUE;
+        int newRep = (newVal == 1) ? UPVOTE_VALUE : (newVal == -1 ? DOWNVOTE_VALUE : 0);
         return newRep - oldRep;
     }
 

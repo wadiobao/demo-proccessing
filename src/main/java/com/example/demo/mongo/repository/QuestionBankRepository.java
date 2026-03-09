@@ -16,4 +16,8 @@ public interface QuestionBankRepository extends MongoRepository<QuestionBank, St
     List<QuestionBank> findAllByContentId(String contentId);
 
     Optional<QuestionBank> findByContentIdAndQuestionHash(String contentId, String questionHash);
+
+    @org.springframework.data.mongodb.repository.Query("{$text: {$search: ?0}}")
+    org.springframework.data.domain.Page<QuestionBank> searchByKeyword(String keyword,
+            org.springframework.data.domain.Pageable pageable);
 }

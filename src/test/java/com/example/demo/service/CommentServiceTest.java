@@ -19,8 +19,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.dto.form.CommentRequest;
-import com.example.demo.dto.form.CommentResponse;
+import com.example.demo.sql.dto.form.CommentRequest;
+import com.example.demo.sql.dto.form.CommentResponse;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.sql.entity.Comment;

@@ -68,4 +68,17 @@ public class QuizPromptBuilder {
                                 config.getLanguage(),
                                 pdfText);
         }
+
+        /**
+         * Builds a specialized prompt for identifying and extracting existing questions
+         * from a document.
+         *
+         * @param pdfText source text / nội dung văn bản gốc
+         * @return identification prompt / prompt trích xuất câu hỏi
+         */
+        public String buildIdentificationPrompt(String pdfText) {
+                return Constants.QuestionFormat.IDENTIFY_INSTRUCTIONS
+                                + Constants.QuestionFormat.IDENTIFY_SCHEMA
+                                + "\n" + String.format(Locale.US, Constants.QuestionFormat.DOCUMENT_PROVIDED, pdfText);
+        }
 }

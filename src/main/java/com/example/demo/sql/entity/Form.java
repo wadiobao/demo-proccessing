@@ -33,27 +33,30 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "form_data")
 public class Form {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	String formId;
-	
+
 	String tacGia;
 	String tieuDe;
-	
+
+	@Builder.Default
+	int voteScore = 0; // Read-optimized counter
+
 	@ElementCollection(fetch = FetchType.LAZY)
 	Set<String> tags;
-	
-	@OneToOne(mappedBy = "form",fetch = FetchType.LAZY, cascade = CascadeType.ALL,optional = false)
+
+	@OneToOne(mappedBy = "form", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
 	FormContent content;
-	
-    @Temporal(TemporalType.TIMESTAMP)
+
+	@Temporal(TemporalType.TIMESTAMP)
 	Date ngayDang;
-    
-    @OneToMany(mappedBy = "form",cascade = CascadeType.ALL,orphanRemoval = true)
-    List<Comment> comment;
-    
-    @ManyToOne
-    @JoinColumn(name = "topic_id")
-    Topic topic;
+
+	@OneToMany(mappedBy = "form", cascade = CascadeType.ALL, orphanRemoval = true)
+	List<Comment> comment;
+
+	@ManyToOne
+	@JoinColumn(name = "topic_id")
+	Topic topic;
 }

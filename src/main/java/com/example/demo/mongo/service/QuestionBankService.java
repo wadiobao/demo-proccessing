@@ -81,4 +81,12 @@ public class QuestionBankService {
             lastQuotaReset = LocalDate.now();
         }
     }
+
+    /**
+     * Performs a text-based search across all community questions.
+     */
+    public org.springframework.data.domain.Page<QuestionBank> searchQuestions(String keyword,
+            org.springframework.data.domain.Pageable pageable) {
+        return questionBankRepository.searchByKeyword(keyword, pageable);
+    }
 }

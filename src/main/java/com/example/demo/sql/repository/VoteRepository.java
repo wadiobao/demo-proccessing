@@ -14,5 +14,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
 
     Optional<Vote> findByVoterAndTargetPost(User voter, Form targetPost);
 
+    java.util.List<Vote> findAllByVoterAndTargetPostIn(User voter, java.util.Collection<Form> posts);
+
     long countByTargetPostAndValue(Form targetPost, int value);
 }

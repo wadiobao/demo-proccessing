@@ -22,4 +22,6 @@ public interface IFormService {
     StateResponse<Object> getAllFormFromTopic(Long topicId, Pageable pageable);
 
     StateResponse<Object> deleteForm(String formId);
+
+    StateResponse<Object> searchByKeyword(String keyword, org.springframework.data.domain.Pageable pageable);
 }

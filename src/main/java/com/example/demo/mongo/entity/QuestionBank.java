@@ -37,6 +37,7 @@ public class QuestionBank {
     @Indexed
     String questionHash; // MD5/SHA of question text for deduplication
 
+    @org.springframework.data.mongodb.core.index.TextIndexed
     Question questionData;
 
     @Builder.Default
