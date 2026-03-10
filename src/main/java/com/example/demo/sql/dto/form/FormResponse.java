@@ -25,4 +25,6 @@ public class FormResponse {
 	String topic;
 	int voteScore;
 	Integer userVoteValue; // 1, -1, or 0 (optional based on auth)
+	String contentId;
+	boolean hasQuiz;
 }

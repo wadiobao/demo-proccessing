@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,10 +68,35 @@ public class FormController {
 		return ResponseEntity.ok(formService.getAllForm(PageRequest.of(page, size)));
 	}
 
-	@PostMapping("/{topicid}/newform")
+	@GetMapping("/session")
+	public ResponseEntity<StateResponse<Object>> startSession() {
+		String username = SecurityContextHolder.getContext()
+				.getAuthentication().getName();
+		return ResponseEntity.ok(StateResponse.builder().result(formService.startSession(username)).build());
+	}
+
+	@DeleteMapping("/session/{sessionId}")
+	public ResponseEntity<StateResponse<Object>> discardSession(@PathVariable String sessionId) {
+		String username = SecurityContextHolder.getContext()
+				.getAuthentication().getName();
+		formService.discardSession(sessionId, username);
+		return ResponseEntity.ok(StateResponse.builder().message("Session discarded").build());
+	}
+
+	@PostMapping("/upload-questions")
+	public ResponseEntity<StateResponse<Object>> uploadQuestions(@RequestParam("file") MultipartFile file,
+			@RequestParam("sessionId") String sessionId) throws Exception {
+		String username = SecurityContextHolder.getContext()
+				.getAuthentication().getName();
+		bulkQuestionUploadService.stageQuestions(file, username, sessionId);
+		return ResponseEntity.ok(StateResponse.builder().message("Questions staged successfully").build());
+	}
+
+	@PostMapping(value = "/{topicid}/newform")
 	public ResponseEntity<StateResponse<Object>> newForm(@PathVariable("topicid") Long topicId,
-			@RequestBody FormRequest formRequest) {
-		return ResponseEntity.ok(formService.newForm(topicId, formRequest));
+			@RequestPart("formRequest") FormRequest formRequest,
+			@RequestParam(value = "sessionId", required = false) String sessionId) {
+		return ResponseEntity.ok(formService.newForm(topicId, formRequest, sessionId));
 	}
 
 	@GetMapping("/form/{formId}")
@@ -108,27 +134,6 @@ public class FormController {
 		return ResponseEntity.ok(StateResponse.builder().message("Vote recorded successfully").build());
 	}
 
-	/**
-	 * Identifies and uploads questions from any document to the community bank.
-	 * 
-	 * <p>
-	 * Sử dụng AI để tự động trích xuất các câu hỏi trắc nghiệm từ file người dùng
-	 * cung cấp (PDF, Word, Ảnh) và nạp vào ngân hàng câu hỏi chung.
-	 *
-	 * @param file  tài liệu chứa câu hỏi
-	 * @param topic chủ đề của các câu hỏi
-	 * @return kết quả nạp câu hỏi
-	 * @throws Exception nếu xử lý hoặc phân quyền thất bại
-	 */
-	@PostMapping("/upload-questions")
-	public ResponseEntity<StateResponse<Object>> bulkUpload(
-			@RequestParam("file") MultipartFile file) throws Exception {
-		String username = SecurityContextHolder.getContext().getAuthentication().getName();
-		return ResponseEntity.ok(StateResponse.builder()
-				.result(bulkQuestionUploadService.identifyAndUploadQuestions(file, username))
-				.message("AI identification and bulk upload completed")
-				.build());
-	}
 
 	/**
 	 * Search for discussions using Full-Text Search.

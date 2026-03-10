@@ -11,6 +11,7 @@ import com.example.demo.sql.entity.User;
 import com.example.demo.sql.entity.Vote;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
+import com.example.demo.mongo.service.QuestionBankService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class ReputationService {
 
     UserRepository userRepository;
     VoteRepository voteRepository;
+    QuestionBankService questionBankService;
 
     private static final int UPVOTE_VALUE = 5;
     private static final int DOWNVOTE_VALUE = -2;
@@ -70,6 +72,11 @@ public class ReputationService {
             int deltaRep = calculateReputationDelta(oldValue, value);
             updateUserReputation(author, deltaRep);
         });
+
+        // 4. Governance Threshold Check: If score > 100, promote linked quiz
+        if (post.getVoteScore() > 100 && post.getContentId() != null) {
+            questionBankService.promoteByContentId(post.getContentId());
+        }
     }
 
     private int calculateReputationDelta(int oldVal, int newVal) {

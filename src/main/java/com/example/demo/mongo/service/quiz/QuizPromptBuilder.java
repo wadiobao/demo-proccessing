@@ -77,8 +77,6 @@ public class QuizPromptBuilder {
          * @return identification prompt / prompt trích xuất câu hỏi
          */
         public String buildIdentificationPrompt(String pdfText) {
-                return Constants.QuestionFormat.IDENTIFY_INSTRUCTIONS
-                                + Constants.QuestionFormat.IDENTIFY_SCHEMA
-                                + "\n" + String.format(Locale.US, Constants.QuestionFormat.DOCUMENT_PROVIDED, pdfText);
+                return String.format(Locale.US, Constants.QuestionFormat.DOCUMENT_PROVIDED, pdfText);
         }
 }

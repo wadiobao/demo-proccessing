@@ -44,6 +44,9 @@ public class Form {
 	@Builder.Default
 	int voteScore = 0; // Read-optimized counter
 
+	String contentId; // Reference to MongoDB Content/Quiz
+	boolean hasQuiz; // Indicator for UI
+
 	@ElementCollection(fetch = FetchType.LAZY)
 	Set<String> tags;
 

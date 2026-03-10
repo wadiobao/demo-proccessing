@@ -83,6 +83,29 @@ public class QuestionBankService {
     }
 
     /**
+     * Officially verifies all questions linked to a contentId once community
+     * threshold is met.
+     */
+    @Transactional
+    public void promoteByContentId(String contentId) {
+        if (contentId == null || contentId.isEmpty())
+            return;
+
+        log.info("Promoting all questions for contentId {} to VERIFIED", contentId);
+        // Find all for content
+        java.util.List<QuestionBank> questions = questionBankRepository.findAll().stream()
+                .filter(q -> contentId.equals(q.getContentId()))
+                .toList();
+
+        for (QuestionBank q : questions) {
+            if ("AI_IDENTIFIED".equals(q.getVerificationStatus())) {
+                q.setVerificationStatus("VERIFIED");
+            }
+        }
+        questionBankRepository.saveAll(questions);
+    }
+
+    /**
      * Performs a text-based search across all community questions.
      */
     public org.springframework.data.domain.Page<QuestionBank> searchQuestions(String keyword,

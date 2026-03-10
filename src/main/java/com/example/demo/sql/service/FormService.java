@@ -27,19 +27,28 @@ import com.example.demo.sql.repository.CommentRepository;
 import com.example.demo.sql.repository.FormContentRepository;
 import com.example.demo.sql.repository.FormRepository;
 import com.example.demo.sql.repository.TopicRepository;
+import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
 import com.example.demo.sql.entity.User;
 import com.example.demo.sql.entity.Vote;
-
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import com.google.gson.Gson;
+import com.example.demo.sql.dto.form.FormSession;
+import com.example.demo.mongo.dto.question.Question;
+import com.example.demo.mongo.entity.QuestionBank;
+import java.util.UUID;
+import java.time.Duration;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j // Added annotation
 public class FormService implements IFormService {
 
 	private final FormRepository formRepository;
@@ -48,6 +57,12 @@ public class FormService implements IFormService {
 	private final TopicRepository topicRepository;
 	private final UserRepository userRepository;
 	private final VoteRepository voteRepository;
+	private final BulkQuestionUploadService bulkQuestionUploadService;
+	private final RedisTemplate<String, String> redisTemplate;
+	private final Gson gson;
+
+	private static final String SESSION_KEY_PREFIX = "form_session:";
+	private static final long SESSION_TTL_SECONDS = 900;
 
 	@Override
 	public StateResponse<Object> getAllForm(Pageable pageable) {
@@ -77,45 +92,116 @@ public class FormService implements IFormService {
 				.topic(form.getTopic().getTopic())
 				.voteScore(form.getVoteScore())
 				.userVoteValue(userVotes.getOrDefault(form.getFormId(), 0))
+				.contentId(form.getContentId())
+				.hasQuiz(form.isHasQuiz())
 				.build());
 	}
 
 	@Override
 	@Transactional
-	public StateResponse<Object> newForm(Long topicId, FormRequest formRequest) {
-		var contenxt = SecurityContextHolder.getContext();
-		String name = contenxt.getAuthentication().getName();
+	public StateResponse<Object> newForm(Long topicId, FormRequest formRequest, String sessionId) {
+		var context = SecurityContextHolder.getContext();
+		String name = context.getAuthentication().getName();
 
-		Set<String> tags = new HashSet<String>();
-		String[] words = formRequest.getTags().split(",");
-		for (String tag : words) {
-			tags.add(tag.trim());
+		Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new RuntimeException("Topic not found"));
+
+		String contentId = formRequest.getContentId();
+		boolean hasQuiz = contentId != null && !contentId.isEmpty();
+
+		// Handle staged quiz if sessionId is provided
+		if (sessionId != null && !sessionId.isEmpty()) {
+			String raw = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
+			if (raw != null) {
+				FormSession session = gson.fromJson(raw, FormSession.class);
+				// Security Check: Ensure owner matches
+				if (!name.equals(session.getOwnerName())) {
+					log.warn("User {} tried to commit session {} owned by {}", name, sessionId, session.getOwnerName());
+					throw new RuntimeException("Unauthorized: This session belongs to another user.");
+				}
+
+				List<Question> questions = session.getQuestions();
+				if (questions != null && !questions.isEmpty()) {
+					List<QuestionBank> saved = bulkQuestionUploadService.commitStagedQuestions(questions, name);
+					contentId = saved.get(0).getContentId();
+					hasQuiz = true;
+
+					// Cleanup session immediately
+					redisTemplate.delete(SESSION_KEY_PREFIX + sessionId);
+					log.info("Committed session {} for user {}. Created contentId: {}", sessionId, name, contentId);
+				}
+			}
 		}
-		Topic topic = topicRepository.findById(topicId).orElseThrow();
 
-		Form form = Form.builder().tacGia(name).tieuDe(formRequest.getTieuDe()).tags(tags).ngayDang(new Date())
-				.topic(topic).build();
+		Set<String> tags = new HashSet<>();
+		if (formRequest.getTags() != null) {
+			String[] words = formRequest.getTags().split(",");
+			for (String tag : words) {
+				tags.add(tag.trim());
+			}
+		}
+
+		Form form = Form.builder()
+				.tacGia(name)
+				.tieuDe(formRequest.getTieuDe())
+				.tags(tags)
+				.ngayDang(new Date())
+				.topic(topic)
+				.contentId(contentId)
+				.hasQuiz(hasQuiz)
+				.build();
 
 		FormContent content = new FormContent();
 		content.setForm(form);
 		content.setNoiDung(formRequest.getContent());
-
 		form.setContent(content);
 
 		contentRepository.save(content);
 		formRepository.save(form);
 
-		return StateResponse
-				.builder()
-				.result(FormResponse.builder().formId(form.getFormId()).tacGia(form.getTacGia())
+		return StateResponse.builder()
+				.result(FormResponse.builder()
+						.formId(form.getFormId())
+						.tacGia(form.getTacGia())
 						.tieuDe(form.getTieuDe())
-						.tags(form.getTags()).ngayDang(form.getNgayDang()).noiDung(content.getNoiDung())
+						.tags(form.getTags())
+						.ngayDang(form.getNgayDang())
+						.noiDung(content.getNoiDung())
 						.topic(topic.getTopic())
-						.voteScore(0) // New post
+						.voteScore(0)
 						.userVoteValue(0)
+						.contentId(contentId)
+						.hasQuiz(hasQuiz)
 						.build())
 				.build();
+	}
 
+	@Override
+	public String startSession(String username) {
+		String sessionId = UUID.randomUUID().toString();
+		FormSession session = FormSession.builder()
+				.sessionId(sessionId)
+				.ownerName(username)
+				.createdAt(System.currentTimeMillis())
+				.questions(new ArrayList<>())
+				.build();
+
+		redisTemplate.opsForValue().set(SESSION_KEY_PREFIX + sessionId, gson.toJson(session),
+				Duration.ofSeconds(SESSION_TTL_SECONDS));
+
+		log.info("Started form creation session {} for user {}", sessionId, username);
+		return sessionId;
+	}
+
+	@Override
+	public void discardSession(String sessionId, String username) {
+		String raw = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
+		if (raw != null) {
+			FormSession session = gson.fromJson(raw, FormSession.class);
+			if (username.equals(session.getOwnerName())) {
+				redisTemplate.delete(SESSION_KEY_PREFIX + sessionId);
+				log.info("Discarded session {} for user {}", sessionId, username);
+			}
+		}
 	}
 
 	@Override
@@ -150,7 +236,10 @@ public class FormService implements IFormService {
 				FormResponse formResponse = FormResponse.builder().formId(form.getFormId()).tacGia(form.getTacGia())
 						.tieuDe(form.getTieuDe())
 						.tags(form.getTags()).ngayDang(form.getNgayDang()).noiDung(form.getContent().getNoiDung())
-						.topic(topic.getTopic()).build();
+						.topic(topic.getTopic())
+						.hasQuiz(form.isHasQuiz())
+						.contentId(form.getContentId())
+						.build();
 				formResponses.add(formResponse);
 			}
 			return TopicResponse.builder().topicId(topic.getTopicId()).topic(topic.getTopic()).forms(formResponses)

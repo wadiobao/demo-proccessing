@@ -65,6 +65,9 @@ public class GeminiAIUtils {
     @Value("${demo.instruction.topic-tags.path}")
     private String topicAndTagsPath;
 
+    @Value("${demo.instruction.identify.path}")
+    private String identifyInstructionPath;
+
     @Autowired
     private HandleTextFromGeminiUtils handleTextFromGeminiUtils;
 
@@ -93,9 +96,16 @@ public class GeminiAIUtils {
      * @throws IOException for API communication failures / lỗi kết nối API
      */
     public GeminiResponse generateQuestionWithGemini(String userPrompt) throws IOException {
-        // load per-call to avoid shared mutable state between concurrent requests
-        // / load mỗi lần gọi để tránh chia sẻ trạng thái giữa các request đồng thời
-        List<String> instructions = loadInstruction(instructionPath);
+        return generateQuestionWithSystemInstruction(userPrompt, instructionPath);
+    }
+
+    public GeminiResponse generateIdentifiedQuestions(String userPrompt) throws IOException {
+        return generateQuestionWithSystemInstruction(userPrompt, identifyInstructionPath);
+    }
+
+    private GeminiResponse generateQuestionWithSystemInstruction(String userPrompt, String sysInstructionPath)
+            throws IOException {
+        List<String> instructions = loadInstruction(sysInstructionPath);
         Client client = new Client.Builder().apiKey(geminiApiKey).build();
         List<Part> parts = new ArrayList<Part>();
         parts.add(Part.builder().text(instructions.toString()).build());
@@ -106,8 +116,6 @@ public class GeminiAIUtils {
                 .responseMimeType("application/json")
                 .build();
 
-        // sanitize user input to prevent instruction override
-        // / lọc nội dung người dùng để ngăn chặn ghi đè tập lệnh hệ thống
         String sanitizedPrompt = promptSanitizer.sanitize(userPrompt);
 
         GenerateContentResponse response = client.models.generateContent(MODEL, sanitizedPrompt, config);

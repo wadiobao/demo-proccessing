@@ -9,7 +9,11 @@ import com.example.demo.sql.dto.form.TopicRequest;
 public interface IFormService {
     StateResponse<Object> getAllForm(Pageable pageable);
 
-    StateResponse<Object> newForm(Long topicId, FormRequest formRequest);
+    StateResponse<Object> newForm(Long topicId, FormRequest formRequest, String sessionId);
+
+    String startSession(String username);
+
+    void discardSession(String sessionId, String username);
 
     StateResponse<Object> getFormComment(String formId, Pageable pageable);
 

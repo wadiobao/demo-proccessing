@@ -40,13 +40,51 @@ public class BulkQuestionUploadService {
         private final DocumentProcessorContext documentProcessorFactory;
         private final QuizPromptBuilder promptBuilder;
         private final GeminiAIUtils geminiAIService;
+        private final org.springframework.data.redis.core.RedisTemplate<String, String> redisTemplate;
+        private final com.google.gson.Gson gson;
+
+        private static final String SESSION_KEY_PREFIX = "form_session:";
+        private static final long SESSION_TTL_SECONDS = 900; // 15 minutes
+
+        /**
+         * Extracts questions from a document and stages them in Redis under a
+         * sessionId.
+         */
+        public void stageQuestions(MultipartFile file, String username, String sessionId) throws Exception {
+                // 1. Level Check
+                User user = userRepository.findByUserName(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                if (user.getCurrentTier() == Role.RESTRICTED) {
+                        throw new RuntimeException("User is restricted from uploading content.");
+                }
+
+                // 2. AI Extraction
+                String extractedText = documentProcessorFactory.getProcessor(file).extractText(file);
+                String prompt = promptBuilder.buildIdentificationPrompt(extractedText);
+                GeminiResponse aiResponse = geminiAIService.generateIdentifiedQuestions(prompt);
+
+                // 3. Stage in Redis (Overwrite if exists)
+                com.example.demo.sql.dto.form.FormSession session = com.example.demo.sql.dto.form.FormSession.builder()
+                                .sessionId(sessionId)
+                                .ownerName(username)
+                                .questions(aiResponse.getQuestions())
+                                .createdAt(System.currentTimeMillis())
+                                .build();
+
+                String json = gson.toJson(session);
+                redisTemplate.opsForValue().set(SESSION_KEY_PREFIX + sessionId, json,
+                                java.time.Duration.ofSeconds(SESSION_TTL_SECONDS));
+
+                log.info("Staged {} questions in Redis for session {} (User: {})",
+                                aiResponse.getQuestions().size(), sessionId, username);
+        }
 
         /**
          * Identifies questions from a document using AI and saves them to the bank.
          * 
          * @param file     source document / tài liệu chứa câu hỏi
          * @param username contributor's username / tên người đóng góp
-         * @param topic    optional topic filter / chủ đề (tùy chọn)
          * @return list of ingested questions / danh sách câu hỏi đã được nạp
          * @throws Exception if processing or permissions fail / lỗi xử lý hoặc quyền
          *                   hạn
@@ -67,8 +105,9 @@ public class BulkQuestionUploadService {
                 // 2. Build the specialized Identification prompt
                 String prompt = promptBuilder.buildIdentificationPrompt(extractedText);
 
-                // 3. Ask AI to find and structure existing questions
-                GeminiResponse aiResponse = geminiAIService.generateQuestionWithGemini(prompt);
+                // 3. Ask AI to find and structure existing questions (uses specific identify
+                // instruction file)
+                GeminiResponse aiResponse = geminiAIService.generateIdentifiedQuestions(prompt);
 
                 // 4. Transform and Persist to Community Bank
                 List<QuestionBank> bankEntries = new java.util.ArrayList<>();
@@ -87,5 +126,22 @@ public class BulkQuestionUploadService {
                                 saved.size(), file.getOriginalFilename(), username);
 
                 return saved;
+        }
+
+        /**
+         * Commits a list of questions to the permanent bank.
+         */
+        public List<QuestionBank> commitStagedQuestions(List<Question> questions, String username) {
+                List<QuestionBank> bankEntries = new java.util.ArrayList<>();
+                for (Question question : questions) {
+                        bankEntries.add(QuestionBank.builder()
+                                        .contributorId(username)
+                                        .isCommunitySourced(true)
+                                        .verificationStatus("AI_IDENTIFIED")
+                                        .questionData(question)
+                                        .difficulty(0.0)
+                                        .build());
+                }
+                return questionBankRepository.saveAll(bankEntries);
         }
 }
