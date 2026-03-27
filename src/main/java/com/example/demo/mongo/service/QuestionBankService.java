@@ -4,10 +4,13 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.enums.Role;
+import com.example.demo.enums.VerificationStatus;
 import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.sql.entity.User;
@@ -63,7 +66,6 @@ public class QuestionBankService {
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
         existing.setQuestionData(updatedData.getQuestionData());
-        existing.setVerificationStatus("COMMUNITY_EDITED");
         existing.setContributorId(username);
 
         QuestionBank saved = questionBankRepository.save(existing);
@@ -88,8 +90,9 @@ public class QuestionBankService {
      */
     @Transactional
     public void promoteByContentId(String contentId) {
-        if (contentId == null || contentId.isEmpty())
-            return;
+        if (contentId == null || contentId.isEmpty()) {
+			return;
+		}
 
         log.info("Promoting all questions for contentId {} to VERIFIED", contentId);
         // Find all for content
@@ -98,8 +101,8 @@ public class QuestionBankService {
                 .toList();
 
         for (QuestionBank q : questions) {
-            if ("AI_IDENTIFIED".equals(q.getVerificationStatus())) {
-                q.setVerificationStatus("VERIFIED");
+            if (q.getVerificationStatus().equals(VerificationStatus.REVIEWING)) {
+                q.setVerificationStatus(VerificationStatus.VERIFIED);
             }
         }
         questionBankRepository.saveAll(questions);
@@ -108,8 +111,8 @@ public class QuestionBankService {
     /**
      * Performs a text-based search across all community questions.
      */
-    public org.springframework.data.domain.Page<QuestionBank> searchQuestions(String keyword,
-            org.springframework.data.domain.Pageable pageable) {
+    public Page<QuestionBank> searchQuestions(String keyword,
+            Pageable pageable) {
         return questionBankRepository.searchByKeyword(keyword, pageable);
     }
 }

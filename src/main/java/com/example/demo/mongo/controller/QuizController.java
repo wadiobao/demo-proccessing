@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.dto.StateResponse;
 import com.example.demo.mongo.dto.quiz.QuizConfig;
 import com.example.demo.mongo.dto.quiz.QuizSubmissionRequest;
+import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.mongo.service.iservice.IQuizAnswerService;
 import com.example.demo.mongo.service.iservice.IQuizService;
 import com.example.demo.mongo.service.iservice.IUserAnalyticsService;
@@ -37,6 +38,7 @@ public class QuizController {
     IQuizService quizService;
     IQuizAnswerService quizAnswerService;
     IUserAnalyticsService userAnalyticsService;
+    BulkQuestionUploadService bulkQuestionUploadService;
 
     /**
      * Generates a quiz for public (unauthenticated) users.
@@ -156,4 +158,14 @@ public class QuizController {
         StateResponse<Object> response = userAnalyticsService.getOverviewStats(username);
         return ResponseEntity.ok(response);
     }
+    
+    
+    @PostMapping("/analyze-questions")
+	public ResponseEntity<StateResponse<Object>> uploadQuestions(@RequestParam("file") MultipartFile file,
+			@RequestParam("sessionId") String sessionId) throws Exception {
+		String username = SecurityContextHolder.getContext()
+				.getAuthentication().getName();
+		bulkQuestionUploadService.stageQuestions(file, username, sessionId);
+		return ResponseEntity.ok(StateResponse.builder().message("Questions staged successfully").build());
+	}
 }

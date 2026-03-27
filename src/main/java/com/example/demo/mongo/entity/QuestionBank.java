@@ -3,12 +3,14 @@ package com.example.demo.mongo.entity;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.example.demo.enums.VerificationStatus;
 import com.example.demo.mongo.dto.question.Question;
 
-import org.springframework.data.annotation.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,7 +39,7 @@ public class QuestionBank {
     @Indexed
     String questionHash; // MD5/SHA of question text for deduplication
 
-    @org.springframework.data.mongodb.core.index.TextIndexed
+    @TextIndexed
     Question questionData;
 
     @Builder.Default
@@ -56,7 +58,7 @@ public class QuestionBank {
     boolean isCommunitySourced = false;
 
     @Builder.Default
-    String verificationStatus = "VERIFIED"; // VERIFIED, COMMUNITY, DRAFT
+    VerificationStatus verificationStatus =  VerificationStatus.SYSTEM;
 
     @CreatedDate
     LocalDateTime createdAt;

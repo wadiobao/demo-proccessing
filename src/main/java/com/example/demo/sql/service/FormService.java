@@ -1,49 +1,50 @@
 package com.example.demo.sql.service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.mongo.dto.question.Question;
+import com.example.demo.mongo.entity.QuestionBank;
+import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.dto.form.CommentResponse;
 import com.example.demo.sql.dto.form.FormRequest;
 import com.example.demo.sql.dto.form.FormResponse;
+import com.example.demo.sql.dto.form.FormSession;
 import com.example.demo.sql.dto.form.TopicRequest;
 import com.example.demo.sql.dto.form.TopicResponse;
-import com.example.demo.sql.service.iservice.IFormService;
 import com.example.demo.sql.entity.Comment;
 import com.example.demo.sql.entity.Form;
 import com.example.demo.sql.entity.FormContent;
 import com.example.demo.sql.entity.Topic;
+import com.example.demo.sql.entity.User;
+import com.example.demo.sql.entity.Vote;
 import com.example.demo.sql.repository.CommentRepository;
 import com.example.demo.sql.repository.FormContentRepository;
 import com.example.demo.sql.repository.FormRepository;
 import com.example.demo.sql.repository.TopicRepository;
-import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
-import com.example.demo.sql.entity.User;
-import com.example.demo.sql.entity.Vote;
+import com.example.demo.sql.service.iservice.IFormService;
+import com.google.gson.Gson;
+
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
-import com.google.gson.Gson;
-import com.example.demo.sql.dto.form.FormSession;
-import com.example.demo.mongo.dto.question.Question;
-import com.example.demo.mongo.entity.QuestionBank;
-import java.util.UUID;
-import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -108,12 +109,10 @@ public class FormService implements IFormService {
 		String contentId = formRequest.getContentId();
 		boolean hasQuiz = contentId != null && !contentId.isEmpty();
 
-		// Handle staged quiz if sessionId is provided
 		if (sessionId != null && !sessionId.isEmpty()) {
 			String raw = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
 			if (raw != null) {
 				FormSession session = gson.fromJson(raw, FormSession.class);
-				// Security Check: Ensure owner matches
 				if (!name.equals(session.getOwnerName())) {
 					log.warn("User {} tried to commit session {} owned by {}", name, sessionId, session.getOwnerName());
 					throw new RuntimeException("Unauthorized: This session belongs to another user.");
@@ -125,7 +124,6 @@ public class FormService implements IFormService {
 					contentId = saved.get(0).getContentId();
 					hasQuiz = true;
 
-					// Cleanup session immediately
 					redisTemplate.delete(SESSION_KEY_PREFIX + sessionId);
 					log.info("Committed session {} for user {}. Created contentId: {}", sessionId, name, contentId);
 				}

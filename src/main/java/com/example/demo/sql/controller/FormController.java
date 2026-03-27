@@ -88,8 +88,10 @@ public class FormController {
 			@RequestParam("sessionId") String sessionId) throws Exception {
 		String username = SecurityContextHolder.getContext()
 				.getAuthentication().getName();
-		bulkQuestionUploadService.stageQuestions(file, username, sessionId);
-		return ResponseEntity.ok(StateResponse.builder().message("Questions staged successfully").build());
+		
+		return ResponseEntity.ok(StateResponse.builder()
+				.result(bulkQuestionUploadService.stageQuestions(file, username, sessionId))
+				.message("Questions staged successfully").build());
 	}
 
 	@PostMapping(value = "/{topicid}/newform")
