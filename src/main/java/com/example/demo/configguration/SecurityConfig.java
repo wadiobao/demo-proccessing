@@ -32,6 +32,9 @@ public class SecurityConfig {
 	private final String[] FORM_END_POINTS = { "/api/v1/discussion/**" };
 	private final String[] FILE_END_POINTS = { "/api/v1/mail/donate", "/api/v1/mail/send-bug" };
 
+	// Kubernetes liveness/readiness probes must reach these without a token
+	private final String[] ACTUATOR_END_POINTS = { "/actuator/health", "/actuator/info" };
+
 	@Value("${app.cors.allowed-origins}")
 	private String cors;
 
@@ -51,6 +54,8 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.POST, FORM_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.POST, FILE_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.GET, FILE_END_POINTS).permitAll()
+				// allow K8s liveness/readiness probes without credentials
+				.requestMatchers(HttpMethod.GET, ACTUATOR_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole(Role.ADMIN.name())// hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());
 

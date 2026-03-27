@@ -1,0 +1,165 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      # Pull secret for private registry (e.g. OCIR, Docker Hub private)
+      # Create with: kubectl create secret docker-registry ocirsecret ...
+      imagePullSecrets:
+        - name: ocirsecret
+      containers:
+        - name: demo
+          # Replace with your actual image path from your container registry
+          # Examples:
+          #   OCIR  : ap-singaporel-1.ocir.io/<tenancy>/<repo>:<tag>
+          #   Docker: docker.io/<username>/<repo>:<tag>
+          image: YOUR_REGISTRY/YOUR_IMAGE:YOUR_TAG
+          ports:
+            - containerPort: 8080
+          env:
+            # --- All sensitive values pulled from Kubernetes Secret ---
+            # See k8s/secret.example.yaml for the full list of required keys.
+            # Gemini AI
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: GEMINI_API_KEY
+            - name: GEMINI_API_KEY_IMAGE
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: GEMINI_API_KEY_IMAGE
+            - name: GEMINI_API_KEY_TOPIC
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: GEMINI_API_KEY_TOPIC
+            # MySQL
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: DB_URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: DB_PASSWORD
+            - name: DB_DRIVER
+              value: "com.mysql.cj.jdbc.Driver"
+            # MongoDB
+            - name: MONGODB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: MONGODB_DATABASE
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: MONGODB_URI
+            # Cloudinary
+            - name: CLOUDINARY_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: CLOUDINARY_WEBHOOK_SECRET
+            - name: CLOUDINARY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: CLOUDINARY_API_KEY
+            - name: CLOUDINARY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: CLOUDINARY_API_SECRET
+            - name: CLOUDINARY_CLOUD_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: CLOUDINARY_CLOUD_NAME
+            # Redis
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: REDIS_PORT
+            - name: REDIS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: REDIS_USERNAME
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: REDIS_PASSWORD
+            # Mail
+            - name: MAIL_HOST
+              value: "smtp.gmail.com"
+            - name: MAIL_PORT
+              value: "587"
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: MAIL_USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: MAIL_PASSWORD
+            # Security & JWT
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: JWT_SECRET_KEY
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secrets
+                  key: CORS_ALLOWED_ORIGINS
+          resources:
+            # Sized for Spring Boot + Tesseract OCR workload
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15

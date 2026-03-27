@@ -38,6 +38,10 @@ build/
 # Environment variables
 .env
 
+# Kubernetes manifests with real config — only commit *.example.yaml templates
+k8s/*.yaml
+!k8s/*.example.yaml
+
 # Compiled output
 bin/
 
@@ -54,4 +58,3 @@ Thumbs.db
 *.txt
 
 .agents
-
