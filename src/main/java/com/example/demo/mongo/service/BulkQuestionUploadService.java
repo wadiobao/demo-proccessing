@@ -89,19 +89,72 @@ public class BulkQuestionUploadService {
 
         /**
          * Commits a list of questions to the permanent bank.
+         *
+         * @param questions the list of questions to save
+         * @param username  the contributor's username
+         * @param contentId the shared content ID for this set of questions
+         * @return saved list of QuestionBank entities
          */
-        public List<QuestionBank> commitStagedQuestions(List<Question> questions, String username) {
+        public List<QuestionBank> commitStagedQuestions(List<Question> questions, String username, String contentId) {
                 List<QuestionBank> bankEntries = new ArrayList<>();
                 for (Question question : questions) {
                         bankEntries.add(QuestionBank.builder()
                                         .contributorId(username)
+                                        .contentId(contentId)
                                         .isCommunitySourced(true)
                                         .verificationStatus(VerificationStatus.REVIEWING)
                                         .questionData(question)
                                         .difficulty(0.0)
                                         .build());
                 }
-                
+
                 return questionBankRepository.saveAll(bankEntries);
+        }
+
+        /**
+         * Retrieves staged questions from Redis for a given sessionId.
+         *
+         * @param sessionId the unique session identifier
+         * @return list of questions currently staged
+         */
+        public List<Question> getStagedQuestions(String sessionId) {
+                String json = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
+                if (json == null) {
+                        throw new RuntimeException("Session not found or expired.");
+                }
+
+                FormSession session = gson.fromJson(json, FormSession.class);
+                return session.getQuestions();
+        }
+
+        /**
+         * Updates the list of staged questions in Redis.
+         *
+         * @param sessionId the unique session identifier
+         * @param updatedQuestions the new list of questions
+         * @param username the user performing the update
+         */
+        public void updateStagedQuestions(String sessionId, List<Question> updatedQuestions, String username) {
+                String json = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
+                if (json == null) {
+                        throw new RuntimeException("Session not found or expired.");
+                }
+
+                FormSession session = gson.fromJson(json, FormSession.class);
+                
+                // Security check: ensure only the owner can update
+                if (!session.getOwnerName().equals(username)) {
+                        throw new RuntimeException("Unauthorized: You do not own this session.");
+                }
+
+                session.setQuestions(updatedQuestions);
+                String updatedJson = gson.toJson(session);
+                
+                // Update in Redis, preserving remaining TTL if possible (resetting to 15m for simplicity here as per original design)
+                redisTemplate.opsForValue().set(SESSION_KEY_PREFIX + sessionId, updatedJson,
+                                Duration.ofSeconds(SESSION_TTL_SECONDS));
+
+                log.info("Updated {} questions in Redis for session {} (User: {})",
+                                updatedQuestions.size(), sessionId, username);
         }
 }

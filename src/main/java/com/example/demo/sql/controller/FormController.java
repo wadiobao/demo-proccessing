@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -99,6 +100,29 @@ public class FormController {
 			@RequestPart("formRequest") FormRequest formRequest,
 			@RequestParam(value = "sessionId", required = false) String sessionId) {
 		return ResponseEntity.ok(formService.newForm(topicId, formRequest, sessionId));
+	}
+
+	/**
+	 * Gets all staged questions for a session.
+	 */
+	@GetMapping("/session/{sessionId}/questions")
+	public ResponseEntity<StateResponse<Object>> getStagedQuestions(@PathVariable String sessionId) {
+		return ResponseEntity.ok(StateResponse.builder()
+				.result(bulkQuestionUploadService.getStagedQuestions(sessionId))
+				.build());
+	}
+
+	/**
+	 * Updates staged questions for a session.
+	 */
+	@PutMapping("/session/{sessionId}/questions")
+	public ResponseEntity<StateResponse<Object>> updateStagedQuestions(@PathVariable String sessionId,
+			@RequestBody java.util.List<com.example.demo.mongo.dto.question.Question> questions) {
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		bulkQuestionUploadService.updateStagedQuestions(sessionId, questions, username);
+		return ResponseEntity.ok(StateResponse.builder()
+				.message("Questions updated successfully")
+				.build());
 	}
 
 	@GetMapping("/form/{formId}")

@@ -20,6 +20,7 @@ import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.service.BulkQuestionUploadService;
 import com.example.demo.sql.dto.form.CommentResponse;
+import com.example.demo.sql.dto.form.FormDetailResponse;
 import com.example.demo.sql.dto.form.FormRequest;
 import com.example.demo.sql.dto.form.FormResponse;
 import com.example.demo.sql.dto.form.FormSession;
@@ -37,6 +38,7 @@ import com.example.demo.sql.repository.FormRepository;
 import com.example.demo.sql.repository.TopicRepository;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
+import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.sql.service.iservice.IFormService;
 import com.google.gson.Gson;
 
@@ -58,6 +60,7 @@ public class FormService implements IFormService {
 	private final TopicRepository topicRepository;
 	private final UserRepository userRepository;
 	private final VoteRepository voteRepository;
+	private final QuestionBankRepository questionBankRepository;
 	private final BulkQuestionUploadService bulkQuestionUploadService;
 	private final RedisTemplate<String, String> redisTemplate;
 	private final Gson gson;
@@ -120,8 +123,12 @@ public class FormService implements IFormService {
 
 				List<Question> questions = session.getQuestions();
 				if (questions != null && !questions.isEmpty()) {
-					List<QuestionBank> saved = bulkQuestionUploadService.commitStagedQuestions(questions, name);
-					contentId = saved.get(0).getContentId();
+					// Prepare contentId: priority to existing one, otherwise generate new
+					if (contentId == null || contentId.isEmpty()) {
+						contentId = UUID.randomUUID().toString();
+					}
+					
+					bulkQuestionUploadService.commitStagedQuestions(questions, name, contentId);
 					hasQuiz = true;
 
 					redisTemplate.delete(SESSION_KEY_PREFIX + sessionId);
@@ -205,6 +212,17 @@ public class FormService implements IFormService {
 	@Override
 	@Transactional
 	public StateResponse<Object> getFormComment(String formId, Pageable pageable) {
+		Form form = formRepository.findById(formId)
+				.orElseThrow(() -> new RuntimeException("Form not found"));
+
+		List<Question> questions = new ArrayList<>();
+		if (form.isHasQuiz() && form.getContentId() != null) {
+			List<QuestionBank> bankEntries = questionBankRepository.findAllByContentId(form.getContentId());
+			for (QuestionBank entry : bankEntries) {
+				questions.add(entry.getQuestionData());
+			}
+		}
+
 		Page<Comment> comments = commentRepository.findByForm_FormId(formId, pageable);
 		Page<CommentResponse> responses = comments.map(comment -> CommentResponse.builder()
 				.id(comment.getCommenttId())
@@ -212,7 +230,13 @@ public class FormService implements IFormService {
 				.noiDung(comment.getNoiDung())
 				.ngayComment(comment.getNgayComment())
 				.build());
-		return StateResponse.builder().result(responses).build();
+
+		FormDetailResponse detail = FormDetailResponse.builder()
+				.questions(questions)
+				.comments(responses)
+				.build();
+
+		return StateResponse.builder().result(detail).build();
 	}
 
 	@Override
