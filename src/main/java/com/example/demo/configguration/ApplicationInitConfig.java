@@ -1,18 +1,16 @@
 package com.example.demo.configguration;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.demo.enums.Role;
-import com.example.demo.sql.entity.User;
+import com.example.demo.sql.entity.Admin;
+import com.example.demo.sql.entity.Role;
+import com.example.demo.sql.repository.RoleRepository;
 import com.example.demo.sql.repository.UserRepository;
 
 import lombok.AccessLevel;
@@ -29,23 +27,24 @@ public class ApplicationInitConfig {
 	PasswordEncoder encoder;
 
 	@Bean
-	ApplicationRunner applicationRunner(UserRepository repository) {
+	ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
 		return args -> {
-			if(repository.findByUserName("admin").isEmpty()) {
-				Set<String> roles = new HashSet<String>();
-				roles.add(Role.ADMIN.name());
-				
-				User user = User.builder()
+			// Get ADMIN role assuming Flyway has already inserted it
+			Role adminRole = roleRepository.findById("ADMIN").orElseThrow(() -> new RuntimeException("ADMIN role not found in database. Check Flyway migrations."));
+
+			if(userRepository.findByUserName("admin").isEmpty()) {
+				Admin admin = Admin.builder()
 								.userName("admin")
 								.password(encoder.encode("admin"))
 								.email("dumabao69@gmail.com")
 								.date(new Date())
-								.roles(roles)
+								.roles(Set.of(adminRole))
+								.employeeId("SYS-ADMIN-001")
+								.department("IT")
 								.build();
 						
-				repository.save(user);
-				
-				log.warn("created default admin");
+				userRepository.save(admin);
+				log.warn("created default admin specializing in Inheritance structure");
 			}
 		};
 	}

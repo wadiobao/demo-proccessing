@@ -28,6 +28,8 @@ public enum ErrorCode {
 	INVALID_TOKEN(2003, "Token không hợp lệ", HttpStatus.UNAUTHORIZED),
 	TOKEN_EXPIRED(2004, "Token đã hết hạn", HttpStatus.UNAUTHORIZED),
 	COOKIE_NOT_FOUND(2005, "Không tìm thấy cookie xác thực", HttpStatus.BAD_REQUEST),
+	INVALID_OTP(2006, "Mã OTP không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+
 
 	// 3xxx: User & Account Errors
 	USER_EXISTED(3001, "Người dùng đã tồn tại", HttpStatus.BAD_REQUEST),

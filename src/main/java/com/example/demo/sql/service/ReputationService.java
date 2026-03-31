@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.enums.Role;
 import com.example.demo.sql.entity.Form;
+import com.example.demo.sql.entity.NormalUser;
+import com.example.demo.sql.entity.Tier;
 import com.example.demo.sql.entity.User;
 import com.example.demo.sql.entity.Vote;
+import com.example.demo.sql.repository.TierRepository;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
 import com.example.demo.mongo.service.QuestionBankService;
@@ -29,6 +31,7 @@ public class ReputationService {
 
     UserRepository userRepository;
     VoteRepository voteRepository;
+    TierRepository tierRepository;
     QuestionBankService questionBankService;
 
     private static final int UPVOTE_VALUE = 5;
@@ -86,27 +89,29 @@ public class ReputationService {
     }
 
     private void updateUserReputation(User user, int delta) {
-        int newScore = user.getReputationScore() + delta;
-        user.setReputationScore(newScore);
+        if (user instanceof NormalUser normalUser) {
+            int newScore = normalUser.getReputationScore() + delta;
+            normalUser.setReputationScore(newScore);
 
-        // Dynamic Role Promotion/Demotion
-        Role newTier = determineTier(newScore);
-        if (newTier != user.getCurrentTier()) {
-            log.info("User {} changed tier: {} -> {}", user.getUserName(), user.getCurrentTier(), newTier);
-            user.setCurrentTier(newTier);
+            // Dynamic Tier Promotion/Demotion
+            Tier newTier = determineTier(newScore);
+            Tier currentTier = normalUser.getCurrentTier();
+            
+            if (currentTier == null || !newTier.getId().equals(currentTier.getId())) {
+                log.info("User {} changed tier: {} -> {}", normalUser.getUserName(), 
+                    currentTier != null ? currentTier.getId() : "NONE", newTier.getId());
+                normalUser.setCurrentTier(newTier);
+            }
+            userRepository.save(normalUser);
         }
-
-        userRepository.save(user);
     }
 
-    private Role determineTier(int score) {
-        if (score < 0)
-            return Role.RESTRICTED;
-        if (score >= 2000)
-            return Role.MODERATOR;
-        if (score >= 500)
-            return Role.EXPERT;
-        return Role.CONTRIBUTOR;
+    private Tier determineTier(int score) {
+        return tierRepository.findAll().stream()
+                .filter(t -> score >= t.getMinReputation())
+                .sorted((t1, t2) -> Integer.compare(t2.getMinReputation(), t1.getMinReputation()))
+                .findFirst()
+                .orElseGet(() -> tierRepository.findById("CONTRIBUTOR").orElse(null));
     }
 
     /**
@@ -115,12 +120,14 @@ public class ReputationService {
     @Transactional
     public void performMonthlyReset() {
         log.info("Starting monthly reputation reset...");
+        Tier contributorTier = tierRepository.findById("CONTRIBUTOR").orElse(null);
+        
         userRepository.findAll().forEach(user -> {
-            if (user.getReputationScore() < 0) {
-                user.setReputationScore(0);
-                user.setCurrentTier(Role.CONTRIBUTOR);
-                user.setLastReputationReset(LocalDateTime.now());
-                userRepository.save(user);
+            if (user instanceof NormalUser normalUser && normalUser.getReputationScore() < 0) {
+                normalUser.setReputationScore(0);
+                normalUser.setCurrentTier(contributorTier);
+                normalUser.setLastReputationReset(LocalDateTime.now());
+                userRepository.save(normalUser);
             }
         });
     }

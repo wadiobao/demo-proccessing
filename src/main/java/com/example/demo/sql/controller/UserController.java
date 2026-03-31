@@ -86,7 +86,7 @@ public class UserController {
 
 	@PostMapping("/reset-password")
 	public ResponseEntity<StateResponse<Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-		mailService.verifyOtp(request.getEmail(), request.getOtp());
+		mailService.verifyOtpForgotPassword(request.getEmail(), request.getOtp());
 		service.resetPassword(request);
 		return ResponseEntity.ok(StateResponse.builder().message("Mật khẩu đã được đặt lại thành công").build());
 	}

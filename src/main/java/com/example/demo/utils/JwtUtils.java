@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.sql.entity.User;
+import com.example.demo.sql.entity.NormalUser;
 import com.example.demo.sql.repository.InvalidatedTokenRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -108,11 +109,22 @@ public class JwtUtils {
 	public String buildScope(User user) {
 		StringJoiner joiner = new StringJoiner(" ");
 		if (!CollectionUtils.isEmpty(user.getRoles())) {
-			user.getRoles().forEach(r -> joiner.add(r));
+			user.getRoles().forEach(r -> {
+				joiner.add("ROLE_" + r.getName());
+				if (!org.springframework.util.CollectionUtils.isEmpty(r.getPermissions())) {
+					r.getPermissions().forEach(p -> joiner.add(p.getName()));
+				}
+			});
+		}
+
+		if (user instanceof NormalUser normalUser && normalUser.getCurrentTier() != null) {
+			joiner.add("TIER_" + normalUser.getCurrentTier().getId());
+			if (!org.springframework.util.CollectionUtils.isEmpty(normalUser.getCurrentTier().getPermissions())) {
+				normalUser.getCurrentTier().getPermissions().forEach(p -> joiner.add(p.getName()));
+			}
 		}
 
 		return joiner.toString();
-
 	}
 
 	/**

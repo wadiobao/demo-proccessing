@@ -7,7 +7,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.enums.Role;
 import com.example.demo.enums.VerificationStatus;
 import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.entity.QuestionBank;
@@ -17,6 +16,7 @@ import com.example.demo.mongo.service.quiz.GeminiAIUtils.GeminiResponse;
 import com.example.demo.mongo.service.quiz.QuizPromptBuilder;
 import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
 import com.example.demo.sql.dto.form.FormSession;
+import com.example.demo.sql.entity.NormalUser;
 import com.example.demo.sql.entity.User;
 import com.example.demo.sql.repository.UserRepository;
 
@@ -59,7 +59,8 @@ public class BulkQuestionUploadService {
                 User user = userRepository.findByUserName(username)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-                if (user.getCurrentTier() == Role.RESTRICTED) {
+                if (user instanceof NormalUser normalUser && normalUser.getCurrentTier() != null 
+                    && "RESTRICTED".equals(normalUser.getCurrentTier().getId())) {
                         throw new RuntimeException("User is restricted from uploading content.");
                 }
 

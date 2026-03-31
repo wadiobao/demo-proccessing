@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.enums.ErrorCode;
-import com.example.demo.enums.Role;
 import com.example.demo.exception.HandleException;
 import com.example.demo.mongo.entity.ArchivedQuestion;
 import com.example.demo.mongo.service.iservice.IArchivedQuestionService;
@@ -43,7 +42,7 @@ public class ArchivedQuestionController {
 		for (GrantedAuthority grantedAuthority : role) {
 			roles.add(grantedAuthority.getAuthority());
 		}
-		if(!author.equals(username) && !roles.contains("ROLE_"+Role.ADMIN.name())) {
+		if(!author.equals(username) && !roles.contains("ROLE_ADMIN")) {
 			throw new HandleException(ErrorCode.UNAUTHORIZED);
 		}
 		return iPdfStoreService.findByAuthor(author);

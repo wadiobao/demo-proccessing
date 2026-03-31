@@ -9,10 +9,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.enums.Role;
 import com.example.demo.enums.VerificationStatus;
 import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.repository.QuestionBankRepository;
+import com.example.demo.sql.entity.Admin;
+import com.example.demo.sql.entity.NormalUser;
+import com.example.demo.sql.entity.Tier;
 import com.example.demo.sql.entity.User;
 import com.example.demo.sql.repository.UserRepository;
 
@@ -48,17 +50,23 @@ public class QuestionBankService {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 1. Level Check
-        if (user.getCurrentTier() != Role.EXPERT && user.getCurrentTier() != Role.MODERATOR
-                && user.getCurrentTier() != Role.ADMIN) {
-            throw new RuntimeException("Insufficient reputation to edit the Question Bank.");
-        }
-
-        // 2. Quota Check
-        checkAndResetQuota();
         int currentEdits = dailyEditCounts.getOrDefault(username, 0);
-        if (currentEdits >= MAX_DAILY_EDITS && user.getCurrentTier() != Role.ADMIN) {
-            throw new RuntimeException("Daily edit quota reached (max " + MAX_DAILY_EDITS + ").");
+        // 1. Level & Quota Check
+        if (user instanceof NormalUser normalUser) {
+            Tier currentTier = normalUser.getCurrentTier();
+            String tierId = (currentTier != null) ? currentTier.getId() : "";
+            
+            if (!"EXPERT".equals(tierId) && !"MODERATOR".equals(tierId)) {
+                throw new RuntimeException("Insufficient reputation to edit the Question Bank.");
+            }
+            
+            checkAndResetQuota();
+            if (currentEdits >= MAX_DAILY_EDITS) {
+                throw new RuntimeException("Daily edit quota reached (max " + MAX_DAILY_EDITS + ").");
+            }
+            dailyEditCounts.put(username, currentEdits + 1);
+        } else if (!(user instanceof Admin)) {
+             throw new RuntimeException("Unauthorized to edit the Question Bank.");
         }
 
         // 3. Perform Edit
@@ -71,7 +79,6 @@ public class QuestionBankService {
         QuestionBank saved = questionBankRepository.save(existing);
 
         // 4. Update Quota
-        dailyEditCounts.put(username, currentEdits + 1);
         log.info("User {} edited question {}. Daily count: {}", username, questionId, currentEdits + 1);
 
         return saved;

@@ -18,7 +18,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 
-import com.example.demo.enums.Role;
 
 @Configuration
 @EnableWebSecurity
@@ -56,7 +55,7 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET, FILE_END_POINTS).permitAll()
 				// allow K8s liveness/readiness probes without credentials
 				.requestMatchers(HttpMethod.GET, ACTUATOR_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole(Role.ADMIN.name())// hasAuthority("ROLE_ADMIN")
+				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN")// hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());
 
 		http.oauth2ResourceServer(oauth2 -> oauth2.bearerTokenResolver(bearerTokenResolver).jwt(

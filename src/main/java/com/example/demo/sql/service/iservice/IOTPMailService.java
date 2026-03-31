@@ -21,4 +21,6 @@ public interface IOTPMailService {
     StateResponse<Object> sendBugtoMyMail(String name, String note) throws IOException, MessagingException;
 
     String sendForgotPasswordOtp(String email);
+
+    void verifyOtpForgotPassword(String email, String otp);
 }

@@ -29,4 +29,19 @@ public interface IUserService {
     UserResponse updateProfile(MultipartFile avatar) throws IOException;
 
     void changePassword(ChangePasswordRequest request);
+
+    /**
+     * Updates the roles of a user.
+     *
+     * @param userId the ID of the user to update
+     * @param roles the new set of roles
+     */
+    void updateRole(Long userId, java.util.Set<String> roles);
+
+    /**
+     * Deletes a user by their ID.
+     *
+     * @param userId the ID of the user to delete
+     */
+    void deleteUser(Long userId);
 }
