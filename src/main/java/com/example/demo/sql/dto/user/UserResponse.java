@@ -1,8 +1,6 @@
 package com.example.demo.sql.dto.user;
 
 import java.util.Date;
-import java.util.Set;
-
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +16,7 @@ public class UserResponse {
 	private String email;
 	private Date date;
 	private String avatarUrl;
-	private Set<String> roles;
+	private String role;
 	private int reputationScore;
 	private String currentTier;
 }

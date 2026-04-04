@@ -63,7 +63,10 @@ public class AuthenticationService implements IAuthenticationService {
 	public ResponseEntity<StateResponse<Object>> authenticate(AuthenticationUser authenticationUser) {
 		Optional<User> option = repository.findByUserName(authenticationUser.getUserName());
 
-		User user = option.orElseThrow();
+		User user = option.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+		if (!(user instanceof NormalUser)) {
+			throw new HandleException(ErrorCode.UNAUTHORIZED);
+		}
 
 		PasswordEncoder encoder = new BCryptPasswordEncoder(10);
 
@@ -79,14 +82,9 @@ public class AuthenticationService implements IAuthenticationService {
 		ResponseCookie accessCookie = jwtUtils.generateAccessCookie(accessToken);
 		ResponseCookie refreshCookie = jwtUtils.generateRefreshCookie(refreshToken);
 
-		int reputation = 0;
-		String tier = "NONE";
-		if (user instanceof NormalUser normalUser) {
-			reputation = normalUser.getReputationScore();
-			tier = (normalUser.getCurrentTier() != null) ? normalUser.getCurrentTier().getId() : "NONE";
-		} else if (user instanceof Admin) {
-			tier = "ADMIN";
-		}
+		NormalUser normalUser = (NormalUser) user;
+		int reputation = normalUser.getReputationScore();
+		String tier = (normalUser.getCurrentTier() != null) ? normalUser.getCurrentTier().getId() : "NONE";
 
 		ResponseEntity<StateResponse<Object>> responseEntity = ResponseEntity.ok()
 				.header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -96,6 +94,44 @@ public class AuthenticationService implements IAuthenticationService {
 								.auth(auth)
 								.reputationScore(reputation)
 								.roleTier(tier)
+								.build())
+						.build());
+
+		return responseEntity;
+
+	}
+
+	@Override
+	@Transactional
+	public ResponseEntity<StateResponse<Object>> adminAuthenticate(AuthenticationUser authenticationUser) {
+		Optional<User> option = repository.findByUserName(authenticationUser.getUserName());
+
+		User user = option.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+		if (!(user instanceof Admin)) {
+			throw new HandleException(ErrorCode.UNAUTHORIZED);
+		}
+
+		PasswordEncoder encoder = new BCryptPasswordEncoder(10);
+
+		boolean auth = encoder.matches(authenticationUser.getPassword(), user.getPassword());
+
+		if (!auth) {
+			throw new HandleException(ErrorCode.UNAUTHENTICATED);
+		}
+
+		String accessToken = jwtUtils.generateToken(user, false);
+		String refreshToken = jwtUtils.generateToken(user, true);
+
+		ResponseCookie accessCookie = jwtUtils.generateAccessCookie(accessToken);
+		ResponseCookie refreshCookie = jwtUtils.generateRefreshCookie(refreshToken);
+
+		ResponseEntity<StateResponse<Object>> responseEntity = ResponseEntity.ok()
+				.header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+				.header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+				.body(StateResponse.builder()
+						.result(AuthenticationResponse.builder()
+								.auth(auth)
+								.roleTier("ADMIN")
 								.build())
 						.build());
 

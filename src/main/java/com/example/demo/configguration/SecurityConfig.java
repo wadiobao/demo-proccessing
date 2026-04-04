@@ -25,7 +25,7 @@ import org.springframework.web.cors.CorsConfiguration;
 public class SecurityConfig {
 
 	private final String[] AUTH_END_POINTS = { "/api/v1/user/register", "/api/v1/user/register/otp",
-			"/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/auth/refresh" };
+			"/api/v1/auth/login", "/api/v1/auth/admin/login", "/api/v1/auth/logout", "/api/v1/auth/refresh" };
 	private final String[] API_END_POINTS = { "/api/v1/quiz/public",
 			"/api/v1/pdfs/**", "/api/webhook/cloudinary" };
 	private final String[] FORM_END_POINTS = { "/api/v1/discussion/**" };
@@ -45,7 +45,15 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST, AUTH_END_POINTS).permitAll()
+		http.authorizeHttpRequests(request -> request
+				// ---- ADMIN ENDPOINTS ----
+				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+				.requestMatchers(HttpMethod.POST, "/api/v1/discussion/newtopic").hasRole("ADMIN")
+				.requestMatchers(HttpMethod.DELETE, "/api/v1/discussion/delete/**").hasRole("ADMIN")
+				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN")// hasAuthority("ROLE_ADMIN")
+
+				// ---- PUBLIC ENDPOINTS ----
+				.requestMatchers(HttpMethod.POST, AUTH_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.GET, AUTH_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.POST, API_END_POINTS).permitAll()
 				.requestMatchers(HttpMethod.GET, API_END_POINTS).permitAll()
@@ -55,7 +63,7 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET, FILE_END_POINTS).permitAll()
 				// allow K8s liveness/readiness probes without credentials
 				.requestMatchers(HttpMethod.GET, ACTUATOR_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN")// hasAuthority("ROLE_ADMIN")
+				
 				.anyRequest().authenticated());
 
 		http.oauth2ResourceServer(oauth2 -> oauth2.bearerTokenResolver(bearerTokenResolver).jwt(
@@ -84,6 +92,9 @@ public class SecurityConfig {
 	@Bean
 	JwtAuthenticationConverter authenticationConverter() {
 		JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+		// explicitly read from the 'scope' claim (matches what JwtUtils.buildScope writes)
+		authoritiesConverter.setAuthoritiesClaimName("role");
+		// buildScope now stores bare role names; Spring's hasRole() appends ROLE_ internally
 		authoritiesConverter.setAuthorityPrefix("ROLE_");
 		JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
 		authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);

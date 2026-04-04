@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 public class Role {
 
     @Id
-    private String name; // e.g., "ADMIN", "USER", "EXPERT"
+    private String name; // e.g., "ADMIN", "USER"
 
     private String description;
 

@@ -37,6 +37,12 @@ public class AuthenticationController {
 		return authenticationService.authenticate(request);
 	}
 
+	@PostMapping("/admin/login")
+	ResponseEntity<StateResponse<Object>> adminAuthenticate(@RequestBody AuthenticationUser request) {
+
+		return authenticationService.adminAuthenticate(request);
+	}
+
 	@GetMapping("/introspect")
 	ResponseEntity<StateResponse<Object>> introspect(@CookieValue(name = "access-token", required = true) String token)
 			throws JOSEException, ParseException {

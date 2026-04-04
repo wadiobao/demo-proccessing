@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
+import com.example.demo.sql.entity.Role;
 import com.example.demo.sql.entity.User;
-import com.example.demo.sql.entity.NormalUser;
 import com.example.demo.sql.repository.InvalidatedTokenRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -72,14 +72,20 @@ public class JwtUtils {
 	public String generateToken(User user, boolean isRefresh) {
 		JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 		JWTClaimsSet claimsSet;
+		
+		
 		if (isRefresh) {
 			claimsSet = new JWTClaimsSet.Builder().jwtID(UUID.randomUUID().toString()).subject(user.getUserName())
 					.issueTime(new Date())
-					.expirationTime(new Date(Instant.now().plus(REFRESH_TiME, ChronoUnit.DAYS).toEpochMilli())).build();
+					.expirationTime(new Date(Instant.now().plus(REFRESH_TiME, ChronoUnit.SECONDS).toEpochMilli()))
+					.claim("uid", user.getId())
+					.build();
 		} else {
 			claimsSet = new JWTClaimsSet.Builder().jwtID(UUID.randomUUID().toString()).subject(user.getUserName())
 					.issuer("freequizai.com").issueTime(new Date())
-					.expirationTime(new Date(Instant.now().plus(ACCESS_TiME, ChronoUnit.DAYS).toEpochMilli()))
+					.expirationTime(new Date(Instant.now().plus(ACCESS_TiME, ChronoUnit.SECONDS).toEpochMilli()))
+					.claim("role", user.getRole().getName())
+					.claim("uid", user.getId())
 					.claim("scope", buildScope(user)).build();
 		}
 
@@ -108,22 +114,10 @@ public class JwtUtils {
 	 */
 	public String buildScope(User user) {
 		StringJoiner joiner = new StringJoiner(" ");
-		if (!CollectionUtils.isEmpty(user.getRoles())) {
-			user.getRoles().forEach(r -> {
-				joiner.add("ROLE_" + r.getName());
-				if (!org.springframework.util.CollectionUtils.isEmpty(r.getPermissions())) {
+			Role r = user.getRole();
+				if (!CollectionUtils.isEmpty(r.getPermissions())) {
 					r.getPermissions().forEach(p -> joiner.add(p.getName()));
 				}
-			});
-		}
-
-		if (user instanceof NormalUser normalUser && normalUser.getCurrentTier() != null) {
-			joiner.add("TIER_" + normalUser.getCurrentTier().getId());
-			if (!org.springframework.util.CollectionUtils.isEmpty(normalUser.getCurrentTier().getPermissions())) {
-				normalUser.getCurrentTier().getPermissions().forEach(p -> joiner.add(p.getName()));
-			}
-		}
-
 		return joiner.toString();
 	}
 

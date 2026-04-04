@@ -1,7 +1,6 @@
 package com.example.demo.sql.service;
 
 import java.io.IOException;
-import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,12 +18,12 @@ import com.example.demo.sql.dto.user.UserRequest;
 import com.example.demo.sql.dto.user.UserResponse;
 import com.example.demo.sql.entity.NormalUser;
 import com.example.demo.sql.entity.Role;
+import com.example.demo.sql.entity.Tier;
 import com.example.demo.sql.entity.User;
 import com.example.demo.sql.repository.NormalUserRepository;
 import com.example.demo.sql.repository.RoleRepository;
 import com.example.demo.sql.repository.TierRepository;
 import com.example.demo.sql.repository.UserRepository;
-import com.example.demo.sql.entity.Tier;
 import com.example.demo.sql.service.iservice.IUserService;
 import com.example.demo.utils.CloudinaryUtils;
 
@@ -80,7 +79,7 @@ public class UserService implements IUserService {
 				.password(encoder.encode(request.getPassword()))
 				.email(request.getEmail())
 				.date(request.getDate())
-				.roles(Set.of(role))
+				.role(role)
 				.reputationScore(0)
 				.currentTier(tier)
 				.build();
@@ -90,7 +89,7 @@ public class UserService implements IUserService {
 				.userName(request.getUserName())
 				.email(request.getEmail())
 				.date(request.getDate())
-				.roles(Set.of("USER"))
+				.role(role.getName())
 				.build();
 	}
 
@@ -122,7 +121,7 @@ public class UserService implements IUserService {
 				.userName(user.getUserName())
 				.email(user.getEmail())
 				.date(user.getDate())
-				.roles(user.getRoles().stream().map(Role::getName).collect(java.util.stream.Collectors.toSet()))
+				.role(user.getRole().getName())
 				.build();
 	}
 
@@ -154,7 +153,7 @@ public class UserService implements IUserService {
 				.email(user.getEmail())
 				.date(user.getDate())
 				.avatarUrl(user.getAvatarUrl())
-				.roles(user.getRoles().stream().map(Role::getName).collect(java.util.stream.Collectors.toSet()))
+				.role(user.getRole().getName())
 				.build();
 	}
 
@@ -174,20 +173,20 @@ public class UserService implements IUserService {
 		userRepository.save(user);
 	}
 
-	@Override
-	@Transactional
-	@PreAuthorize("hasRole('ADMIN')")
-	public void updateRole(Long userId, Set<String> roles) {
-		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
-		
-		Set<Role> newRoles = roles.stream()
-				.map(r -> roleRepository.findById(r).orElseThrow(() -> new HandleException(ErrorCode.UNCATEGORIZED_EXCEPTION)))
-				.collect(java.util.stream.Collectors.toSet());
-				
-		user.setRoles(newRoles);
-		userRepository.save(user);
-	}
+//	@Override
+//	@Transactional
+//	@PreAuthorize("hasRole('ADMIN')")
+//	public void updateRole(Long userId, Set<String> roles) {
+//		User user = userRepository.findById(userId)
+//				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+//		
+//		Set<Role> newRoles = roles.stream()
+//				.map(r -> roleRepository.findById(r).orElseThrow(() -> new HandleException(ErrorCode.UNCATEGORIZED_EXCEPTION)))
+//				.collect(java.util.stream.Collectors.toSet());
+//				
+//		user.setRoles(newRoles);
+//		userRepository.save(user);
+//	}
 
 	@Override
 	@Transactional

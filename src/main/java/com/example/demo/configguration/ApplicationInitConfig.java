@@ -1,7 +1,6 @@
 package com.example.demo.configguration;
 
 import java.util.Date;
-import java.util.Set;
 
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +37,7 @@ public class ApplicationInitConfig {
 								.password(encoder.encode("admin"))
 								.email("dumabao69@gmail.com")
 								.date(new Date())
-								.roles(Set.of(adminRole))
+								.role(adminRole)
 								.employeeId("SYS-ADMIN-001")
 								.department("IT")
 								.build();

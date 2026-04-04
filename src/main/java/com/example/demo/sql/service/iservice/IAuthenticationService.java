@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public interface IAuthenticationService {
     ResponseEntity<StateResponse<Object>> authenticate(AuthenticationUser authenticationUser);
+    ResponseEntity<StateResponse<Object>> adminAuthenticate(AuthenticationUser authenticationUser);
 
     IntrospectResponse introspect(Introspect introspect) throws JOSEException, ParseException;
 

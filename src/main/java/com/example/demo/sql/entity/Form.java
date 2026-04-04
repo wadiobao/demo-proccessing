@@ -1,7 +1,6 @@
 package com.example.demo.sql.entity;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -13,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
@@ -55,9 +53,6 @@ public class Form {
 
 	@Temporal(TemporalType.TIMESTAMP)
 	Date ngayDang;
-
-	@OneToMany(mappedBy = "form", cascade = CascadeType.ALL, orphanRemoval = true)
-	List<Comment> comment;
 
 	@ManyToOne
 	@JoinColumn(name = "topic_id")

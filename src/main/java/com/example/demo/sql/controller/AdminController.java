@@ -1,7 +1,5 @@
 package com.example.demo.sql.controller;
 
-import java.util.Set;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -59,22 +57,22 @@ public class AdminController {
                 .build());
     }
 
-    /**
-     * Updates the roles of a specific user.
-     *
-     * @param userId the ID of the user to update
-     * @param roles the new set of roles
-     * @return a success message
-     */
-    @PutMapping("/users/{id}/role")
-    public ResponseEntity<StateResponse<Object>> updateUserRole(
-            @PathVariable("id") Long userId,
-            @RequestBody Set<String> roles) {
-        userService.updateRole(userId, roles);
-        return ResponseEntity.ok(StateResponse.builder()
-                .message("User role updated successfully")
-                .build());
-    }
+//    /**
+//     * Updates the roles of a specific user.
+//     *
+//     * @param userId the ID of the user to update
+//     * @param roles the new set of roles
+//     * @return a success message
+//     */
+//    @PutMapping("/users/{id}/role")
+//    public ResponseEntity<StateResponse<Object>> updateUserRole(
+//            @PathVariable("id") Long userId,
+//            @RequestBody Set<String> roles) {
+//        userService.updateRole(userId, roles);
+//        return ResponseEntity.ok(StateResponse.builder()
+//                .message("User role updated successfully")
+//                .build());
+//    }
 
     /**
      * Deletes a user from the system.

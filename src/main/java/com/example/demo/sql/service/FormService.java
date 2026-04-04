@@ -243,7 +243,7 @@ public class FormService implements IFormService {
 	@Transactional
 	@PreAuthorize("hasRole('ADMIN')")
 	public StateResponse<Object> newTopic(TopicRequest request) {
-		Topic topic = Topic.builder().topic(request.getTopic()).form(new ArrayList<Form>()).build();
+		Topic topic = Topic.builder().topic(request.getTopic()).build();
 		topicRepository.save(topic);
 		return StateResponse.builder().result(topic).build();
 	}
@@ -252,7 +252,7 @@ public class FormService implements IFormService {
 	public StateResponse<Object> getAllTopic(Pageable pageable) {
 		Page<Topic> topics = topicRepository.findAll(pageable);
 		Page<TopicResponse> responses = topics.map(topic -> {
-			List<Form> forms = topic.getForm();
+			List<Form> forms = formRepository.findByTopic_TopicIdOrderByNgayDangDesc(topic.getTopicId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
 			List<FormResponse> formResponses = new ArrayList<FormResponse>();
 			for (Form form : forms) {
 				FormResponse formResponse = FormResponse.builder().formId(form.getFormId()).tacGia(form.getTacGia())

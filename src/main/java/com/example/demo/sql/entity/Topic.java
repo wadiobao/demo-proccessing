@@ -32,6 +32,5 @@ public class Topic {
 	Long topicId;
 	String topic;
 	
-	@OneToMany(mappedBy = "topic", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-	List<Form> form;
+
 }

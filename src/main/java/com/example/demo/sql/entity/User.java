@@ -2,7 +2,6 @@ package com.example.demo.sql.entity;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import com.example.demo.dto.basemodel.BaseModel;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -13,7 +12,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
@@ -46,14 +45,11 @@ public class User extends BaseModel {
 
 	private String avatarUrl;
 
-	@ManyToMany(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@lombok.ToString.Exclude
 	@lombok.EqualsAndHashCode.Exclude
-	private Set<Role> roles;
+	private Role role;
 
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-	@lombok.ToString.Exclude
-	@lombok.EqualsAndHashCode.Exclude
-	private List<Comment> comment;
+
 
 }
