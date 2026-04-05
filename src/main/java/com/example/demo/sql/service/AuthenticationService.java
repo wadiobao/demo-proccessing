@@ -92,8 +92,6 @@ public class AuthenticationService implements IAuthenticationService {
 				.body(StateResponse.builder()
 						.result(AuthenticationResponse.builder()
 								.auth(auth)
-								.reputationScore(reputation)
-								.roleTier(tier)
 								.build())
 						.build());
 
@@ -131,7 +129,6 @@ public class AuthenticationService implements IAuthenticationService {
 				.body(StateResponse.builder()
 						.result(AuthenticationResponse.builder()
 								.auth(auth)
-								.roleTier("ADMIN")
 								.build())
 						.build());
 
@@ -190,8 +187,6 @@ public class AuthenticationService implements IAuthenticationService {
 				.body(StateResponse.builder()
 						.result(AuthenticationResponse.builder()
 								.auth(true)
-								.reputationScore(reputation)
-								.roleTier(tier)
 								.build())
 						.build());
 

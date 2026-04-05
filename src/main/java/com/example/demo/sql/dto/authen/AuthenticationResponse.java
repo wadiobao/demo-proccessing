@@ -15,6 +15,4 @@ import lombok.Setter;
 @Builder
 public class AuthenticationResponse {
 	private boolean auth;
-	private int reputationScore;
-	private String roleTier;
 }

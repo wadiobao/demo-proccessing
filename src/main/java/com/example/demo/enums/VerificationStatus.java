@@ -4,4 +4,5 @@ public enum VerificationStatus {
 	SYSTEM,
 	VERIFIED,
 	REVIEWING,
+	AI_IDENTIFIED
 }

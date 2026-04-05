@@ -72,8 +72,7 @@ public class JwtUtils {
 	public String generateToken(User user, boolean isRefresh) {
 		JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 		JWTClaimsSet claimsSet;
-		
-		
+
 		if (isRefresh) {
 			claimsSet = new JWTClaimsSet.Builder().jwtID(UUID.randomUUID().toString()).subject(user.getUserName())
 					.issueTime(new Date())
@@ -114,10 +113,10 @@ public class JwtUtils {
 	 */
 	public String buildScope(User user) {
 		StringJoiner joiner = new StringJoiner(" ");
-			Role r = user.getRole();
-				if (!CollectionUtils.isEmpty(r.getPermissions())) {
-					r.getPermissions().forEach(p -> joiner.add(p.getName()));
-				}
+		Role r = user.getRole();
+		if (!CollectionUtils.isEmpty(r.getPermissions())) {
+			r.getPermissions().forEach(p -> joiner.add(p.getName()));
+		}
 		return joiner.toString();
 	}
 

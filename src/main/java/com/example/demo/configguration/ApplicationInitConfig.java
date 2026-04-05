@@ -8,8 +8,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.demo.sql.entity.Admin;
+import com.example.demo.sql.entity.NormalUser;
 import com.example.demo.sql.entity.Role;
+import com.example.demo.sql.entity.Tier;
 import com.example.demo.sql.repository.RoleRepository;
+import com.example.demo.sql.repository.TierRepository;
 import com.example.demo.sql.repository.UserRepository;
 
 import lombok.AccessLevel;
@@ -26,7 +29,7 @@ public class ApplicationInitConfig {
 	PasswordEncoder encoder;
 
 	@Bean
-	ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
+	ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository, TierRepository tierRepository) {
 		return args -> {
 			// Get ADMIN role assuming Flyway has already inserted it
 			Role adminRole = roleRepository.findById("ADMIN").orElseThrow(() -> new RuntimeException("ADMIN role not found in database. Check Flyway migrations."));
@@ -44,6 +47,24 @@ public class ApplicationInitConfig {
 						
 				userRepository.save(admin);
 				log.warn("created default admin specializing in Inheritance structure");
+			}
+			
+			Role userRole = roleRepository.findById("USER").orElseThrow(() -> new RuntimeException("USER role not found in database. Check Flyway migrations."));
+
+			Tier userTier = tierRepository.findById("USER").orElseThrow(() -> new RuntimeException("USER tier not found in database. Check Flyway migrations."));
+			
+			if(userRepository.findByUserName("userdemo123").isEmpty()) {
+				NormalUser user = NormalUser.builder()
+								.userName("userdemo123")
+								.password(encoder.encode("123123123"))
+								.email("dumabao691@gmail.com")
+								.date(new Date())
+								.role(userRole)
+								.currentTier(userTier)
+								.build();
+						
+				userRepository.save(user);
+				log.warn("created default user specializing in Inheritance structure");
 			}
 		};
 	}

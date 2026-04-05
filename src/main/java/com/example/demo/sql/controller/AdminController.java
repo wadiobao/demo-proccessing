@@ -192,7 +192,7 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(StateResponse.builder()
-                .result(questionBankService.searchQuestions("", PageRequest.of(page, size)))
+                .result(questionBankService.findAll(PageRequest.of(page, size)))
                 .build());
     }
 

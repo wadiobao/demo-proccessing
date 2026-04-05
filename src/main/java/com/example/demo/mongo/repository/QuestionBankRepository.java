@@ -3,7 +3,10 @@ package com.example.demo.mongo.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.mongo.entity.QuestionBank;
@@ -17,7 +20,7 @@ public interface QuestionBankRepository extends MongoRepository<QuestionBank, St
 
     Optional<QuestionBank> findByContentIdAndQuestionHash(String contentId, String questionHash);
 
-    @org.springframework.data.mongodb.repository.Query("{$text: {$search: ?0}}")
-    org.springframework.data.domain.Page<QuestionBank> searchByKeyword(String keyword,
-            org.springframework.data.domain.Pageable pageable);
+    @Query("{$text: {$search: ?0}}")
+   Page<QuestionBank> searchByKeyword(String keyword,
+            Pageable pageable);
 }

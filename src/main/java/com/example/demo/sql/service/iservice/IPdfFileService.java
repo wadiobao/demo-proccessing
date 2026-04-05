@@ -16,4 +16,8 @@ public interface IPdfFileService {
     boolean deleteChecked(List<String> cloudinaryId);
 
     Page<PdfFile> findAllByMajor(PdfFileFilterRequest request);
+
+    PdfFile uploadPdf(org.springframework.web.multipart.MultipartFile file, com.example.demo.sql.dto.PdfFileRequest request) throws java.io.IOException;
+
+    PdfFile updatePdf(Long id, com.example.demo.sql.dto.PdfFileRequest request);
 }

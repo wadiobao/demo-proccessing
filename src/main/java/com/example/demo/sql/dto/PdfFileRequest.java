@@ -1,5 +1,6 @@
 package com.example.demo.sql.dto;
 
+import com.example.demo.enums.FileType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,15 +9,18 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 /**
- * Filter DTO for querying PDF files by Major and page.
+ * Request DTO for uploading or updating PDF file metadata.
+ *
+ * @since 1.1
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PdfFileFilterRequest {
+public class PdfFileRequest {
+    String title;
     Long majorId;
-    int size;
-    int numPage;
+    FileType fileType;
+    String author;
 }

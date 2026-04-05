@@ -71,7 +71,7 @@ public class UserService implements IUserService {
 		Role role = roleRepository.findById("USER")
 				.orElseThrow(() -> new HandleException(ErrorCode.UNCATEGORIZED_EXCEPTION));
 
-		Tier tier = tierRepository.findById("CONTRIBUTOR")
+		Tier tier = tierRepository.findById("USER")
 				.orElseThrow(() -> new HandleException(ErrorCode.UNCATEGORIZED_EXCEPTION));
 
 		NormalUser user = NormalUser.builder()
@@ -86,10 +86,12 @@ public class UserService implements IUserService {
 		normalUserRepository.save(user);
 
 		return UserResponse.builder()
-				.userName(request.getUserName())
-				.email(request.getEmail())
-				.date(request.getDate())
-				.role(role.getName())
+				.userName(user.getUserName())
+				.email(user.getEmail())
+				.date(user.getDate())
+				.currentTier(user.getCurrentTier().getId())
+				.avatarUrl(user.getAvatarUrl())
+				.reputationScore(user.getReputationScore())
 				.build();
 	}
 
@@ -114,14 +116,16 @@ public class UserService implements IUserService {
 		var contenxt = SecurityContextHolder.getContext();
 		String name = contenxt.getAuthentication().getName();
 
-		User user = userRepository.findByUserName(name)
+		NormalUser user = (NormalUser) userRepository.findByUserName(name)
 				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
 
 		return UserResponse.builder()
 				.userName(user.getUserName())
 				.email(user.getEmail())
 				.date(user.getDate())
-				.role(user.getRole().getName())
+				.currentTier(user.getCurrentTier().getId())
+				.avatarUrl(user.getAvatarUrl())
+				.reputationScore(user.getReputationScore())
 				.build();
 	}
 
@@ -139,7 +143,7 @@ public class UserService implements IUserService {
 	public UserResponse updateProfile(MultipartFile avatar) throws IOException {
 		var context = SecurityContextHolder.getContext();
 		String name = context.getAuthentication().getName();
-		User user = userRepository.findByUserName(name)
+		NormalUser user = (NormalUser) userRepository.findByUserName(name)
 				.orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
 
 		if (avatar != null && !avatar.isEmpty()) {
@@ -152,8 +156,9 @@ public class UserService implements IUserService {
 				.userName(user.getUserName())
 				.email(user.getEmail())
 				.date(user.getDate())
+				.currentTier(user.getCurrentTier().getId())
 				.avatarUrl(user.getAvatarUrl())
-				.role(user.getRole().getName())
+				.reputationScore(user.getReputationScore())
 				.build();
 	}
 

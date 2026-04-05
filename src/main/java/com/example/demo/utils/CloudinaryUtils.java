@@ -107,6 +107,27 @@ public class CloudinaryUtils {
 	}
 
 	/**
+	 * Uploads a PDF file to the dedicated PDF store folder.
+	 *
+	 * @param file multipart file containing the PDF / file PDF nhận từ request
+	 * @return Map containing public_id and secure_url / Map chứa thông tin định danh
+	 *         và URL
+	 * @throws IOException if byte processing fails / lỗi xử lý dữ liệu nhị phân của
+	 *                     file
+	 */
+	public Map<String, String> uploadPdf(MultipartFile file) throws IOException {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+				"folder", "pdf_store",
+				"resource_type", "auto"));
+
+		Map<String, String> result = new HashMap<>();
+		result.put("public_id", (String) uploadResult.get("public_id"));
+		result.put("secure_url", (String) uploadResult.get("secure_url"));
+		return result;
+	}
+
+	/**
 	 * Verifies the authenticity of a Cloudinary webhook notification by recomputing
 	 * the HMAC-SHA1 signature and comparing it against the provided header value.
 	 * Rejects spoofed requests that lack a valid signature.

@@ -8,16 +8,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.example.demo.enums.Major;
+import com.example.demo.sql.entity.Major;
 import com.example.demo.sql.entity.PdfFile;
 
 @Repository
 public interface PdfFileRepository extends JpaRepository<PdfFile, Long> {
-	boolean existsByCloudinaryId(String cloudinaryId);
+    boolean existsByCloudinaryId(String cloudinaryId);
 
-	Optional<PdfFile> findByCloudinaryId(String publicId);
+    Optional<PdfFile> findByCloudinaryId(String publicId);
 
-	List<PdfFile> findAllByCloudinaryIdIn(List<String> publicIds);
+    List<PdfFile> findAllByCloudinaryIdIn(List<String> publicIds);
 
-	Page<PdfFile> findAllByMajor(Major major, Pageable pageable);
+    Page<PdfFile> findAllByMajor(Major major, Pageable pageable);
+
+    Page<PdfFile> findAllByMajorId(Long majorId, Pageable pageable);
 }

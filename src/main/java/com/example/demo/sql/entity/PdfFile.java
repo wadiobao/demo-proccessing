@@ -2,7 +2,6 @@ package com.example.demo.sql.entity;
 
 import com.example.demo.dto.basemodel.BaseModel;
 import com.example.demo.enums.FileType;
-import com.example.demo.enums.Major;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,7 +31,11 @@ public class PdfFile extends BaseModel {
 	String title;
 	String pdfUrl;
 	String cloudinaryId;
+
+	@jakarta.persistence.ManyToOne
+	@jakarta.persistence.JoinColumn(name = "major_id")
 	Major major;
+
 	FileType fileType;
 	String author;
 }

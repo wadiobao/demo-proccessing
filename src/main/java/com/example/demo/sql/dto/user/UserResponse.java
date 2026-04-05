@@ -16,7 +16,6 @@ public class UserResponse {
 	private String email;
 	private Date date;
 	private String avatarUrl;
-	private String role;
 	private int reputationScore;
 	private String currentTier;
 }
