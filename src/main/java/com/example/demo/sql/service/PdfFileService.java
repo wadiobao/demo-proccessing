@@ -124,4 +124,10 @@ public class PdfFileService implements IPdfFileService {
         
         return pdfFileRepository.save(pdfFile);
     }
+
+    @Override
+    public PdfFile getById(Long id) {
+        return pdfFileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("PdfFile not found with id: " + id));
+    }
 }
