@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.sql.service.iservice.IPdfFileService;
 import com.example.demo.sql.service.iservice.IUserService;
 
 import lombok.AccessLevel;
@@ -36,7 +37,7 @@ import lombok.experimental.FieldDefaults;
 public class AdminController {
 
     IUserService userService;
-    com.example.demo.sql.service.iservice.IPdfFileService pdfFileService;
+    IPdfFileService pdfFileService;
     com.example.demo.sql.service.iservice.ICommentService commentService;
     com.example.demo.mongo.service.iservice.IArchivedQuestionService archivedQuestionService;
     com.example.demo.mongo.service.QuestionBankService questionBankService;

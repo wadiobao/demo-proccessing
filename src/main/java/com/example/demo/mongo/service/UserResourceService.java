@@ -3,6 +3,7 @@ package com.example.demo.mongo.service;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.mongo.dto.question.QuizRequest;
+import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.ContentRepository;
 import com.example.demo.mongo.repository.UserResourceRepository;
@@ -30,8 +31,7 @@ public class UserResourceService implements IUserResourceService {
 
 	@Override
 	@Transactional
-	public void save(String fileName, String pdfContent, String userName,
-			com.example.demo.mongo.entity.Content content) {
+	public void save(String fileName, String pdfContent, String userName,Content content) {
 		UserResource u = userResourceRepository.findByUserNameAndTopic(userName, content.getTopic())
 				.orElse(UserResource
 						.builder()

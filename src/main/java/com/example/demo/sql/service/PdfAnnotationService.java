@@ -9,11 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.sql.dto.PdfAnnotationRequest;
 import com.example.demo.sql.dto.PdfAnnotationResponse;
-import com.example.demo.sql.entity.PdfAnnotation;
-import com.example.demo.sql.entity.PdfFile;
+import com.example.demo.modules.document.shared.domain.model.PdfAnnotation;
+import com.example.demo.modules.document.shared.domain.model.PdfFile;
 import com.example.demo.sql.entity.User;
-import com.example.demo.sql.repository.PdfAnnotationRepository;
-import com.example.demo.sql.repository.PdfFileRepository;
+import com.example.demo.modules.document.shared.domain.repository.PdfAnnotationRepository;
+import com.example.demo.modules.document.shared.domain.repository.PdfFileRepository;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.service.iservice.IPdfAnnotationService;
 

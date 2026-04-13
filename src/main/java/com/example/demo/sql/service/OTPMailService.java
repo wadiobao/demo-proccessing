@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,12 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.enums.ErrorCode;
+import com.example.demo.exception.HandleException;
 import com.example.demo.sql.dto.user.UserRequest;
 import com.example.demo.sql.dto.user.UserResponse;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.service.iservice.IOTPMailService;
-import com.example.demo.enums.ErrorCode;
-import com.example.demo.exception.HandleException;
+import com.example.demo.utils.GeneralUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,28 +28,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class OTPMailService implements IOTPMailService {
 
 	@Value("${demo.donatefile.path}")
+	@NonFinal
 	String donateFile;
-
-	@Autowired
 	JavaMailSender javaMailSender;
-
-	@Autowired
-	RedisTemplate<String, String> redisTemplate;
-
-	@Autowired
+	RedisTemplate<String, String> redisTemplate;	
 	UserRepository userRepository;
-	
-	@Autowired
 	UserService userService;
+	GeneralUtils generalUtils;
 
-	ObjectMapper mapper = new ObjectMapper();
+	ObjectMapper mapper;
 
 	final String MY_MAIL = "dumabao69@gmail.com";
 
@@ -62,45 +61,58 @@ public class OTPMailService implements IOTPMailService {
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
-		redisTemplate.opsForValue().set(request.getEmail(), otp, 3, TimeUnit.MINUTES);
-		redisTemplate.opsForValue().set(request.getEmail() + otp, json, 3, TimeUnit.MINUTES);
+		
+		String hash = generalUtils.sha256(request.getEmail() + otp);
+		log.info("Hash when generate "+hash);
+		
+		redisTemplate.opsForValue().set(hash, json, 3, TimeUnit.MINUTES);
 
 		SimpleMailMessage mailMessage = new SimpleMailMessage();
 		mailMessage.setTo(request.getEmail());
 		mailMessage.setSubject("Mã OTP");
 		mailMessage.setText("Mã OTP của bạn là: " + otp + " \n Mã sẽ hết hạn sau 3 phút");
 		javaMailSender.send(mailMessage);
-
+		
 		return otp;
 	}
 
 	@Override
 	public UserResponse verifyOtp(String email, String otp) {
-		String dbOtp = redisTemplate.opsForValue().get(email);
 		
-		// Ngăn chặn lỗi double submit (Request thứ 1 tạo user, Request thứ 2 đến sau bị mất OTP trong Redis chặn lại)
-		// Trả về lỗi USER_EXISTED thân thiện hơn thay vì INVALID_OTP
-		if (userRepository.existsByEmail(email)) {
-			throw new HandleException(ErrorCode.USER_EXISTED);
-		}
-
-		if (dbOtp == null || !otp.equals(dbOtp)) {
-			throw new HandleException(ErrorCode.INVALID_OTP);
-		}
-
-		String json = redisTemplate.opsForValue().get(email + dbOtp);
-		UserRequest request = null;
+		String hash = generalUtils.sha256(email+otp);
+		String dbOtp = redisTemplate.opsForValue().get(hash);
+		UserRequest request = new UserRequest();
+		
 		try {
-			request = mapper.readValue(json, UserRequest.class);
+			log.info("Hash when verify "+hash);
+			
+			// Ngăn chặn lỗi double submit (Request thứ 1 tạo user, Request thứ 2 đến sau bị mất OTP trong Redis chặn lại)
+			// Trả về lỗi USER_EXISTED thân thiện hơn thay vì INVALID_OTP
+			if (userRepository.existsByEmail(email)) {
+				throw new HandleException(ErrorCode.USER_EXISTED);
+			}
+
+			if (dbOtp == null) {
+				throw new HandleException(ErrorCode.INVALID_OTP);
+			}
+
+			request = mapper.readValue(dbOtp, UserRequest.class);
+			
+			redisTemplate.delete(hash);
+			log.info(request.toString());
+			
 		} catch (JsonMappingException e) {
-			e.printStackTrace();
+				e.printStackTrace();
 		} catch (JsonProcessingException e) {
+				e.printStackTrace();
+		} catch (Exception e) {
 			e.printStackTrace();
+		}finally {
+			redisTemplate.delete(hash);
 		}
 		
-		redisTemplate.delete(email);
-		redisTemplate.delete(email + dbOtp);
 		return userService.registerUser(request);
+		
 	}
 
 	@Override
@@ -146,6 +158,7 @@ public class OTPMailService implements IOTPMailService {
 		return otp;
 	}
 
+	@Override
 	public void verifyOtpForgotPassword(String email, String otp) {
 		String dbOtp = redisTemplate.opsForValue().get(email + "_RESET");
 		if (dbOtp == null || !otp.equals(dbOtp)) {

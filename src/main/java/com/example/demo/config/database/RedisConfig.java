@@ -1,4 +1,4 @@
-package com.example.demo.configguration.database;
+package com.example.demo.config.database;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

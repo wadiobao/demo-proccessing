@@ -2,6 +2,9 @@ package com.example.demo.mongo.service.quiz;
 
 import java.util.List;
 
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -9,6 +12,8 @@ import com.example.demo.dto.StateResponse;
 import com.example.demo.mongo.dto.question.FileGenerateResponse;
 import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.mongo.dto.quiz.QuizConfig;
+import com.example.demo.mongo.entity.Content;
+import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.mongo.service.quiz.GeminiAIUtils.GeminiResponse;
 import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
@@ -18,13 +23,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.query.Criteria;
-
-import com.example.demo.mongo.entity.QuestionBank;
-import com.example.demo.mongo.service.quiz.WordPdfGeneration;
 
 /**
  * Engine for automated quiz construction and format processing.
@@ -48,6 +46,8 @@ public class QuizProcessor {
     QuizResponseBuilder responseBuilder;
     QuestionBankRepository questionBankRepository;
     MongoTemplate mongoTemplate;
+    AdvancedQuizContextService advancedQuizContextService;
+    com.example.demo.utils.FileBasedKeywordExtractor keywordExtractor;
 
     /**
      * Processes a PDF file and generates a quiz.
@@ -137,6 +137,23 @@ public class QuizProcessor {
             return geminiAIService.reGenerateQuestionWithGemini(prompt);
         }
 
+        // Check if Hard Mode triggers Cross Context Query
+        String relatedContext = null;
+        if (config.getLevel() == 1) { // 1 = Hard mode
+            List<String> sourceTags = null;
+            if (contentId != null) {
+                Content dbContent = mongoTemplate.findById(contentId, Content.class);
+                if (dbContent != null) {
+                    sourceTags = dbContent.getTags();
+                }
+            }
+            if (sourceTags == null || sourceTags.isEmpty()) {
+                sourceTags = keywordExtractor.getTopKeywords(pdfText, 5);
+            }
+            AdvancedQuizContextService.CrossContextResult crossResult = advancedQuizContextService.retrieveRelatedContext(contentId != null ? contentId : "temp_id", sourceTags);
+            relatedContext = crossResult.getSnippetB();
+        }
+
         // Check Hybrid Threshold (Bank >= 100 questions for this content)
         if (contentId != null) {
             long bankSize = questionBankRepository.countByContentId(contentId);
@@ -163,7 +180,7 @@ public class QuizProcessor {
 
                 // 2. Get remaining from AI
                 config.setQuestionCount(fromAI);
-                String prompt = promptBuilder.buildStandardPrompt(config, pdfText);
+                String prompt = promptBuilder.buildStandardPrompt(config, pdfText, relatedContext);
                 GeminiResponse aiResponse = geminiAIService.generateQuestionWithGemini(prompt);
 
                 // Reset config for consistency
@@ -181,7 +198,7 @@ public class QuizProcessor {
         }
 
         // Default: 100% AI generation
-        String prompt = promptBuilder.buildStandardPrompt(config, pdfText);
+        String prompt = promptBuilder.buildStandardPrompt(config, pdfText, relatedContext);
         log.debug("Standard Prompt generated for {} questions", config.getQuestionCount());
         return geminiAIService.generateQuestionWithGemini(prompt);
     }

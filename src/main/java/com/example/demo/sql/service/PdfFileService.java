@@ -11,12 +11,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.sql.dto.PdfFileFilterRequest;
-import com.example.demo.sql.dto.PdfFileRequest;
+import com.example.demo.modules.document.shared.domain.model.PdfFile;
+import com.example.demo.modules.document.shared.domain.repository.PdfFileRepository;
+import com.example.demo.modules.document.upload.api.request.PdfFileFilterRequest;
+import com.example.demo.modules.document.upload.api.request.PdfFileRequest;
 import com.example.demo.sql.entity.Major;
-import com.example.demo.sql.entity.PdfFile;
 import com.example.demo.sql.repository.MajorRepository;
-import com.example.demo.sql.repository.PdfFileRepository;
 import com.example.demo.sql.service.iservice.IPdfFileService;
 import com.example.demo.utils.CloudinaryUtils;
 
@@ -103,7 +103,7 @@ public class PdfFileService implements IPdfFileService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public PdfFile updatePdf(Long id, com.example.demo.sql.dto.PdfFileRequest request) {
+    public PdfFile updatePdf(Long id, PdfFileRequest request) {
         PdfFile pdfFile = pdfFileRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("PdfFile not found with id: " + id));
         

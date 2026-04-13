@@ -1,11 +1,12 @@
 package com.example.demo.sql.entity;
  
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.FetchType;
 import java.util.Set;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +28,7 @@ import lombok.experimental.FieldDefaults;
 public class Tier {
  
     @Id
-    String id; // e.g., "RESTRICTED", "CONTRIBUTOR", "USER", "EXPERT", "MODERATOR"
+    String id; // e.g., "RESTRICTED", "CONTRIBUTOR", "MEMBER", "EXPERT", "MODERATOR"
  
     String description;
  

@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.sql.entity.PdfFile;
-import com.example.demo.sql.repository.PdfFileRepository;
+import com.example.demo.modules.document.shared.domain.model.PdfFile;
+import com.example.demo.modules.document.shared.domain.repository.PdfFileRepository;
 import com.example.demo.utils.CloudinaryUtils;
 
 import lombok.RequiredArgsConstructor;

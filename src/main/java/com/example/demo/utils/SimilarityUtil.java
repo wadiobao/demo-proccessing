@@ -70,10 +70,10 @@ public class SimilarityUtil {
         var resource1 = new ClassPathResource("donate/donate.txt");
         String f1 = new String(resource1.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        var resource2 = new ClassPathResource("instructions/instructionV4.txt");
+        var resource2 = new ClassPathResource("file-test/test3.txt");
         String f2 = new String(resource2.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        double score = SimilarityUtil.similarity(f1, f2);
+        double score = SimilarityUtil.similarity("kinh tế", f2);
         log.info("Similarity score: {}", score);
 
     }

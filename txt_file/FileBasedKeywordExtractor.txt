@@ -1,44 +1,46 @@
-**FileBasedKeywordExtractor.java**
 
-**Purpose:**
-This class is a sophisticated utility for performing text analysis on files, specifically tailored for the Vietnamese language. Its core functions are to extract keywords from text, remove common "stopwords," and calculate the similarity between two different text files based on their keyword usage.
 
-**How it works:**
-The class is implemented as a Spring `@Component` for easy integration.
+### **FileBasedKeywordExtractor.java**
 
-- **Initialization & Configuration:**
-  - `FileBasedKeywordExtractor()`: The constructor initializes empty sets for a dictionary and stopwords.
-  - `loadDictionary(String filePath)`: Reads a custom dictionary from a file. This dictionary helps the tokenizer identify multi-word Vietnamese terms (e.g., "trí tuệ nhân tạo"). It expects a JSON-like format (`{"text": "word"}`) and determines the maximum word length (in syllables) to optimize tokenization.
-  - `loadStopWords(String filePath)`: Loads a list of Vietnamese stopwords (common words like "là", "và", "của" that are ignored during analysis) from a specified file.
+**Mục đích:**
+Lớp này là một tiện ích chuyên sâu dùng để thực hiện phân tích văn bản trên các tệp tin, được thiết kế riêng cho tiếng Việt. Các chức năng cốt lõi của nó là trích xuất từ khóa từ văn bản, loại bỏ các "từ dừng" (stopwords) phổ biến và tính toán độ tương đồng giữa hai tệp văn bản khác nhau dựa trên cách sử dụng từ khóa.
 
-- **`tokenize(String text)` Method (Vietnamese Word Segmentation):**
-  - This is a crucial step for processing Vietnamese. Unlike English, Vietnamese words can be composed of multiple syllables separated by spaces.
-  - The method first cleans the input text by removing special characters.
-  - It then implements a "maximal matching" (or forward-matching) algorithm. It iterates through the text, trying to find the longest possible sequence of syllables that matches an entry in the loaded dictionary. This correctly groups syllables into meaningful words.
-  - The result is a `List<String>` of properly segmented words (tokens).
+**Cách thức hoạt động:**
+Lớp được triển khai dưới dạng một `@Component` của Spring để dễ dàng tích hợp vào hệ thống.
 
-- **`getFrequencyMapFromFile(String filePath)` Method:**
-  - This method reads a file line by line to efficiently handle large files without consuming excessive memory.
-  - For each line, it calls the `tokenize` method to get the words.
-  - It then counts the occurrences of each word (token), skipping any stopwords or single-character tokens.
-  - It returns a `Map<String, Integer>` where keys are the extracted keywords and values are their frequencies in the file.
+- **Khởi tạo & Cấu hình:**
+    - `FileBasedKeywordExtractor()`: Hàm khởi tạo thiết lập các tập hợp (set) rỗng cho từ điển và từ dừng.
+    - `loadDictionary(String filePath)`: Đọc một từ điển tùy chỉnh từ tệp. Từ điển này giúp bộ tách từ (tokenizer) nhận diện các cụm từ tiếng Việt đa âm tiết (ví dụ: "trí tuệ nhân tạo"). Nó chấp nhận định dạng giống JSON (`{"text": "word"}`) và xác định độ dài từ tối đa (tính theo âm tiết) để tối ưu hóa quá trình tách từ.
+    - `loadStopWords(String filePath)`: Tải danh sách các từ dừng tiếng Việt (các từ phổ biến như "là", "và", "của" - những từ thường bị bỏ qua khi phân tích) từ một tệp được chỉ định.
 
-- **`compareFiles(String filePath1, String filePath2)` Method (Core Logic):**
-  - This is the main analysis function. It orchestrates the entire comparison process:
-    1. It calls `getFrequencyMapFromFile` for both input files to get their respective keyword frequency maps.
-    2. It identifies the set of `commonKeywords` that appear in both files.
-    3. It calculates two standard metrics for text similarity:
-       - **Cosine Similarity:** A value between 0 and 1 that measures the cosine of the angle between the two keyword frequency vectors. A value closer to 1 means the files are very similar in terms of keyword usage and frequency. It answers: "Do the files use the same words with similar frequency?"
-       - **Jaccard Similarity:** A value between 0 and 1 that measures the ratio of common keywords to the total number of unique keywords in both files. It answers: "How much do the sets of words in the two files overlap?"
-    4. It prints a detailed report to the console, including the similarity scores and a list of the top 10 most prominent common keywords.
-    5. It returns a `FileCompareResult` object containing the calculated similarity scores and the set of common keywords for further use.
+- **Phương thức `tokenize(String text)` (Phân đoạn từ tiếng Việt):**
+    - Đây là một bước quan trọng để xử lý tiếng Việt. Khác với tiếng Anh, từ tiếng Việt có thể bao gồm nhiều âm tiết cách nhau bởi khoảng trắng.
+    - Phương thức trước tiên sẽ làm sạch văn bản đầu vào bằng cách loại bỏ các ký tự đặc biệt.
+    - Sau đó, nó triển khai thuật toán "so khớp tối đa" (maximal matching - hoặc forward-matching). Nó duyệt qua văn bản, cố gắng tìm chuỗi âm tiết dài nhất có thể khớp với một mục trong từ điển đã tải. Điều này giúp nhóm các âm tiết thành các từ có nghĩa một cách chính xác.
+    - Kết quả là một `List<String>` chứa các từ đã được phân đoạn đúng (tokens).
 
-- **Helper Methods:**
-  - `calculateCosineSimilarity(...)` and `calculateJaccardSimilarity(...)`: Private methods that implement the mathematical formulas for the respective similarity metrics.
+- **Phương thức `getFrequencyMapFromFile(String filePath)`:**
+    - Phương thức này đọc tệp theo từng dòng để xử lý hiệu quả các tệp lớn mà không tiêu tốn quá nhiều bộ nhớ.
+    - Với mỗi dòng, nó gọi phương thức `tokenize` để lấy các từ.
+    - Sau đó, nó đếm số lần xuất hiện của mỗi từ (token), bỏ qua các từ dừng hoặc các token chỉ có một ký tự.
+    - Nó trả về một `Map<String, Integer>` trong đó khóa (key) là các từ khóa được trích xuất và giá trị (value) là tần suất xuất hiện của chúng trong tệp.
 
-**Usage:**
-This utility is ideal for tasks like:
-- **Plagiarism Detection:** Comparing a student's submission against a source document to check for overlap.
-- **Document Clustering:** Grouping similar documents together based on their content.
-- **Content Recommendation:** Finding documents related to a given document.
-- **Keyword Analysis:** Understanding the most important terms in a body of text.
+- **Phương thức `compareFiles(String filePath1, String filePath2)` (Logic cốt lõi):**
+    - Đây là hàm phân tích chính. Nó điều phối toàn bộ quá trình so sánh:
+        1. Gọi `getFrequencyMapFromFile` cho cả hai tệp đầu vào để lấy bản đồ tần suất từ khóa tương ứng.
+        2. Xác định tập hợp `commonKeywords` (từ khóa chung) xuất hiện trong cả hai tệp.
+        3. Tính toán hai chỉ số tiêu chuẩn cho độ tương đồng văn bản:
+            - **Độ tương đồng Cosine (Cosine Similarity):** Một giá trị từ 0 đến 1 đo lường cosin của góc giữa hai vectơ tần suất từ khóa. Giá trị gần bằng 1 có nghĩa là các tệp rất giống nhau về cách dùng từ và tần suất. Nó trả lời câu hỏi: "Các tệp có sử dụng cùng một bộ từ với tần suất tương tự không?"
+            - **Độ tương đồng Jaccard (Jaccard Similarity):** Một giá trị từ 0 đến 1 đo lường tỷ lệ giữa các từ khóa chung trên tổng số từ khóa duy nhất trong cả hai tệp. Nó trả lời câu hỏi: "Tập hợp các từ trong hai tệp trùng lặp nhau bao nhiêu phần trăm?"
+        4. In một báo cáo chi tiết ra console, bao gồm điểm số tương đồng và danh sách 10 từ khóa chung nổi bật nhất.
+        5. Trả về đối tượng `FileCompareResult` chứa các điểm số tương đồng đã tính toán và tập hợp các từ khóa chung để sử dụng cho các mục đích khác.
+
+- **Các phương thức hỗ trợ:**
+    - `calculateCosineSimilarity(...)` và `calculateJaccardSimilarity(...)`: Các phương thức private triển khai công thức toán học cho các chỉ số tương đồng tương ứng.
+
+**Sử dụng:**
+Tiện ích này lý tưởng cho các tác vụ như:
+- **Phát hiện đạo văn:** So sánh bài nộp của sinh viên với tài liệu nguồn để kiểm tra mức độ trùng lặp.
+- **Phân cụm tài liệu:** Nhóm các tài liệu tương tự lại với nhau dựa trên nội dung của chúng.
+- **Gợi ý nội dung:** Tìm các tài liệu liên quan đến một tài liệu cho trước.
+- **Phân tích từ khóa:** Hiểu được các thuật ngữ quan trọng nhất trong một khối văn bản.

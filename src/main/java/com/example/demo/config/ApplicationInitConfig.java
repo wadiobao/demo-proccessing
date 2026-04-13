@@ -1,4 +1,4 @@
-package com.example.demo.configguration;
+package com.example.demo.config;
 
 import java.util.Date;
 
@@ -51,7 +51,7 @@ public class ApplicationInitConfig {
 			
 			Role userRole = roleRepository.findById("USER").orElseThrow(() -> new RuntimeException("USER role not found in database. Check Flyway migrations."));
 
-			Tier userTier = tierRepository.findById("USER").orElseThrow(() -> new RuntimeException("USER tier not found in database. Check Flyway migrations."));
+			Tier userTier = tierRepository.findById("MEMBER").orElseThrow(() -> new RuntimeException("MEMBER tier not found in database. Check Flyway migrations."));
 			
 			if(userRepository.findByUserName("userdemo123").isEmpty()) {
 				NormalUser user = NormalUser.builder()

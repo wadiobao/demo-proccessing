@@ -32,8 +32,8 @@ public class QuizPromptBuilder {
          * @param pdfText source text / nội dung văn bản gốc
          * @return formatted prompt / chuỗi prompt hoàn chỉnh
          */
-        public String buildStandardPrompt(QuizConfig config, String pdfText) {
-                return String.format(Locale.US,
+        public String buildStandardPrompt(QuizConfig config, String pdfText, String relatedContext) {
+                String basePrompt = String.format(Locale.US,
                                 Constants.QuestionFormat.QUESTION_COUNT
                                                 + Constants.QuestionFormat.DIFFICULTY_LEVEL
                                                 + Constants.QuestionFormat.KNOWLEDGE_TYPE
@@ -46,6 +46,14 @@ public class QuizPromptBuilder {
                                 config.getImgQuest(),
                                 config.getLanguage(),
                                 pdfText);
+                                
+                if (relatedContext != null && !relatedContext.isEmpty() && !relatedContext.equals("NONE - FORCE_AI_EXTRAPOLATION")) {
+                    basePrompt += String.format(Locale.US, Constants.QuestionFormat.CROSS_CONTEXT, relatedContext);
+                } else if ("NONE - FORCE_AI_EXTRAPOLATION".equals(relatedContext)) {
+                    basePrompt += "\n[CHÚ Ý FALLBACK]: Không có tài liệu chéo hệ thống cung cấp. Hãy TỰ SỬ DỤNG lượng kiến thức được huấn luyện bên ngoài để TỔNG HỢP KIẾN THỨC với tài liệu được cung cấp.";
+                }
+                
+                return basePrompt;
         }
 
         /**

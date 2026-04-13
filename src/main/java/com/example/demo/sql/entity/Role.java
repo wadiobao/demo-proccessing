@@ -9,7 +9,9 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString.Exclude;
 
 /**
  * Role defines a set of permissions that can be assigned to a user.
@@ -30,7 +32,7 @@ public class Role {
     private String description;
 
     @ManyToMany
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
+    @Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Permission> permissions;
 }

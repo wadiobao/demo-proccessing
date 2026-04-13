@@ -71,7 +71,7 @@ public class UserService implements IUserService {
 		Role role = roleRepository.findById("USER")
 				.orElseThrow(() -> new HandleException(ErrorCode.UNCATEGORIZED_EXCEPTION));
 
-		Tier tier = tierRepository.findById("USER")
+		Tier tier = tierRepository.findById("MEMBER")
 				.orElseThrow(() -> new HandleException(ErrorCode.UNCATEGORIZED_EXCEPTION));
 
 		NormalUser user = NormalUser.builder()

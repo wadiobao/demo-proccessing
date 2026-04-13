@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.example.demo.mongo.entity.Content;
 
+
 public interface IContentService {
 	public Content save(String content, String owner) throws IOException;
 

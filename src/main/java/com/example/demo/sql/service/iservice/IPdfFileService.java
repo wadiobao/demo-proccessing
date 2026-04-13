@@ -5,8 +5,11 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.example.demo.sql.dto.PdfFileFilterRequest;
-import com.example.demo.sql.entity.PdfFile;
+import com.example.demo.modules.document.shared.domain.model.PdfFile;
+import com.example.demo.modules.document.upload.api.request.PdfFileFilterRequest;
+import com.example.demo.modules.document.upload.api.request.PdfFileRequest;
+
+
 
 public interface IPdfFileService {
     Page<PdfFile> getAllPdfs(Pageable pageable);
@@ -17,9 +20,9 @@ public interface IPdfFileService {
 
     Page<PdfFile> findAllByMajor(PdfFileFilterRequest request);
 
-    PdfFile uploadPdf(org.springframework.web.multipart.MultipartFile file, com.example.demo.sql.dto.PdfFileRequest request) throws java.io.IOException;
+    PdfFile uploadPdf(org.springframework.web.multipart.MultipartFile file, PdfFileRequest request) throws java.io.IOException;
 
-    PdfFile updatePdf(Long id, com.example.demo.sql.dto.PdfFileRequest request);
+    PdfFile updatePdf(Long id, PdfFileRequest request);
 
     PdfFile getById(Long id);
 }

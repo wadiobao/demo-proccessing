@@ -3,7 +3,7 @@
 -- 1. Initialize Tiers (Table name 'tiers')
 INSERT IGNORE INTO tiers (id, description, min_reputation) VALUES 
 ('RESTRICTED', 'Limit access due to low reputation', -100),
-('USER', 'Standard contributor', 0),
+('MEMBER', 'Standard contributor', 0),
 ('CONTRIBUTOR', 'Trusted member', 100),
 ('EXPERT', 'Proven expert with editing rights', 500),
 ('MODERATOR', 'Community moderator', 1000);
@@ -31,7 +31,7 @@ INSERT IGNORE INTO roles_permissions (role_name, permissions_name) VALUES
 -- Assuming columns: tier_id (owner), permissions_name (target)
 INSERT IGNORE INTO tiers_permissions (tier_id, permissions_name) VALUES 
 ('CONTRIBUTOR', 'QUESTION_UPLOAD'),
-('USER', 'QUESTION_UPLOAD'),
+('MEMBER', 'QUESTION_UPLOAD'),
 ('EXPERT', 'QUESTION_UPLOAD'),
 ('EXPERT', 'QUESTION_EDIT'),
 ('MODERATOR', 'QUESTION_UPLOAD'),

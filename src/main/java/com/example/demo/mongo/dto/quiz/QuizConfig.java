@@ -48,6 +48,8 @@ public class QuizConfig {
     @Builder.Default
     private int imgQuest = 0;
 
+    
+    //USER TRACKING
     /**
      * Topic of the quiz (used for tracking learning progress)
      */

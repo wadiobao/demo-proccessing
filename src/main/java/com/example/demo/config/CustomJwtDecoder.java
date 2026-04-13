@@ -1,4 +1,4 @@
-package com.example.demo.configguration;
+package com.example.demo.config;
 
 import java.text.ParseException;
 import java.util.Objects;

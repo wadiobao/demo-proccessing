@@ -55,6 +55,7 @@ public final class Constants {
         public static final String IMAGE_PRESENTATION = "[hình ảnh]:%d\n";
         public static final String LANGUAGE = "[ngôn ngữ]:%s\n";
         public static final String DOCUMENT_PROVIDED = "Tài liệu được cung cấp: %s";
+        public static final String CROSS_CONTEXT = "\n[TÀI LIỆU CHÉO BỔ SUNG TỪ FILE LIÊN QUAN]: %s\n(Yêu cầu: Kết hợp chéo kiến thức giữa Tài liệu cung cấp và Tài liệu chéo này để tạo câu hỏi mức độ Khó/Vận dụng/Phân tích)";
         public static final String MIN_DIFFICULT = "[min_difficulty]: %f\n";
         public static final String MAX_DIFFICULT = "[max_difficulty]: %f\n";
 

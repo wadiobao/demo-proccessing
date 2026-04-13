@@ -3,7 +3,7 @@ package com.example.demo.sql.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.example.demo.enums.AnnotationType;
-import com.example.demo.sql.entity.PdfAnnotationRect;
+import com.example.demo.modules.document.shared.domain.model.PdfAnnotationRect;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

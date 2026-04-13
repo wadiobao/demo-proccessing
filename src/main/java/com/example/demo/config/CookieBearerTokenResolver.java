@@ -1,4 +1,4 @@
-package com.example.demo.configguration;
+package com.example.demo.config;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
