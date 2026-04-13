@@ -12,11 +12,12 @@ import com.example.demo.mongo.dto.quiz.QuizConfig;
 import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.entity.UserResource;
 import com.example.demo.mongo.repository.UserResourceRepository;
-import com.example.demo.mongo.service.iservice.IContentService;
 import com.example.demo.mongo.service.iservice.IQuizService;
 import com.example.demo.mongo.service.quiz.QuizPersistenceManager;
 import com.example.demo.mongo.service.quiz.QuizProcessor;
-import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
+import com.example.demo.modules.document.processing.api.DocumentProcessingFacade;
+import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
+import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
 import com.example.demo.utils.IRTCalculator;
 
 import lombok.AccessLevel;
@@ -43,8 +44,8 @@ public class QuizService implements IQuizService {
     QuizPersistenceManager persistenceManager;
     UserResourceRepository userResourceRepository;
     IRTCalculator irtCalculator;
-    DocumentProcessorContext documentProcessorFactory;
-    IContentService iContentService;
+    DocumentProcessingFacade documentProcessingFacade;
+    DocumentMetadataFacade documentMetadataFacade;
 
     /**
      * Processes a quiz request for guest users without storing data.
@@ -82,12 +83,12 @@ public class QuizService implements IQuizService {
 
         String username = authentication.getName();
 
-        // 1. Extract text early
-        String pdfText = documentProcessorFactory.getProcessor(file).extractText(file);
+        // 1. Extract text early via modular Processing Facade
+        String pdfText = documentProcessingFacade.processDocument(file).getRawText();
 
-        // 2. Topic handling - Call ContentService to find metadata without saving yet
-        // (One Search)
-        Content metadata = iContentService.findOrCreateMetadata(pdfText, username);
+        // 2. Topic handling via modular Metadata Facade
+        DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(pdfText, username);
+        String topicId = (metadata != null) ? metadata.getTopic() : "general:unknown";
 
         String detectedTopic = config.getTopic();
         if (detectedTopic == null || detectedTopic.trim().isEmpty()) {

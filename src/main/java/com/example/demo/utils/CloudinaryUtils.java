@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,5 +161,27 @@ public class CloudinaryUtils {
 			log.error("Webhook signature verification failed: {}", e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * Decodes a Base64 image, saves it locally, and uploads to Cloudinary.
+	 * 
+	 * @param base64String raw image data
+	 * @param fileName     temporary filename
+	 * @return Cloudinary metadata [public_id, secure_url]
+	 */
+	public String[] saveImageFromBase64(String base64String, String fileName) {
+		try {
+			byte[] imageBytes = Base64.getDecoder().decode(base64String);
+			Files.write(Paths.get(fileName), imageBytes);
+			String[] imgAtt = this.upload(fileName);
+			if (Files.deleteIfExists(Paths.get(fileName))) {
+				log.info("Temporary image file deleted from local storage.");
+			}
+			return imgAtt;
+		} catch (IOException e) {
+			log.error("Error saving image file: {}", e.getMessage());
+		}
+		return null;
 	}
 }

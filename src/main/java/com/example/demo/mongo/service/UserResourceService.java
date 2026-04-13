@@ -3,9 +3,8 @@ package com.example.demo.mongo.service;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.mongo.dto.question.QuizRequest;
-import com.example.demo.mongo.entity.Content;
+import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
 import com.example.demo.mongo.entity.UserResource;
-import com.example.demo.mongo.repository.ContentRepository;
 import com.example.demo.mongo.repository.UserResourceRepository;
 import com.example.demo.mongo.service.iservice.IUserResourceService;
 import com.example.demo.utils.GeneralUtils;
@@ -23,15 +22,13 @@ public class UserResourceService implements IUserResourceService {
 
 	UserResourceRepository userResourceRepository;
 
-	ContentRepository contentRepository;
-
 	IRTCalculator irtCalculator;
 
 	GeneralUtils generalUtils;
 
 	@Override
 	@Transactional
-	public void save(String fileName, String pdfContent, String userName,Content content) {
+	public void save(String fileName, String pdfContent, String userName, DocumentMetadata content) {
 		UserResource u = userResourceRepository.findByUserNameAndTopic(userName, content.getTopic())
 				.orElse(UserResource
 						.builder()

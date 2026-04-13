@@ -11,13 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.dto.StateResponse;
 import com.example.demo.mongo.dto.question.FileGenerateResponse;
 import com.example.demo.mongo.dto.question.Question;
-import com.example.demo.mongo.dto.quiz.QuizConfig;
-import com.example.demo.mongo.entity.Content;
-import com.example.demo.mongo.entity.QuestionBank;
-import com.example.demo.mongo.repository.QuestionBankRepository;
-import com.example.demo.mongo.service.quiz.GeminiAIUtils.GeminiResponse;
-import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
-import com.example.demo.mongo.service.quiz.processor.IDocumentProcessor;
+import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
+import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
+import com.example.demo.modules.document.processing.api.DocumentProcessingFacade;
+import com.example.demo.modules.document.processing.domain.model.ExtractedContent;
+import com.example.demo.modules.document.retrieval.api.DocumentRetrievalFacade;
+import com.example.demo.mongo.dto.question.FileGenerateResponse;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -39,15 +38,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class QuizProcessor {
 
-    DocumentProcessorContext documentProcessorFactory;
+    DocumentProcessingFacade documentProcessingFacade;
     GeminiAIUtils geminiAIService;
-    WordPdfGeneration fileGenerationService;
+    DocumentRetrievalFacade documentRetrievalFacade;
     QuizPromptBuilder promptBuilder;
     QuizResponseBuilder responseBuilder;
     QuestionBankRepository questionBankRepository;
     MongoTemplate mongoTemplate;
     AdvancedQuizContextService advancedQuizContextService;
-    com.example.demo.utils.FileBasedKeywordExtractor keywordExtractor;
+    DocumentMetadataFacade documentMetadataFacade;
 
     /**
      * Processes a PDF file and generates a quiz.
@@ -69,9 +68,8 @@ public class QuizProcessor {
      */
     public StateResponse<Object> processQuiz(MultipartFile file, QuizConfig config, String contentId) {
         try {
-            // Select processor and extract text
-            IDocumentProcessor processor = documentProcessorFactory.getProcessor(file);
-            String pdfText = processor.extractText(file);
+            // Use modular Processing Facade to extract text
+            String pdfText = documentProcessingFacade.processDocument(file).getRawText();
             return processQuiz(file, pdfText, config, contentId);
         } catch (Exception e) {
             log.error("Error processing quiz: {}", e.getMessage(), e);
@@ -96,8 +94,8 @@ public class QuizProcessor {
             // Generate questions using Hybrid AI/Bank approach
             GeminiResponse geminiResponse = generateQuestions(config, pdfText, contentId);
 
-            // Generate downloadable files (Word & PDF)
-            String[] wordAndPdf = fileGenerationService.generateWordAndPdfBase64(geminiResponse.getQuestions());
+            // Generate downloadable files (Word & PDF) via modular Retrieval Facade
+            String[] wordAndPdf = documentRetrievalFacade.generateQuizDocuments(geminiResponse.getQuestions());
             if (wordAndPdf == null) {
                 return responseBuilder.buildFileGenerationError();
             }
@@ -142,13 +140,13 @@ public class QuizProcessor {
         if (config.getLevel() == 1) { // 1 = Hard mode
             List<String> sourceTags = null;
             if (contentId != null) {
-                Content dbContent = mongoTemplate.findById(contentId, Content.class);
-                if (dbContent != null) {
-                    sourceTags = dbContent.getTags();
+                DocumentMetadata dbMetadata = documentMetadataFacade.findById(contentId);
+                if (dbMetadata != null) {
+                    sourceTags = dbMetadata.getTags();
                 }
             }
             if (sourceTags == null || sourceTags.isEmpty()) {
-                sourceTags = keywordExtractor.getTopKeywords(pdfText, 5);
+                sourceTags = documentProcessingFacade.analyzeText(pdfText).getKeywords();
             }
             AdvancedQuizContextService.CrossContextResult crossResult = advancedQuizContextService.retrieveRelatedContext(contentId != null ? contentId : "temp_id", sourceTags);
             relatedContext = crossResult.getSnippetB();

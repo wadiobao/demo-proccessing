@@ -14,7 +14,7 @@ import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.mongo.service.quiz.GeminiAIUtils;
 import com.example.demo.mongo.service.quiz.GeminiAIUtils.GeminiResponse;
 import com.example.demo.mongo.service.quiz.QuizPromptBuilder;
-import com.example.demo.mongo.service.quiz.processor.DocumentProcessorContext;
+import com.example.demo.modules.document.processing.api.DocumentProcessingFacade;
 import com.example.demo.sql.dto.form.FormSession;
 import com.example.demo.sql.entity.NormalUser;
 import com.example.demo.sql.entity.User;
@@ -41,7 +41,7 @@ public class BulkQuestionUploadService {
 
         private final QuestionBankRepository questionBankRepository;
         private final UserRepository userRepository;
-        private final DocumentProcessorContext documentProcessorFactory;
+        private final DocumentProcessingFacade documentProcessingFacade;
         private final QuizPromptBuilder promptBuilder;
         private final GeminiAIUtils geminiAIService;
         private final org.springframework.data.redis.core.RedisTemplate<String, String> redisTemplate;
@@ -64,8 +64,8 @@ public class BulkQuestionUploadService {
                         throw new RuntimeException("User is restricted from uploading content.");
                 }
 
-                // 2. AI Extraction
-                String extractedText = documentProcessorFactory.getProcessor(file).extractText(file);
+                // 2. AI Extraction via modular Processing Facade
+                String extractedText = documentProcessingFacade.processDocument(file).getRawText();
                 String prompt = promptBuilder.buildIdentificationPrompt(extractedText);
                 GeminiResponse aiResponse = geminiAIService.generateIdentifiedQuestions(prompt);
 

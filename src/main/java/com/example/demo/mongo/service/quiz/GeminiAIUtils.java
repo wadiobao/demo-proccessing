@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import com.example.demo.constants.Constants;
 import com.example.demo.mongo.dto.TopicAndTags;
 import com.example.demo.mongo.dto.question.Question;
-import com.example.demo.utils.FileGeneratorUtils;
+import com.example.demo.utils.CloudinaryUtils;
 import com.example.demo.utils.HandleTextFromGeminiUtils;
 import com.example.demo.utils.PromptSanitizer;
 import com.google.genai.Client;
@@ -72,7 +72,7 @@ public class GeminiAIUtils {
     private HandleTextFromGeminiUtils handleTextFromGeminiUtils;
 
     @Autowired
-    private FileGeneratorUtils fileGeneratorUtils;
+    private CloudinaryUtils cloudinaryUtils;
 
     @Autowired
     private PromptSanitizer promptSanitizer;
@@ -208,7 +208,7 @@ public class GeminiAIUtils {
 
         String imgBase64 = HandleTextFromGeminiUtils.extractDataFromGemini(response);
 
-        String imgAttributes[] = fileGeneratorUtils.saveImageFromBase64(imgBase64, id + ".png");
+        String imgAttributes[] = cloudinaryUtils.saveImageFromBase64(imgBase64, id + ".png");
 
         return imgAttributes;
 

@@ -2,13 +2,13 @@ package com.example.demo.mongo.service.quiz;
 
 import org.springframework.stereotype.Component;
 
+import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
+import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
 import com.example.demo.mongo.dto.question.FileGenerateResponse;
 import com.example.demo.mongo.entity.ArchivedQuestion;
-import com.example.demo.mongo.entity.Content;
 import com.example.demo.mongo.entity.QuestionBank;
 import com.example.demo.mongo.repository.QuestionBankRepository;
 import com.example.demo.mongo.service.ArchivedQuestionService;
-import com.example.demo.mongo.service.iservice.IContentService;
 import com.example.demo.mongo.service.iservice.IUserResourceService;
 import com.example.demo.utils.GeneralUtils;
 
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class QuizPersistenceManager {
 
-    IContentService contentService;
+    DocumentMetadataFacade documentMetadataFacade;
     IUserResourceService userResourceService;
     ArchivedQuestionService archivedQuestionService;
     QuestionBankRepository questionBankRepository;
@@ -57,14 +57,14 @@ public class QuizPersistenceManager {
      */
     @Transactional
     public FileGenerateResponse persistQuizData(FileGenerateResponse response, String username, String filename,
-            String pdfContent, Content content)
+            String pdfContent, DocumentMetadata content)
             throws Exception {
 
         log.info("Starting quiz data persistence for user: {}, file: {}", username, filename);
 
         // Step 1: Save Content only if it's new (doesn't have an ID yet)
         if (content.getId() == null) {
-            content = contentService.save(pdfContent, username);
+            content = documentMetadataFacade.findOrCreateMetadata(pdfContent, username);
             log.info("New content saved with ID: {}", content.getId());
         } else {
             log.info("Using existing content/idempotent record: {}", content.getId());
