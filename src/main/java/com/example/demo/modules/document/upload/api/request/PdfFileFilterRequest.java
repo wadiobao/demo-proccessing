@@ -1,4 +1,4 @@
-package com.example.demo.sql.dto;
+package com.example.demo.modules.document.upload.api.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -7,9 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-/**
- * Filter DTO for querying PDF files by Major and page.
- */
+// TODO FIXME: Đổi tên thành ListDocumentQueryRequest
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

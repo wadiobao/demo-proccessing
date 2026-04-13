@@ -1,4 +1,4 @@
-package com.example.demo.sql.dto;
+package com.example.demo.modules.document.upload.api.request;
 
 import com.example.demo.enums.FileType;
 import lombok.AccessLevel;
@@ -8,11 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-/**
- * Request DTO for uploading or updating PDF file metadata.
- *
- * @since 1.1
- */
+// TODO FIXME: Đổi tên thành UploadDocumentRequest
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
