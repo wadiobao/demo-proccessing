@@ -34,6 +34,8 @@ public class SecurityConfig {
 	// Kubernetes liveness/readiness probes must reach these without a token
 	private final String[] ACTUATOR_END_POINTS = { "/actuator/health", "/actuator/info" };
 
+	private final String[] SWAGGER_END_POINTS = { "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html" };
+
 	@Value("${app.cors.allowed-origins}")
 	private String cors;
 
@@ -64,6 +66,9 @@ public class SecurityConfig {
 				// allow K8s liveness/readiness probes without credentials
 				.requestMatchers(HttpMethod.GET, ACTUATOR_END_POINTS).permitAll()
 				
+				// allow Swagger UI
+				.requestMatchers(HttpMethod.GET, SWAGGER_END_POINTS).permitAll()
+				
 				.anyRequest().authenticated());
 
 		http.oauth2ResourceServer(oauth2 -> oauth2.bearerTokenResolver(bearerTokenResolver).jwt(
@@ -73,7 +78,8 @@ public class SecurityConfig {
 				.ignoringRequestMatchers(AUTH_END_POINTS)
 				.ignoringRequestMatchers(API_END_POINTS)
 				.ignoringRequestMatchers(FILE_END_POINTS)
-				.ignoringRequestMatchers(FORM_END_POINTS));
+				.ignoringRequestMatchers(FORM_END_POINTS)
+				.ignoringRequestMatchers(SWAGGER_END_POINTS));
 
 		http.logout(t -> t.disable());
 

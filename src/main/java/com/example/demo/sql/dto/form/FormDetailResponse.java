@@ -2,7 +2,7 @@ package com.example.demo.sql.dto.form;
 
 import java.util.List;
 import org.springframework.data.domain.Page;
-import com.example.demo.mongo.dto.question.Question;
+import com.example.demo.modules.quiz.shared.domain.model.Question;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

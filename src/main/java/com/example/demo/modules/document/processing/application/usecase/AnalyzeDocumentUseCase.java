@@ -35,7 +35,7 @@ public class AnalyzeDocumentUseCase {
         log.info("Analyzing document content with AI strategy: {}", strategy);
         
         try {
-            List<String> keywords = aiAnalysisPort.extractKeywords(text, 5);
+            List<String> keywords = aiAnalysisPort.extractKeywords(text, 15);
             String summary = aiAnalysisPort.analyze("Tóm tắt ngắn gọn nội dung sau trong 1-2 câu: " + text);
 
             return ExtractedContent.builder()

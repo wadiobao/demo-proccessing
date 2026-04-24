@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.modules.document.retrieval.application.usecase.GenerateQuizDocumentUseCase;
+import com.example.demo.modules.quiz.shared.domain.model.Question;
 
 import lombok.RequiredArgsConstructor;
 

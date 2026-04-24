@@ -13,7 +13,7 @@ import com.example.demo.sql.entity.Vote;
 import com.example.demo.sql.repository.TierRepository;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
-import com.example.demo.mongo.service.QuestionBankService;
+import com.example.demo.modules.quiz.bank.application.PromoteBankQuestionsUseCase;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class ReputationService {
     UserRepository userRepository;
     VoteRepository voteRepository;
     TierRepository tierRepository;
-    QuestionBankService questionBankService;
+    PromoteBankQuestionsUseCase promoteBankQuestionsUseCase;
 
     private static final int UPVOTE_VALUE = 5;
     private static final int DOWNVOTE_VALUE = -2;
@@ -78,7 +78,7 @@ public class ReputationService {
 
         // 4. Governance Threshold Check: If score > 100, promote linked quiz
         if (post.getVoteScore() > 100 && post.getContentId() != null) {
-            questionBankService.promoteByContentId(post.getContentId());
+            promoteBankQuestionsUseCase.execute(post.getContentId());
         }
     }
 

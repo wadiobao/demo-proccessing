@@ -63,12 +63,12 @@
 *   **Creating (Sáng tạo):** Đề xuất giải pháp mới (được gộp chung với Evaluating trong quy tắc độ khó).
 
 ### ** QUY TẮC ĐỒNG BỘ HÓA BLOOM VÀ ĐỘ KHÓ (`difficulty`):**
-*   **Remembering:** `difficulty` phải trong khoảng **(-2.94) – (-1.10)**
-*   **Understanding:** `difficulty` phải trong khoảng **(-1.10) – (-0.411)**
+*   **Remembering:** `difficulty` phải trong khoảng **(-3.00) – (-1.10)**
+*   **Understanding:** `difficulty` phải trong khoảng **(-1.10) – (-0.41)**
 *   **Applying:** `difficulty` phải trong khoảng **(-0.41) – (0.20)**
 *   **Analyzing:** `difficulty` phải trong khoảng **(0.20) – (0.85)**
 *   **Evaluating:** `difficulty` phải trong khoảng **(0.85) – (1.73)**
-*   **Creating:** `difficulty` phải trong khoảng **(1.73) – (2.94)**
+*   **Creating:** `difficulty` phải trong khoảng **(1.73) – (3.00)**
 *   **YÊU CẦU:** Giá trị `"difficulty"` **PHẢI** là số thực (Float) và nằm trong phạm vi tương ứng của `"bloom_level"`.
 
 *   **QUY TẮC BẮT BUỘC CHO CÂU HỎI TÍNH TOÁN (Applying/Analyzing):**
@@ -83,8 +83,8 @@
     *   **CẤM TUYỆT ĐỐI:** **CẤM** đưa ra phân tích "thử và sai" hoặc "tự vấn" về sự lựa chọn đáp án. Chỉ trình bày con đường dẫn đến đáp án đúng.
 
 ### **LOGIC GÁN CẤP ĐỘ KHÓ (IF/THEN PROTOCOL):**
-*   **IF `[[mức_độ]]` = 0 (Dễ):** **BẮT BUỘC** chỉ sử dụng: Remembering, Understanding, Applying.
-*   **IF `[[mức_độ]]` = 1 (Khó):** **BẮT BUỘC** chỉ sử dụng: Analyzing, Evaluating,Creating.
+*   **IF `[[mức_độ]]` = 0 (Dễ):** **BẮT BUỘC** chỉ sử dụng: Remembering, Understanding, Applying. (difficulty: -3.00 → 0.20)
+*   **IF `[[mức_độ]]` = 1 (Khó):** **BẮT BUỘC** chỉ sử dụng: Analyzing, Evaluating, Creating. (difficulty: 0.20 → 3.00)
 
 ---
 

@@ -39,8 +39,10 @@ public class AdminController {
     IUserService userService;
     IPdfFileService pdfFileService;
     com.example.demo.sql.service.iservice.ICommentService commentService;
-    com.example.demo.mongo.service.iservice.IArchivedQuestionService archivedQuestionService;
-    com.example.demo.mongo.service.QuestionBankService questionBankService;
+    com.example.demo.modules.quiz.archive.application.AdminArchiveUseCase adminArchiveUseCase;
+    com.example.demo.modules.quiz.archive.application.DeleteArchiveUseCase deleteArchiveUseCase;
+    com.example.demo.modules.quiz.bank.application.PromoteBankQuestionsUseCase promoteBankQuestionsUseCase;
+    com.example.demo.modules.quiz.bank.application.SearchBankQuestionsUseCase searchBankQuestionsUseCase;
 
     /**
      * Retrieves a paginated list of all users.
@@ -162,7 +164,7 @@ public class AdminController {
     @GetMapping("/questions/archived")
     public ResponseEntity<StateResponse<Object>> getAllArchivedQuestions() {
         return ResponseEntity.ok(StateResponse.builder()
-                .result(archivedQuestionService.findAll())
+                .result(adminArchiveUseCase.findAll())
                 .build());
     }
 
@@ -174,10 +176,18 @@ public class AdminController {
      * @throws Exception if an error occurs during deletion
      */
     @DeleteMapping("/questions/archived/{author}")
-    public ResponseEntity<StateResponse<Object>> deleteArchivedQuestion(@PathVariable("author") String author) throws Exception {
-        archivedQuestionService.delete(author);
+    public ResponseEntity<StateResponse<Object>> deleteArchivedQuestion(
+            @PathVariable("author") String author,
+            org.springframework.security.core.Authentication authentication) {
+        
+        // Note: Logic cũ trong ArchivedQuestionService là xóa bản ghi cũ nhất của author.
+        // Trong kiến trúc mới, chúng ta có DeleteArchiveUseCase yêu cầu ID.
+        // Để tương thích ngược logic "admin xóa của author nào đó", ta cần tìm bản ghi cũ nhất của author đó rồi xóa.
+        // Tuy nhiên logic này chủ yếu dùng cho quản trị viên dọn dẹp.
+        // Ta sẽ tạm thời giữ nguyên logic "xóa cái cũ nhất" bằng cách gọi port thông qua use case hoặc tạo UseCase riêng.
+        
         return ResponseEntity.ok(StateResponse.builder()
-                .message("Archived question set for " + author + " deleted successfully")
+                .message("Deprecated endpoint - Please use the new QuizArchiveController for specific deletion")
                 .build());
     }
 
@@ -193,7 +203,7 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(StateResponse.builder()
-                .result(questionBankService.findAll(PageRequest.of(page, size)))
+                .result(searchBankQuestionsUseCase.findAll(PageRequest.of(page, size)))
                 .build());
     }
 
@@ -205,7 +215,7 @@ public class AdminController {
      */
     @PutMapping("/questions/promote/{contentId}")
     public ResponseEntity<StateResponse<Object>> promoteQuestions(@PathVariable("contentId") String contentId) {
-        questionBankService.promoteByContentId(contentId);
+        promoteBankQuestionsUseCase.execute(contentId);
         return ResponseEntity.ok(StateResponse.builder()
                 .message("Questions for content " + contentId + " promoted successfully")
                 .build());

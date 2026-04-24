@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  * Triển khai các khả năng phân tích thông minh như trích xuất keyword,
  * nhận diện chủ đề và tóm tắt nội dung thông qua Gemini API.
  */
-@Component
+@Component("documentGeminiAiAdapter")
 @RequiredArgsConstructor
 @Slf4j
 public class GeminiAiAdapter implements AiAnalysisPort {

@@ -8,9 +8,9 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.mongo.dto.TopicAndTags;
-import com.example.demo.mongo.dto.question.Answer;
-import com.example.demo.mongo.dto.question.Question;
+import com.example.demo.modules.quiz.shared.domain.model.Answer;
+import com.example.demo.modules.quiz.shared.domain.model.Question;
+import com.example.demo.modules.document.shared.domain.model.TopicAndTags;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -65,7 +65,12 @@ public class HandleTextFromGeminiUtils {
                 String correctAns = matcher.group(7).trim();
                 String explain = matcher.group(8).trim();
 
-                Answer answer = Answer.builder().A(ansA).B(ansB).C(ansC).D(ansD).correct(correctAns).explain(explain)
+                Answer answer = Answer.builder()
+                		.option1(ansA)
+                		.option2(ansB)
+                		.option3(ansC).option4(ansD)
+                		.correctAnswer(correctAns)
+                		.explanation(explain)
                         .build();
                 Question question = Question.builder().id(id).question(questionText).answer(answer).build();
                 questions.add(question);
@@ -158,8 +163,9 @@ public class HandleTextFromGeminiUtils {
             // / chế độ cứu hộ: cố gắng khôi phục dữ liệu từ kết quả AI bị cắt cụt hoặc sai
             // cú pháp
             String clean = extractJsonArrayString(inputText);
-            if (clean == null)
-                return new ArrayList<>();
+            if (clean == null) {
+				return new ArrayList<>();
+			}
 
             int lastBrace = clean.lastIndexOf('}');
             if (lastBrace > 0) {

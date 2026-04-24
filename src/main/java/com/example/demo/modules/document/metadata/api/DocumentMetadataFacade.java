@@ -45,7 +45,9 @@ public class DocumentMetadataFacade {
             return exactMatch.get().toDomain();
         }
 
+        log.info("[AI-CALL] Creating text embedding (Vectorization)");
         List<Double> embedding = vectorUtils.createVector(content);
+        log.info("[AI-RESULT] Embedding created (Dimensions: {})", embedding != null ? embedding.size() : 0);
         String detectedTopic = null;
         List<String> tags = null;
 
@@ -67,11 +69,12 @@ public class DocumentMetadataFacade {
         // 3. Fallback to AI Analysis if no strong match
         if (detectedTopic == null) {
             try {
+                log.info("[AI-CALL] Analyzing text metadata (Topic & Keywords detection)");
                 ExtractedContent analyzed = documentProcessingFacade.analyzeText(content);
                 tags = analyzed.getKeywords();
                 if (tags != null && !tags.isEmpty()) {
                     detectedTopic = analyzed.getSummary() != null ? analyzed.getSummary() : tags.get(0);
-                    log.info("Extracted new AI metadata. Topic: {}", detectedTopic);
+                    log.info("[AI-RESULT] Extracted metadata. Topic: {}, Keywords: {}", detectedTopic, tags.size());
                 }
             } catch (Exception e) {
                 log.error("AI Analysis failed: {}", e.getMessage());
@@ -122,5 +125,14 @@ public class DocumentMetadataFacade {
         }
 
         return null;
+    }
+
+    /**
+     * Finds a document metadata by tag, excluding a specific ID.
+     */
+    public DocumentMetadata findByTag(String tag, String excludeId) {
+        return repository.findFirstByTagsContainingAndIdNot(tag, excludeId)
+                .map(DocumentMetadataMongoEntity::toDomain)
+                .orElse(null);
     }
 }

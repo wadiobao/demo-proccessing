@@ -8,8 +8,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.constants.Constants;
-import com.example.demo.mongo.dto.question.Question;
 import com.example.demo.modules.document.retrieval.application.port.output.DocumentGeneratorPort;
+import com.example.demo.modules.quiz.shared.domain.model.Question;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,17 +54,19 @@ public class GenerateQuizDocumentUseCase {
     private List<Map<String, Object>> formatQuestions(List<Question> questions) {
         List<Map<String, Object>> formatted = new ArrayList<>();
         for (Question q : questions) {
-            if (q == null || q.getAnswer() == null) continue;
+            if (q == null || q.getAnswer() == null) {
+				continue;
+			}
             
             Map<String, Object> map = new HashMap<>();
             map.put(Constants.MapKeys.ID, q.getId() != 0 ? q.getId() : "");
             map.put(Constants.MapKeys.QUESTION, q.getQuestion() != null ? q.getQuestion() : "");
-            map.put(Constants.MapKeys.OPTION_A, q.getAnswer().getA() != null ? q.getAnswer().getA() : "");
-            map.put(Constants.MapKeys.OPTION_B, q.getAnswer().getB() != null ? q.getAnswer().getB() : "");
-            map.put(Constants.MapKeys.OPTION_C, q.getAnswer().getC() != null ? q.getAnswer().getC() : "");
-            map.put(Constants.MapKeys.OPTION_D, q.getAnswer().getD() != null ? q.getAnswer().getD() : "");
-            map.put(Constants.MapKeys.ANSWER, q.getAnswer().getCorrect() != null ? q.getAnswer().getCorrect() : "");
-            map.put(Constants.MapKeys.EXPLAIN, q.getAnswer().getExplain() != null ? q.getAnswer().getExplain() : "");
+            map.put(Constants.MapKeys.OPTION_A, q.getAnswer().getOption1() != null ? q.getAnswer().getOption1() : "");
+            map.put(Constants.MapKeys.OPTION_B, q.getAnswer().getOption2() != null ? q.getAnswer().getOption2() : "");
+            map.put(Constants.MapKeys.OPTION_C, q.getAnswer().getOption3() != null ? q.getAnswer().getOption3() : "");
+            map.put(Constants.MapKeys.OPTION_D, q.getAnswer().getOption4() != null ? q.getAnswer().getOption4() : "");
+            map.put(Constants.MapKeys.ANSWER, q.getAnswer().getCorrectAnswer() != null ? q.getAnswer().getCorrectAnswer() : "");
+            map.put(Constants.MapKeys.EXPLAIN, q.getAnswer().getExplanation() != null ? q.getAnswer().getExplanation() : "");
             formatted.add(map);
         }
         return formatted;

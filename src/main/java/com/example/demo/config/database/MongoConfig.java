@@ -7,7 +7,9 @@ import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @Configuration
-@EnableMongoRepositories(basePackages = { "com.example.demo.mongo.repository",
+@EnableMongoRepositories(basePackages = { 
+        "com.example.demo.modules.quiz.shared.infrastructure.persistence.repository",
+        "com.example.demo.modules.document.metadata.infrastructure.persistence.repository",
 		"com.example.demo.agent.repository"
 })
 public class MongoConfig {

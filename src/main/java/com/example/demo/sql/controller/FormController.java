@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.mongo.service.BulkQuestionUploadService;
+import com.example.demo.modules.quiz.generation.application.BulkQuestionUploadService;
 import com.example.demo.sql.dto.form.FormRequest;
 import com.example.demo.sql.dto.form.TopicRequest;
 import com.example.demo.sql.entity.Form;
@@ -117,7 +117,7 @@ public class FormController {
 	 */
 	@PutMapping("/session/{sessionId}/questions")
 	public ResponseEntity<StateResponse<Object>> updateStagedQuestions(@PathVariable String sessionId,
-			@RequestBody java.util.List<com.example.demo.mongo.dto.question.Question> questions) {
+			@RequestBody java.util.List<com.example.demo.modules.quiz.shared.domain.model.Question> questions) {
 		String username = SecurityContextHolder.getContext().getAuthentication().getName();
 		bulkQuestionUploadService.updateStagedQuestions(sessionId, questions, username);
 		return ResponseEntity.ok(StateResponse.builder()

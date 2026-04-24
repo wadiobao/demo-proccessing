@@ -16,9 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.mongo.dto.question.Question;
-import com.example.demo.mongo.entity.QuestionBank;
-import com.example.demo.mongo.service.BulkQuestionUploadService;
+import com.example.demo.modules.quiz.shared.domain.model.Question;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.QuestionBankMongoEntity;
+import com.example.demo.modules.quiz.generation.application.BulkQuestionUploadService;
 import com.example.demo.sql.dto.form.CommentResponse;
 import com.example.demo.sql.dto.form.FormDetailResponse;
 import com.example.demo.sql.dto.form.FormRequest;
@@ -38,7 +38,7 @@ import com.example.demo.sql.repository.FormRepository;
 import com.example.demo.sql.repository.TopicRepository;
 import com.example.demo.sql.repository.UserRepository;
 import com.example.demo.sql.repository.VoteRepository;
-import com.example.demo.mongo.repository.QuestionBankRepository;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.QuestionBankRepository;
 import com.example.demo.sql.service.iservice.IFormService;
 import com.google.gson.Gson;
 
@@ -217,8 +217,8 @@ public class FormService implements IFormService {
 
 		List<Question> questions = new ArrayList<>();
 		if (form.isHasQuiz() && form.getContentId() != null) {
-			List<QuestionBank> bankEntries = questionBankRepository.findAllByContentId(form.getContentId());
-			for (QuestionBank entry : bankEntries) {
+			List<QuestionBankMongoEntity> bankEntries = questionBankRepository.findAllByContentId(form.getContentId());
+			for (QuestionBankMongoEntity entry : bankEntries) {
 				questions.add(entry.getQuestionData());
 			}
 		}

@@ -35,7 +35,7 @@ public class DocumentMetadataRepositoryImpl implements DocumentMetadataRepositor
             FieldSearchPath fieldSearchPath = SearchPath.fieldPath("embedding");
 
             List<Bson> pipeline = Arrays.asList(Aggregates.vectorSearch(
-                    fieldSearchPath, 
+                    fieldSearchPath,
                     queryVector,
                     indexName,
                     limit,

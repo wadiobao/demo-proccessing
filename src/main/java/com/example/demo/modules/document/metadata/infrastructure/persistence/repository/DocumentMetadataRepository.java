@@ -10,4 +10,9 @@ import com.example.demo.modules.document.metadata.infrastructure.persistence.ent
 @Repository
 public interface DocumentMetadataRepository extends MongoRepository<DocumentMetadataMongoEntity, String>, DocumentMetadataRepositoryCustom {
     Optional<DocumentMetadataMongoEntity> findFirstByContentAndOwner(String content, String owner);
+    
+    /**
+     * Finds the first document that contains a specific tag, excluding a specific ID.
+     */
+    Optional<DocumentMetadataMongoEntity> findFirstByTagsContainingAndIdNot(String tag, String excludeId);
 }
