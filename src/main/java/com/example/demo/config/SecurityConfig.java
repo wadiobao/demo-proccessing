@@ -10,8 +10,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,18 +21,6 @@ import org.springframework.web.cors.CorsConfiguration;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-
-	private final String[] AUTH_END_POINTS = { "/api/v1/user/register", "/api/v1/user/register/otp",
-			"/api/v1/auth/login", "/api/v1/auth/admin/login", "/api/v1/auth/logout", "/api/v1/auth/refresh" };
-	private final String[] API_END_POINTS = { "/api/v1/quiz/public",
-			"/api/v1/pdfs/**", "/api/webhook/cloudinary" };
-	private final String[] FORM_END_POINTS = { "/api/v1/discussion/**" };
-	private final String[] FILE_END_POINTS = { "/api/v1/mail/donate", "/api/v1/mail/send-bug" };
-
-	// Kubernetes liveness/readiness probes must reach these without a token
-	private final String[] ACTUATOR_END_POINTS = { "/actuator/health", "/actuator/info" };
-
-	private final String[] SWAGGER_END_POINTS = { "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html" };
 
 	@Value("${app.cors.allowed-origins}")
 	private String cors;
@@ -49,37 +35,23 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests(request -> request
 				// ---- ADMIN ENDPOINTS ----
-				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.POST, "/api/v1/discussion/newtopic").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.DELETE, "/api/v1/discussion/delete/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN")// hasAuthority("ROLE_ADMIN")
-
+				.requestMatchers(SecurityEndpoints.PRIVATE.ADMIN).hasRole("ADMIN")
+				
 				// ---- PUBLIC ENDPOINTS ----
-				.requestMatchers(HttpMethod.POST, AUTH_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, AUTH_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.POST, API_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, API_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, FORM_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.POST, FORM_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.POST, FILE_END_POINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, FILE_END_POINTS).permitAll()
-				// allow K8s liveness/readiness probes without credentials
-				.requestMatchers(HttpMethod.GET, ACTUATOR_END_POINTS).permitAll()
+				.requestMatchers(SecurityEndpoints.PUBLIC.all()).permitAll()
 				
-				// allow Swagger UI
-				.requestMatchers(HttpMethod.GET, SWAGGER_END_POINTS).permitAll()
-				
+				// ---- ALL OTHER PRIVATE ENDPOINTS ----
 				.anyRequest().authenticated());
 
 		http.oauth2ResourceServer(oauth2 -> oauth2.bearerTokenResolver(bearerTokenResolver).jwt(
 				jwtconfig -> jwtconfig.decoder(customJwtDecoder).jwtAuthenticationConverter(authenticationConverter()))
 				.authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
+		
 		http.csrf(httpconfig -> httpconfig.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-				.ignoringRequestMatchers(AUTH_END_POINTS)
-				.ignoringRequestMatchers(API_END_POINTS)
-				.ignoringRequestMatchers(FILE_END_POINTS)
-				.ignoringRequestMatchers(FORM_END_POINTS)
-				.ignoringRequestMatchers(SWAGGER_END_POINTS));
+				.ignoringRequestMatchers(SecurityEndpoints.PUBLIC.AUTH)
+				.ignoringRequestMatchers(SecurityEndpoints.PUBLIC.QUIZ)
+				.ignoringRequestMatchers(SecurityEndpoints.PUBLIC.FILE)
+				.ignoringRequestMatchers(SecurityEndpoints.PUBLIC.INFRA));
 
 		http.logout(t -> t.disable());
 
@@ -107,9 +79,6 @@ public class SecurityConfig {
 		return authenticationConverter;
 	}
 
-	@Bean
-	PasswordEncoder encoder() {
-		return new BCryptPasswordEncoder(10);
-	}
+
 
 }

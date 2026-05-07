@@ -15,9 +15,9 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.constants.Constants;
 import com.example.demo.modules.document.processing.application.port.output.TextExtractorPort;
 import com.example.demo.modules.document.processing.infrastructure.util.ImageProcessor;
-import com.example.demo.constants.Constants;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +97,7 @@ public class PdfBoxAdapter implements TextExtractorPort {
                         Tesseract tesseract = new Tesseract();
                         tesseract.setDatapath(Constants.FilePaths.TESSDATA_PATH);
                         tesseract.setLanguage(Constants.Languages.VIETNAMESE);
+                        tesseract.setVariable("user_defined_dpi", "300");
                         return String.format(Constants.Messages.PAGE_FORMAT, index + 1, tesseract.doOCR(finalImg));
                     } catch (TesseractException e) {
                         log.error("OCR Error on page {}: {}", index + 1, e.getMessage());

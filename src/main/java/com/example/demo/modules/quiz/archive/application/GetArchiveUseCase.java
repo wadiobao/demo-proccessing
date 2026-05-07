@@ -6,17 +6,19 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.modules.quiz.api.dto.QuizArchiveResponse;
+import com.example.demo.modules.quiz.archive.api.dto.QuizArchiveResponse;
 import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Use case for retrieving quiz history (archives) for a specific user.
+ * Use case for retrieving archived quiz sessions.
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GetArchiveUseCase {
 
     private final ArchivePort archivePort;

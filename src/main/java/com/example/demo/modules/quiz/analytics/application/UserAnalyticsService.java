@@ -7,9 +7,9 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.modules.quiz.api.dto.UserOverviewStatsResponse;
-import com.example.demo.modules.quiz.api.dto.UserOverviewStatsResponse.TopicMastery;
-import com.example.demo.modules.quiz.api.dto.UserStatsResponse;
+import com.example.demo.modules.quiz.adaptive.api.response.UserOverviewStatsResponse;
+import com.example.demo.modules.quiz.adaptive.api.response.UserOverviewStatsResponse.TopicMastery;
+import com.example.demo.modules.quiz.adaptive.api.response.UserStatsResponse;
 import com.example.demo.modules.quiz.shared.domain.model.UserAnswer;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.UserResourceMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.UserResourceRepository;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class UserAnalyticsService {
+class UserAnalyticsService {
 
     UserResourceRepository userResourceRepository;
     MessageSource messageSource;

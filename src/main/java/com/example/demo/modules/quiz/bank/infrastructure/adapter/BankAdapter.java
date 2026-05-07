@@ -51,4 +51,9 @@ public class BankAdapter implements BankPort {
     public Page<QuestionBankMongoEntity> searchByKeyword(String keyword, Pageable pageable) {
         return repository.searchByKeyword(keyword, pageable);
     }
+
+    @Override
+    public void deleteById(String id) {
+        repository.deleteById(id);
+    }
 }

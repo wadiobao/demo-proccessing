@@ -6,8 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.constants.Constants;
-import com.example.demo.modules.quiz.generation.infrastructure.port.AiGenerationPort;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
+import com.example.demo.modules.quiz.shared.domain.port.AiGenerationPort;
+import com.example.demo.modules.quiz.shared.domain.port.AiGenerationPort.AiResponse;
 import com.example.demo.utils.CloudinaryUtils;
 import com.example.demo.utils.HandleTextFromGeminiUtils;
 import com.example.demo.utils.PromptSanitizer;

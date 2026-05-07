@@ -17,9 +17,16 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 		basePackages = {
-				"com.example.demo.sql.repository",
-				// Thêm repository của mỗi module dùng MySQL vào đây
-				"com.example.demo.modules.document.shared.domain.repository"
+				// Identity module
+				"com.example.demo.modules.identity.infrastructure.persistence.repository",
+				// Community module
+				"com.example.demo.modules.community.forum.infrastructure.persistence.repository",
+				"com.example.demo.modules.community.reputation.infrastructure.persistence.repository",
+				// Quiz module
+				"com.example.demo.modules.quiz.graph.infrastructure.persistence.repository",
+				// Document module
+				"com.example.demo.modules.document.shared.domain.repository",
+				"com.example.demo.modules.document.shared.infrastructure.persistence"
 		},
 		entityManagerFactoryRef = "mysqlEntityManagerFactory",
 		transactionManagerRef = "mysqlTransactionManager")
@@ -27,11 +34,17 @@ public class MySqlConfig {
 
 	@Primary
 	@Bean(name = "mysqlEntityManagerFactory")
-	public LocalContainerEntityManagerFactoryBean mysqlEntityManagerFactory(EntityManagerFactoryBuilder builder,DataSource dataSource) {
+	public LocalContainerEntityManagerFactoryBean mysqlEntityManagerFactory(EntityManagerFactoryBuilder builder, DataSource dataSource) {
 		return builder.dataSource(dataSource)
 				.packages(
-						"com.example.demo.sql.entity",
-						// Thêm entity package của mỗi module dùng MySQL vào đây
+						// Identity module JPA entities
+						"com.example.demo.modules.identity.infrastructure.persistence.entity",
+						// Community module JPA entities
+						"com.example.demo.modules.community.forum.infrastructure.persistence.entity",
+						"com.example.demo.modules.community.reputation.infrastructure.persistence.entity",
+						// Quiz module JPA entities
+						"com.example.demo.modules.quiz.graph.infrastructure.persistence.entity",
+						// Document module
 						"com.example.demo.modules.document.shared.domain.model"
 				)
 				.build();

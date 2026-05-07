@@ -35,6 +35,7 @@ public class DocumentMetadataMongoEntity extends BaseModel {
     List<String> tags;
     List<Double> embedding;
     String topic;
+    String originalName;
 
     @Transient
     Double vectorSearchScore;
@@ -47,6 +48,7 @@ public class DocumentMetadataMongoEntity extends BaseModel {
                 .tags(this.tags)
                 .embedding(this.embedding)
                 .topic(this.topic)
+                .originalName(this.originalName)
                 .vectorSearchScore(this.vectorSearchScore)
                 .build();
     }
@@ -59,6 +61,7 @@ public class DocumentMetadataMongoEntity extends BaseModel {
                 .tags(domain.getTags())
                 .embedding(domain.getEmbedding())
                 .topic(domain.getTopic())
+                .originalName(domain.getOriginalName())
                 .build();
     }
 }

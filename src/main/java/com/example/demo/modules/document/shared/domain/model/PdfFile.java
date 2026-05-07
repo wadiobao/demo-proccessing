@@ -2,7 +2,7 @@ package com.example.demo.modules.document.shared.domain.model;
 
 import com.example.demo.dto.basemodel.BaseModel;
 import com.example.demo.enums.FileType;
-import com.example.demo.sql.entity.Major;
+import com.example.demo.modules.document.shared.domain.model.Major;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -113,3 +113,15 @@ INSERT IGNORE INTO majors (code, display_name) VALUES
 ('913', 'Làm việc nhóm'),
 ('914', 'Tư duy phản biện'),
 ('915', 'Trí tuệ cảm xúc (EQ)');
+
+-- 7. Initialize Topics (Table name 'topic_data')
+INSERT IGNORE INTO topic_data (topic_id, topic) VALUES 
+(1, 'Hỏi đáp học thuật'),
+(2, 'Chia sẻ tài liệu'),
+(3, 'Đề thi & Đáp án'),
+(4, 'Kinh nghiệm ôn thi'),
+(5, 'Thảo luận chung'),
+(6, 'Góp ý hệ thống'),
+(7, 'Thông báo & Tin tức'),
+(8, 'Câu lạc bộ & Nhóm học tập'),
+(9, 'Khám phá & Sáng tạo');

@@ -24,4 +24,6 @@ public interface BankPort {
     Page<QuestionBankMongoEntity> findAll(Pageable pageable);
 
     Page<QuestionBankMongoEntity> searchByKeyword(String keyword, Pageable pageable);
+    
+    void deleteById(String id);
 }

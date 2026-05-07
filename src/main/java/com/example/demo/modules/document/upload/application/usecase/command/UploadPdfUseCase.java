@@ -14,8 +14,8 @@ import com.example.demo.modules.document.upload.application.port.output.Document
 import com.example.demo.modules.document.upload.application.port.output.FileStoragePort;
 
 import com.example.demo.modules.document.shared.domain.model.PdfFile;
-import com.example.demo.sql.entity.Major;
-import com.example.demo.sql.repository.MajorRepository;
+import com.example.demo.modules.document.shared.domain.model.Major;
+import com.example.demo.modules.document.shared.infrastructure.persistence.MajorRepository;
 
 import lombok.RequiredArgsConstructor;
 

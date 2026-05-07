@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.modules.quiz.generation.infrastructure.port.QuestionBankPort;
+import com.example.demo.modules.quiz.generation.application.port.QuestionBankPort;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.QuestionBankRepository;
 

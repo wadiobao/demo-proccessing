@@ -79,6 +79,14 @@ public class ArchiveAdapter implements ArchivePort {
     }
 
     @Override
+    public void deleteAllByAuthor(String author) {
+        List<ArchivedQuestionMongoEntity> archives = repository.findAllByAuthorOrderByCreatedAtDesc(author);
+        for (ArchivedQuestionMongoEntity archive : archives) {
+            delete(archive); // Reuse individual delete for image cleanup
+        }
+    }
+
+    @Override
     public long countByAuthor(String author) {
         return repository.countByAuthor(author);
     }

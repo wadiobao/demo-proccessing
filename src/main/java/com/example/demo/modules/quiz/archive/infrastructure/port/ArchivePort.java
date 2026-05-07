@@ -22,5 +22,7 @@ public interface ArchivePort {
 
     void delete(ArchivedQuestionMongoEntity archive);
 
+    void deleteAllByAuthor(String author);
+
     long countByAuthor(String author);
 }

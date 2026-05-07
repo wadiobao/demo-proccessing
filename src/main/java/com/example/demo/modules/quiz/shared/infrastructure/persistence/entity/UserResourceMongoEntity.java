@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.example.demo.dto.basemodel.BaseModel;
+import com.example.demo.modules.quiz.shared.domain.model.ThetaSnapshot;
 import com.example.demo.modules.quiz.shared.domain.model.UserAnswer;
 
 import lombok.AccessLevel;
@@ -59,6 +60,13 @@ public class UserResourceMongoEntity extends BaseModel {
      */
     @Default
     int sessionSize = 15;
+
+    /**
+     * Chronological record of theta scores after each quiz session.
+     * Capped at 100 entries to prevent unbounded document growth.
+     */
+    @Default
+    List<ThetaSnapshot> thetaHistory = new ArrayList<>();
 
     @Version
     Long version;

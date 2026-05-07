@@ -6,7 +6,7 @@ import org.hibernate.annotations.BatchSize;
 
 import com.example.demo.dto.basemodel.BaseModel;
 import com.example.demo.enums.AnnotationType;
-import com.example.demo.sql.entity.User;
+import com.example.demo.modules.identity.infrastructure.persistence.entity.UserEntity;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -56,7 +56,7 @@ public class PdfAnnotation extends BaseModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    User user;
+    UserEntity user;
 
     @Enumerated(EnumType.STRING)
     AnnotationType type;

@@ -3,11 +3,11 @@ package com.example.demo.modules.quiz.bank.infrastructure.adapter;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.modules.quiz.bank.infrastructure.port.AuthorReputationPort;
-import com.example.demo.sql.entity.Admin;
-import com.example.demo.sql.entity.NormalUser;
-import com.example.demo.sql.entity.Tier;
-import com.example.demo.sql.entity.User;
-import com.example.demo.sql.repository.UserRepository;
+import com.example.demo.modules.identity.domain.model.Admin;
+import com.example.demo.modules.identity.domain.model.NormalUser;
+import com.example.demo.modules.identity.domain.model.Tier;
+import com.example.demo.modules.identity.domain.model.User;
+import com.example.demo.modules.identity.domain.repository.IUserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthorReputationAdapter implements AuthorReputationPort {
 
-    private final UserRepository userRepository;
+    private final IUserRepository userRepository;
 
     @Override
     public boolean isAuthorizedToEdit(String username) {

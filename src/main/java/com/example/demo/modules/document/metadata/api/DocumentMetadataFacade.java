@@ -3,7 +3,6 @@ package com.example.demo.modules.document.metadata.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,11 +37,19 @@ public class DocumentMetadataFacade {
      * Saves or retrieves existing metadata for the given content.
      */
     @Transactional
-    public DocumentMetadata findOrCreateMetadata(String content, String owner) {
+    public DocumentMetadata findOrCreateMetadata(String content, String owner, String originalName) {
         // 1. Check for EXACT match first
         Optional<DocumentMetadataMongoEntity> exactMatch = repository.findFirstByContentAndOwner(content, owner);
         if (exactMatch.isPresent()) {
-            return exactMatch.get().toDomain();
+            DocumentMetadataMongoEntity entity = exactMatch.get();
+            // Update originalName if it was missing in the existing record
+            if ((entity.getOriginalName() == null || entity.getOriginalName().isBlank()) && originalName != null) {
+                entity.setOriginalName(originalName);
+                repository.save(entity);
+                log.info("Updated missing originalName for existing metadata: {}", originalName);
+            }
+            log.info("Found an exact match");
+            return entity.toDomain();
         }
 
         log.info("[AI-CALL] Creating text embedding (Vectorization)");
@@ -57,6 +64,15 @@ public class DocumentMetadataFacade {
             if (similar != null) {
                 if (similar.getVectorSearchScore() >= 0.95) {
                     log.info("Reusing exact metadata for content. Topic: {}", similar.getTopic());
+                    
+                    // Update originalName in DB if missing
+                    repository.findById(similar.getId()).ifPresent(entity -> {
+                        if ((entity.getOriginalName() == null || entity.getOriginalName().isBlank()) && originalName != null) {
+                            entity.setOriginalName(originalName);
+                            repository.save(entity);
+                        }
+                    });
+                    
                     return similar;
                 }
                 detectedTopic = similar.getTopic();
@@ -93,19 +109,29 @@ public class DocumentMetadataFacade {
                 .embedding(embedding)
                 .topic(detectedTopic)
                 .tags(tags)
+                .originalName(originalName)
                 .build();
 
         DocumentMetadataMongoEntity entity = DocumentMetadataMongoEntity.fromDomain(domain);
         return repository.save(entity).toDomain();
     }
 
-    /**
-     * Finds metadata by its unique identifier.
-     */
     public DocumentMetadata findById(String id) {
         return repository.findById(id)
                 .map(DocumentMetadataMongoEntity::toDomain)
                 .orElse(null);
+    }
+
+    /**
+     * Finds multiple metadata entries by their unique identifiers.
+     */
+    public List<DocumentMetadata> findByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<DocumentMetadata> results = new ArrayList<>();
+        repository.findAllById(ids).forEach(entity -> results.add(entity.toDomain()));
+        return results;
     }
 
     /**

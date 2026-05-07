@@ -28,6 +28,7 @@ public class DocumentMetadata {
     List<String> tags;
     List<Double> embedding;
     String topic;
+    String originalName;
     
     // Transient field for search scoring
     Double vectorSearchScore;

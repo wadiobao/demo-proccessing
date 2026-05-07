@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.modules.quiz.archive.application.AdminArchiveUseCase;
-import com.example.demo.modules.quiz.archive.application.ArchiveQuizUseCase;
-import com.example.demo.modules.quiz.archive.application.DeleteArchiveUseCase;
-import com.example.demo.modules.quiz.archive.application.GetArchiveUseCase;
+import com.example.demo.modules.quiz.archive.api.ArchiveFacade;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
@@ -32,17 +29,14 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class QuizArchiveController {
 
-    private final ArchiveQuizUseCase archiveQuizUseCase;
-    private final GetArchiveUseCase getArchiveUseCase;
-    private final DeleteArchiveUseCase deleteArchiveUseCase;
-    private final AdminArchiveUseCase adminArchiveUseCase;
+    private final ArchiveFacade archiveFacade;
 
     /**
      * Archives a quiz.
      */
     @PostMapping
     public ResponseEntity<ArchivedQuestionMongoEntity> create(@RequestBody ArchivedQuestionMongoEntity archive) {
-        return ResponseEntity.ok(archiveQuizUseCase.execute(archive));
+        return ResponseEntity.ok(archiveFacade.createArchive(archive));
     }
 
     /**
@@ -53,7 +47,7 @@ public class QuizArchiveController {
             @RequestParam String author,
             Authentication authentication) {
         
-        return ResponseEntity.ok(getArchiveUseCase.findByAuthor(author));
+        return ResponseEntity.ok(archiveFacade.getAuthorHistory(author));
     }
 
     /**
@@ -68,7 +62,7 @@ public class QuizArchiveController {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        deleteArchiveUseCase.execute(id, username, isAdmin);
+        archiveFacade.deleteArchive(id, username, isAdmin);
         return ResponseEntity.noContent().build();
     }
 
@@ -77,6 +71,6 @@ public class QuizArchiveController {
      */
     @GetMapping("/all")
     public ResponseEntity<List<ArchivedQuestionMongoEntity>> getAll() {
-        return ResponseEntity.ok(adminArchiveUseCase.findAll());
+        return ResponseEntity.ok(archiveFacade.getAllArchives());
     }
 }
