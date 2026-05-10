@@ -47,19 +47,12 @@ public class GenerateAdaptiveQuizCommand {
         }
 
         // 1. Process Documents (Text extraction, Metadata, Sampling)
-        ProcessedDocumentResult docResult = documentService.processDocuments(files, username, config.getQuestionCount());
+        ProcessedDocumentResult docResult = documentService.processDocuments(files, username, config.getQuestionCount(), config.getTopic());
 
-        // 2. Create Aggregate Metadata for AI context
-        DocumentMetadata aggregateMetadata = documentMetadataFacade.findOrCreateMetadata(
-                docResult.getAggregatedText(), 
-                username, 
-                files.size() == 1 ? files.get(0).getOriginalFilename() : "Combined Document"
-        );
-        
-        // 3. Determine Topic
+        // 2. Determine Topic
         String detectedTopic = (config.getTopic() != null && !config.getTopic().isBlank()) 
                 ? config.getTopic().trim().toLowerCase() 
-                : (aggregateMetadata.getTopic() != null ? aggregateMetadata.getTopic() : docResult.getFirstDetectedTopic());
+                : docResult.getFirstDetectedTopic();
         
         config.setTopic(detectedTopic);
 
@@ -70,8 +63,8 @@ public class GenerateAdaptiveQuizCommand {
         // 5. Prepare Personalized Config (Bloom, Difficulty)
         configService.preparePersonalizedConfig(config, userResource);
 
-        // 6. Generate Quiz
-        return generateAndPersist(files, config, username, docResult, aggregateMetadata, detectedTopic);
+        // 5. Generate Quiz
+        return generateAndPersist(files, config, username, docResult, detectedTopic);
     }
 
     private StateResponse<Object> generateAndPersist(
@@ -79,25 +72,25 @@ public class GenerateAdaptiveQuizCommand {
             QuizConfig config, 
             String username, 
             ProcessedDocumentResult docResult, 
-            DocumentMetadata aggregateMetadata, 
             String detectedTopic) throws Exception {
         
         if (config.getLevel() < 2) {
             if (files.size() > 1) {
                 throw new RuntimeException("Standard mode only supports single file generation.");
             }
+            String contentId = docResult.getIndividualMetadataIds().isEmpty() ? null : docResult.getIndividualMetadataIds().get(0);
             return generationFacade.generateStandardQuiz(
                     docResult.getAggregatedText(), 
                     files.get(0).getOriginalFilename(), 
                     config, 
-                    aggregateMetadata.getId()
+                    contentId
             );
         }
 
         StateResponse<Object> response = generationFacade.generatePersonalizedQuiz(
                 docResult.getSampledChunks(), 
                 config, 
-                aggregateMetadata.getId()
+                null
         );
 
         if (response.getResult() instanceof FileGenerateResponse) {
@@ -105,7 +98,7 @@ public class GenerateAdaptiveQuizCommand {
             String fileName = files.size() > 1 ? "Personalized_" + detectedTopic : files.get(0).getOriginalFilename();
             // If multiple files, don't add the aggregate metadata ID to the UserResource
             fileResponse = generationFacade.persistQuiz(
-                    fileResponse, username, fileName, docResult.getAggregatedText(), files.size() <= 1);
+                    fileResponse, username, fileName, docResult.getAggregatedText(), files.size() <= 1, detectedTopic);
             response.setResult(fileResponse);
         }
 

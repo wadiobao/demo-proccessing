@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GetTopicInfoQuery {
 
     private final UserResourceRepository userResourceRepository;
+    private final com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator irtCalculator;
 
     public StateResponse<Object> execute(String username) {
         log.info("Executing get all topics info query for user: {}", username);
@@ -34,6 +35,7 @@ public class GetTopicInfoQuery {
                         .topic(resource.getTopic())
                         .createdAt(resource.getCreatedAt())
                         .score(resource.getTheta())
+                        .mastery(irtCalculator.getMasteryLabel(resource.getMastery() == 0 ? irtCalculator.calculateMasteryLevel(resource.getTheta()) : resource.getMastery()))
                         .build())
                 .collect(Collectors.toList());
 

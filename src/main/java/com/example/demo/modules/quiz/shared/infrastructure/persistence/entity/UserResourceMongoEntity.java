@@ -52,6 +52,9 @@ public class UserResourceMongoEntity extends BaseModel {
     
     @Default
     double b = 0.0;
+    
+    @Default
+    int mastery = 1;
 
     /**
      * Fixed number of questions per quiz session for this topic.

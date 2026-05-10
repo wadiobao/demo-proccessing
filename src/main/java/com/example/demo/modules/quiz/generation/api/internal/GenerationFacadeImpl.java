@@ -53,6 +53,11 @@ class GenerationFacadeImpl implements GenerationFacade {
 
     @Override
     public FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText, boolean shouldUpdateContentIds) throws Exception {
-        return persistQuizUseCase.execute(response, username, fileName, rawText, shouldUpdateContentIds);
+        return persistQuizUseCase.execute(response, username, fileName, rawText, shouldUpdateContentIds, null);
+    }
+
+    @Override
+    public FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText, boolean shouldUpdateContentIds, String explicitTopic) throws Exception {
+        return persistQuizUseCase.execute(response, username, fileName, rawText, shouldUpdateContentIds, explicitTopic);
     }
 }

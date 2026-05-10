@@ -35,6 +35,7 @@ public class AdaptiveQuizTopicService {
                         .b(0.0)
                         .sessionSize(sessionSize)
                         .history(new ArrayList<>())
+                        .thetaHistory(new ArrayList<>())
                         .contentIds(new ArrayList<>())
                         .build());
 

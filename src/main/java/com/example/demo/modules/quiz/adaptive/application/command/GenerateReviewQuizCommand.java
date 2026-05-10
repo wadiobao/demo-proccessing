@@ -56,34 +56,25 @@ public class GenerateReviewQuizCommand {
         ProcessedDocumentResult docResult = documentService.processFromMetadataIds(
                 userResource.getContentIds(), config.getQuestionCount());
 
-        // 3. Create/Find Aggregate Metadata for AI context
-        // For review flow, we use a standard name reflecting the topic
-        DocumentMetadata aggregateMetadata = documentMetadataFacade.findOrCreateMetadata(
-                docResult.getAggregatedText(), 
-                username, 
-                "Review_" + userResource.getTopic()
-        );
-        
         config.setTopic(userResource.getTopic());
 
         // 4. Prepare Personalized Config (Bloom, Difficulty)
         configService.preparePersonalizedConfig(config, userResource);
 
         // 5. Generate and Persist Quiz
-        return generateAndPersist(config, username, docResult, aggregateMetadata, userResource.getTopic());
+        return generateAndPersist(config, username, docResult, userResource.getTopic());
     }
 
     private StateResponse<Object> generateAndPersist(
             QuizConfig config, 
             String username, 
             ProcessedDocumentResult docResult, 
-            DocumentMetadata aggregateMetadata, 
             String detectedTopic) throws Exception {
         
         StateResponse<Object> response = generationFacade.generatePersonalizedQuiz(
                 docResult.getSampledChunks(), 
                 config, 
-                aggregateMetadata.getId()
+                null
         );
 
         if (response.getResult() instanceof FileGenerateResponse) {
@@ -92,7 +83,7 @@ public class GenerateReviewQuizCommand {
             
             // For review quizzes, we NEVER want to add the aggregate metadata ID back to the topic files list
             fileResponse = generationFacade.persistQuiz(
-                    fileResponse, username, fileName, docResult.getAggregatedText(), false);
+                    fileResponse, username, fileName, docResult.getAggregatedText(), false, detectedTopic);
             response.setResult(fileResponse);
         }
 

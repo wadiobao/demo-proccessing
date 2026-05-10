@@ -47,7 +47,7 @@ class UserAnalyticsService {
 
         List<UserAnswer> history = userResource.getHistory();
         int totalAnswered = history.size();
-        int correctAnswers = (int) history.stream().filter(UserAnswer::isTrue).count();
+        int correctAnswers = (int) history.stream().filter(UserAnswer::isCorrect).count();
         double accuracy = totalAnswered > 0 ? (correctAnswers * 100.0) / totalAnswered : 0.0;
 
         List<UserAnswer> recentHistory = history.size() > 20
@@ -61,7 +61,7 @@ class UserAnalyticsService {
                 String bloomLevel = answer.getBloomLevel() != null ? answer.getBloomLevel() : "Unknown";
                 bloomCounts.putIfAbsent(bloomLevel, new int[] { 0, 0 });
                 bloomCounts.get(bloomLevel)[0]++;
-                if (answer.isTrue()) {
+                if (answer.isCorrect()) {
                     bloomCounts.get(bloomLevel)[1]++;
                 }
             }
@@ -122,7 +122,7 @@ class UserAnalyticsService {
             List<UserAnswer> history = resource.getHistory();
             if (history != null && !history.isEmpty()) {
                 totalQuestionsAnswered += history.size();
-                totalCorrectAnswers += (int) history.stream().filter(UserAnswer::isTrue).count();
+                totalCorrectAnswers += (int) history.stream().filter(UserAnswer::isCorrect).count();
             }
 
             sumTheta += resource.getTheta();

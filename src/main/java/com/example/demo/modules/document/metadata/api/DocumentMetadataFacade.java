@@ -38,15 +38,32 @@ public class DocumentMetadataFacade {
      */
     @Transactional
     public DocumentMetadata findOrCreateMetadata(String content, String owner, String originalName) {
+        return findOrCreateMetadata(content, owner, originalName, null);
+    }
+
+    /**
+     * Saves or retrieves existing metadata for the given content with an optional explicit topic.
+     */
+    @Transactional
+    public DocumentMetadata findOrCreateMetadata(String content, String owner, String originalName, String explicitTopic) {
         // 1. Check for EXACT match first
         Optional<DocumentMetadataMongoEntity> exactMatch = repository.findFirstByContentAndOwner(content, owner);
         if (exactMatch.isPresent()) {
             DocumentMetadataMongoEntity entity = exactMatch.get();
+            boolean updated = false;
             // Update originalName if it was missing in the existing record
             if ((entity.getOriginalName() == null || entity.getOriginalName().isBlank()) && originalName != null) {
                 entity.setOriginalName(originalName);
-                repository.save(entity);
+                updated = true;
                 log.info("Updated missing originalName for existing metadata: {}", originalName);
+            }
+            if (explicitTopic != null && !explicitTopic.equals(entity.getTopic())) {
+                log.info("Updating topic for existing exact match from {} to {}", entity.getTopic(), explicitTopic);
+                entity.setTopic(explicitTopic);
+                updated = true;
+            }
+            if (updated) {
+                repository.save(entity);
             }
             log.info("Found an exact match");
             return entity.toDomain();
@@ -65,13 +82,26 @@ public class DocumentMetadataFacade {
                 if (similar.getVectorSearchScore() >= 0.95) {
                     log.info("Reusing exact metadata for content. Topic: {}", similar.getTopic());
                     
-                    // Update originalName in DB if missing
+                    // Update originalName or topic in DB if missing/different
                     repository.findById(similar.getId()).ifPresent(entity -> {
+                        boolean updated = false;
                         if ((entity.getOriginalName() == null || entity.getOriginalName().isBlank()) && originalName != null) {
                             entity.setOriginalName(originalName);
+                            updated = true;
+                        }
+                        if (explicitTopic != null && !explicitTopic.equals(entity.getTopic())) {
+                            log.info("Updating topic for similar match from {} to {}", entity.getTopic(), explicitTopic);
+                            entity.setTopic(explicitTopic);
+                            updated = true;
+                        }
+                        if (updated) {
                             repository.save(entity);
                         }
                     });
+                    
+                    if (explicitTopic != null && !explicitTopic.equals(similar.getTopic())) {
+                        similar.setTopic(explicitTopic);
+                    }
                     
                     return similar;
                 }
@@ -84,16 +114,21 @@ public class DocumentMetadataFacade {
 
         // 3. Fallback to AI Analysis if no strong match
         if (detectedTopic == null) {
-            try {
-                log.info("[AI-CALL] Analyzing text metadata (Topic & Keywords detection)");
-                ExtractedContent analyzed = documentProcessingFacade.analyzeText(content);
-                tags = analyzed.getKeywords();
-                if (tags != null && !tags.isEmpty()) {
-                    detectedTopic = analyzed.getSummary() != null ? analyzed.getSummary() : tags.get(0);
-                    log.info("[AI-RESULT] Extracted metadata. Topic: {}, Keywords: {}", detectedTopic, tags.size());
+            if (explicitTopic != null) {
+                detectedTopic = explicitTopic;
+                log.info("Using explicit topic: {}", detectedTopic);
+            } else {
+                try {
+                    log.info("[AI-CALL] Analyzing text metadata (Topic & Keywords detection)");
+                    ExtractedContent analyzed = documentProcessingFacade.analyzeText(content);
+                    tags = analyzed.getKeywords();
+                    if (tags != null && !tags.isEmpty()) {
+                        detectedTopic = analyzed.getSummary() != null ? analyzed.getSummary() : tags.get(0);
+                        log.info("[AI-RESULT] Extracted metadata. Topic: {}, Keywords: {}", detectedTopic, tags.size());
+                    }
+                } catch (Exception e) {
+                    log.error("AI Analysis failed: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                log.error("AI Analysis failed: {}", e.getMessage());
             }
         }
 

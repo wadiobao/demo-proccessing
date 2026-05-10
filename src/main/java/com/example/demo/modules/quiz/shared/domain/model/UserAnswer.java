@@ -18,7 +18,7 @@ import lombok.experimental.FieldDefaults;
 public class UserAnswer {
     String id;
     String bankId;
-    boolean isTrue;
+    boolean correct;
     double difficulty;
     String bloomLevel;
 }

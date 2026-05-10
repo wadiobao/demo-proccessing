@@ -31,9 +31,8 @@ public class CreateTopicCommand {
         log.info("Creating topic '{}' for user '{}' with {} files", topic, username, files != null ? files.size() : 0);
 
         List<String> metadataIds = new ArrayList<>();
-        // 1. Process files and get metadata IDs
         if (files != null && !files.isEmpty()) {
-            metadataIds = documentService.extractMetadataIds(files, username);
+            metadataIds = documentService.extractMetadataIds(files, username, topic);
         }
         // 2. Sync topic resource (create if not exists, add files, set session size)
         UserResourceMongoEntity userResource = topicService.syncTopicResource(username, topic, metadataIds, sessionSize);

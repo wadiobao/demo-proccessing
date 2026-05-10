@@ -20,6 +20,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ThetaSnapshot {
+    // theta of that session
     double theta;
     // accuracy percentage of that session
     double accuracy;

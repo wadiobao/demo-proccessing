@@ -41,7 +41,7 @@ public class IRTCalculator {
 		double sum = 0;
 		for (UserAnswer a : answers) {
 			double p = p(theta, a.getDifficulty());
-			sum += a.isTrue() ? Math.log(p) : Math.log(1 - p);
+			sum += a.isCorrect() ? Math.log(p) : Math.log(1 - p);
 		}
 		return sum;
 	}
@@ -57,7 +57,7 @@ public class IRTCalculator {
 		// gradient MLE)
 		double g = 0;
 		for (UserAnswer a : answers) {
-			g += (a.isTrue() ? 1.0 : 0.0) - p(theta, a.getDifficulty());
+			g += (a.isCorrect() ? 1.0 : 0.0) - p(theta, a.getDifficulty());
 		}
 
 		// Prior component: gradient of Gaussian prior N(0, sigma^2) to prevent extreme
@@ -260,23 +260,46 @@ public class IRTCalculator {
 	 * @param learningRate weight of this specific interaction / hệ số học tập
 	 * @return adjusted difficulty (b) / độ khó mới đã được hiệu chỉnh
 	 */
-	public double recalibrateItemDifficulty(double currentB, double userTheta, boolean correct, double learningRate) {
-		double pv = p(userTheta, currentB);
-		double score = correct ? 1.0 : 0.0;
-		// move b in the direction of the prediction error (stochastic gradient descent)
-		// / di chuyển b theo hướng sai số dự đoán (gradient descent ngẫu nhiên)
-		double newB = currentB + learningRate * (pv - score);
-		// sanitize output within valid IRT model range
-		// / làm sạch kết quả trong phạm vi mô hình IRT hợp lệ
-		return Math.max(Math.min(newB, 3.0), -3.0);
-	}
+	    public double recalibrateItemDifficulty(double currentB, double userTheta, boolean correct, double learningRate) {
+        double pv = p(userTheta, currentB);
+        double score = correct ? 1.0 : 0.0;
+        // move b in the direction of the prediction error (stochastic gradient descent)
+        // / di chuyển b theo hướng sai số dự đoán (gradient descent ngẫu nhiên)
+        double newB = currentB + learningRate * (pv - score);
+        // sanitize output within valid IRT model range
+        // / làm sạch kết quả trong phạm vi mô hình IRT hợp lệ
+        return Math.max(Math.min(newB, 3.0), -3.0);
+    }
 
-	public static class UserAnswerGenerator {
+    /**
+     * Maps an IRT theta score [-3.0, 3.0] to a 6-level mastery scale.
+     * 
+     * @param theta user's latent ability
+     * @return mastery level from 1 (Beginner) to 6 (Master)
+     */
+    public int calculateMasteryLevel(double theta) {
+        // Normalize theta to 0.0 - 1.0 range
+        double normalized = (theta + 3.0) / 6.0;
+        // Map to 1-6
+        int level = (int) Math.ceil(normalized * 6.0);
+        return Math.max(1, Math.min(6, level));
+    }
+
+    public String getMasteryLabel(int level) {
+        if (level < 1 || level > 6) return "Unknown";
+        return UserAnswerGenerator.BLOOM_LEVELS[level - 1];
+    }
+
+    public static class UserAnswerGenerator {
 
 		private static final Random random = new Random();
-		private static final String[] BLOOM_LEVELS = {
-				"Remembering", "Understanding", "Applying",
-				"Analyzing", "Evaluating", "Creating"
+		public static final String[] BLOOM_LEVELS = {
+				"Remembering",
+				"Understanding",
+				"Applying",
+				"Analyzing",
+				"Evaluating",
+				"Creating"
 		};
 
 		public enum AnswerPattern {
@@ -302,7 +325,7 @@ public class IRTCalculator {
 
 				answers.add(UserAnswer.builder()
 						.id("Q" + i)
-						.isTrue(correct)
+						.correct(correct)
 						.difficulty(diff)
 						.bloomLevel(bloom)
 						.build());

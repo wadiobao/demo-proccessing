@@ -1,8 +1,11 @@
 package com.example.demo.modules.quiz.adaptive.application.query;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.modules.quiz.shared.domain.model.ThetaSnapshot;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.UserResourceMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.UserResourceRepository;
 
@@ -19,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GetTopicScoreHistoryQuery {
 
     private final UserResourceRepository userResourceRepository;
+    private final com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator irtCalculator;
 
     public StateResponse<Object> execute(String topicId, String username) {
         log.info("Executing get topic score history query for user: {}, topic: {}", username, topicId);
@@ -29,9 +33,14 @@ public class GetTopicScoreHistoryQuery {
             throw new SecurityException("You do not have permission to view this topic");
         }
 
+        List<ThetaSnapshot> history = userResource.getThetaHistory();
+
         return StateResponse.builder()
                 .message("Topic score history retrieved successfully")
-                .result(userResource.getThetaHistory())
-                .build();
+                .result(java.util.Map.of(
+                    "currentMastery", irtCalculator.getMasteryLabel(userResource.getMastery() == 0 ? irtCalculator.calculateMasteryLevel(userResource.getTheta()) : userResource.getMastery()),
+                    "currentTheta", userResource.getTheta(),
+                    "history", history
+                )).build();
     }
 }

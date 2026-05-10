@@ -1,6 +1,7 @@
 package com.example.demo.modules.quiz.evaluation.application.usecase;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,7 +37,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Use case for submitting quiz answers, calculating scores, and updating IRT parameters.
+ * Use case for submitting quiz answers, calculating scores, and updating IRT
+ * parameters.
  */
 @Service
 @RequiredArgsConstructor
@@ -58,20 +60,24 @@ public class SubmitQuizUseCase {
         // 1. Kiểm tra xem bài tập đã được nộp chưa (idempotency)
         ArchivedQuestionMongoEntity archive = archivePort.findById(request.getArchivedQuestionId())
                 .orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
-        
+
         if (archive.isEvaluated()) {
             throw new HandleException(ErrorCode.EVALUATED_QUESTIONS);
         }
 
-        // 2. Lấy hoặc tạo mới thông tin năng lực người dùng
+        // 2. Lấy thông tin năng lực người dùng (phải tồn tại vì UserResource được tạo
+        // khi generate quiz)
         UserResourceMongoEntity userResource = userResourceRepository
                 .findByUserNameAndTopic(username, request.getTopic())
-                .orElseGet(() -> createNewUserResource(username, request.getTopic()));
+                .orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
 
         List<UserAnswer> answers = request.getAnswers();
-        int totalQuestions = answers.size();
-        int correctAnswers = (int) answers.stream().filter(UserAnswer::isTrue).count();
-        double scorePercentage = (correctAnswers * 100.0) / totalQuestions;
+        if (answers == null) {
+            answers = new ArrayList<>();
+        }
+        int totalQuestions = archive.getQuestions().size();
+        int correctAnswers = (int) answers.stream().filter(UserAnswer::isCorrect).count();
+        double scorePercentage = totalQuestions > 0 ? (correctAnswers * 100.0) / totalQuestions : 0.0;
 
         // 3. Tính toán Theta mới qua IRT-MAP
         // Note: Cần cẩn thận với kiểu dữ liệu history trong UserResource
@@ -82,30 +88,44 @@ public class SubmitQuizUseCase {
 
         double newTheta = irtResults[0];
         double newDifficulty = (irtResults[1] + irtResults[2]) / 2;
+        int mastery = irtCalculator.calculateMasteryLevel(newTheta);
 
         userResource.setTheta(newTheta);
         userResource.setB(newDifficulty);
+        userResource.setMastery(mastery);
 
-        // record this session's score for historical trend tracking, capped at 100 entries
+        // record this session's score for historical trend tracking, capped at 100
+        // entries
         ThetaSnapshot snapshot = ThetaSnapshot.builder()
                 .theta(newTheta)
                 .accuracy(scorePercentage)
                 .recordedAt(LocalDateTime.now())
                 .build();
+
         List<ThetaSnapshot> thetaHistory = userResource.getThetaHistory();
+        if (thetaHistory == null) {
+            thetaHistory = new java.util.ArrayList<>();
+            userResource.setThetaHistory(thetaHistory);
+        }
+
         thetaHistory.add(snapshot);
         if (thetaHistory.size() > 100) {
-            userResource.setThetaHistory(new java.util.ArrayList<>(thetaHistory.subList(thetaHistory.size() - 100, thetaHistory.size())));
+            userResource.setThetaHistory(
+                    new java.util.ArrayList<>(thetaHistory.subList(thetaHistory.size() - 100, thetaHistory.size())));
         }
 
         // 4. Lưu lịch sử làm bài (giới hạn 200 bản ghi để tránh vượt quá 16MB document)
+        // Note: history đã được cập nhật bên trong irtCalculator.reviewAnswer
         List<UserAnswer> history = userResource.getHistory();
-        history.addAll(answers);
         if (history.size() > 200) {
             userResource.setHistory(new java.util.ArrayList<>(history.subList(history.size() - 200, history.size())));
         }
 
         userResourceRepository.save(userResource);
+
+        // Mark archive as evaluated and save
+        archive.setEvaluated(true);
+        archivePort.save(archive);
 
         // 5. Hiệu chỉnh độ khó cho Question Bank
         recalibrateQuestionBank(answers, newTheta);
@@ -130,8 +150,8 @@ public class SubmitQuizUseCase {
                 .toList();
 
         if (bankIds.isEmpty()) {
-			return;
-		}
+            return;
+        }
 
         List<QuestionBankMongoEntity> bankedQuestions = questionBankRepository.findAllById(bankIds);
         Map<String, QuestionBankMongoEntity> questionMap = bankedQuestions.stream()
@@ -146,14 +166,14 @@ public class SubmitQuizUseCase {
                 double calibratedB = irtCalculator.recalibrateItemDifficulty(
                         bankedQ.getDifficulty(),
                         userTheta,
-                        ans.isTrue(),
+                        ans.isCorrect(),
                         0.1);
 
                 Query query = new Query(Criteria.where("_id").is(ans.getBankId()));
                 Update update = new Update()
                         .inc("attempts", 1)
                         .set("difficulty", calibratedB);
-                if (ans.isTrue()) {
+                if (ans.isCorrect()) {
                     update.inc("correctCount", 1);
                 }
                 bulkOps.updateOne(query, update);
@@ -165,30 +185,18 @@ public class SubmitQuizUseCase {
         }
     }
 
-    private UserResourceMongoEntity createNewUserResource(String username, String topic) {
-        return UserResourceMongoEntity.builder()
-                .userName(username)
-                .topic(topic)
-                .theta(0.0)
-                .b(0.0)
-                .sessionSize(15) // Default to 15 if created during submission (unlikely but safe)
-                .history(new java.util.ArrayList<>())
-                .contentIds(new java.util.ArrayList<>())
-                .build();
-    }
-
     private String generateFeedback(double scorePercentage) {
         java.util.Locale locale = LocaleContextHolder.getLocale();
         if (scorePercentage >= 90) {
-			return messageSource.getMessage("feedback.excellent", null, locale);
-		}
+            return messageSource.getMessage("feedback.excellent", null, locale);
+        }
         if (scorePercentage >= 70) {
-			return messageSource.getMessage("feedback.good", null, locale);
-		}
+            return messageSource.getMessage("feedback.good", null, locale);
+        }
         if (scorePercentage >= 50) {
-			return messageSource.getMessage("feedback.fair", null, locale);
-		}
+            return messageSource.getMessage("feedback.fair", null, locale);
+        }
         return messageSource.getMessage("feedback.poor", null, locale);
     }
-    
+
 }

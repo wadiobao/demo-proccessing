@@ -43,7 +43,7 @@ public class AddFileToTopicCommand {
         }
 
         String rawText = documentProcessingFacade.processDocument(file).getRawText();
-        DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(rawText, username, file.getOriginalFilename());
+        DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(rawText, username, file.getOriginalFilename(), userResource.getTopic());
 
         if (!userResource.getContentIds().contains(metadata.getId())) {
             userResource.getContentIds().add(metadata.getId());

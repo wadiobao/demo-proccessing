@@ -16,7 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service for processing documents, extracting text, and creating metadata.
+ * Manages document processing and metadata extraction for adaptive quiz generation.
+ *
+ * <p>This service coordinates between document processing, metadata management,
+ * and document splitting to prepare content for AI-driven quiz generation.
+ * It handles both new file uploads and existing document metadata.
+ *
+ * @since 1.0
  */
 @Service
 @RequiredArgsConstructor
@@ -28,10 +34,20 @@ public class AdaptiveQuizDocumentService {
     private final DocumentSplitter documentSplitter;
 
     /**
-     * Processes a list of files and prepares data for quiz generation.
+     * Processes uploaded files to extract text, create metadata, and sample content chunks.
+     *
+     * @param files the list of multipart files to be processed
+     * @param username the identifier of the user who owns the documents
+     * @param questionCount the number of questions intended for generation, used to determine sampling size
+     * @return a {@link ProcessedDocumentResult} containing aggregated text, chunks, and metadata identifiers
+     * @throws Exception if document processing or metadata creation fails
      */
     public ProcessedDocumentResult processDocuments(List<MultipartFile> files, String username, int questionCount) throws Exception {
-        log.info("Processing {} documents for user {}", files.size(), username);
+        return processDocuments(files, username, questionCount, null);
+    }
+
+    public ProcessedDocumentResult processDocuments(List<MultipartFile> files, String username, int questionCount, String topic) throws Exception {
+        log.info("Processing {} documents for user {} (Topic: {})", files.size(), username, topic);
         
         List<String> allChunks = new ArrayList<>();
         StringBuilder fullTextBuilder = new StringBuilder();
@@ -42,7 +58,7 @@ public class AdaptiveQuizDocumentService {
             String rawText = documentProcessingFacade.processDocument(file).getRawText();
             fullTextBuilder.append(rawText).append("\n\n");
             
-            DocumentMetadata meta = documentMetadataFacade.findOrCreateMetadata(rawText, username, file.getOriginalFilename());
+            DocumentMetadata meta = documentMetadataFacade.findOrCreateMetadata(rawText, username, file.getOriginalFilename(), topic);
             individualMetadataIds.add(meta.getId());
             if (firstDetectedTopic == null) {
                 firstDetectedTopic = meta.getTopic();
@@ -66,21 +82,37 @@ public class AdaptiveQuizDocumentService {
     }
 
     /**
-     * Just extracts text and saves metadata for a list of files.
+     * Extracts text and generates metadata identifiers for a set of uploaded files.
+     *
+     * @param files the list of multipart files to analyze
+     * @param username the identifier of the user who owns the documents
+     * @return a list of unique metadata identifiers for the processed files
+     * @throws Exception if file processing or metadata storage fails
      */
     public List<String> extractMetadataIds(List<MultipartFile> files, String username) throws Exception {
-        log.info("Extracting metadata for {} files for user {}", files.size(), username);
+        return extractMetadataIds(files, username, null);
+    }
+
+    public List<String> extractMetadataIds(List<MultipartFile> files, String username, String topic) throws Exception {
+        log.info("Extracting metadata for {} files for user {} (Topic: {})", files.size(), username, topic);
         List<String> individualMetadataIds = new ArrayList<>();
         for (MultipartFile file : files) {
             String rawText = documentProcessingFacade.processDocument(file).getRawText();
-            DocumentMetadata meta = documentMetadataFacade.findOrCreateMetadata(rawText, username, file.getOriginalFilename());
+            DocumentMetadata meta = documentMetadataFacade.findOrCreateMetadata(rawText, username, file.getOriginalFilename(), topic);
             individualMetadataIds.add(meta.getId());
         }
         return individualMetadataIds;
     }
 
     /**
-     * Processes documents from existing metadata IDs (for review flow).
+     * Reconstructs processing data from existing metadata identifiers.
+     *
+     * <p>This is typically used in review or re-generation flows where the
+     * documents have already been processed and stored.
+     *
+     * @param metadataIds list of existing document metadata identifiers
+     * @param questionCount the number of questions intended for generation
+     * @return a {@link ProcessedDocumentResult} containing the reconstructed document data
      */
     public ProcessedDocumentResult processFromMetadataIds(List<String> metadataIds, int questionCount) {
         log.info("Processing {} existing metadata documents", metadataIds.size());
@@ -116,7 +148,13 @@ public class AdaptiveQuizDocumentService {
                 .firstDetectedTopic(firstDetectedTopic)
                 .build();
     }
-
+    /**
+     * Selects a representative subset of text chunks using uniform sampling.
+     *
+     * @param allChunks the complete list of text chunks
+     * @param maxChunks the maximum number of chunks to include in the sample
+     * @return a list of sampled text chunks
+     */
     private List<String> performUniformSampling(List<String> allChunks, int maxChunks) {
         if (allChunks.size() <= maxChunks) {
             return allChunks;

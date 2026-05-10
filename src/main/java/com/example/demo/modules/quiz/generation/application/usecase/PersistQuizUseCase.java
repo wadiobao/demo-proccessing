@@ -38,14 +38,27 @@ public class PersistQuizUseCase {
     @Transactional
     public FileGenerateResponse execute(FileGenerateResponse response, String username, String filename,
             String pdfContent, boolean shouldUpdateContentIds) throws Exception {
-        log.info("Starting quiz data persistence for user: {}, file: {}", username, filename);
+        return execute(response, username, filename, pdfContent, shouldUpdateContentIds, null);
+    }
 
-        // 1. Đảm bảo Metadata tồn tại
-        DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(pdfContent, username, filename);
-        final String contentId = metadata.getId();
+    @Transactional
+    public FileGenerateResponse execute(FileGenerateResponse response, String username, String filename,
+            String pdfContent, boolean shouldUpdateContentIds, String explicitTopic) throws Exception {
+        log.info("Starting quiz data persistence for user: {}, file: {}, explicit topic: {}", username, filename, explicitTopic);
+
+        String topic = explicitTopic;
+        String contentId = null;
+
+        // Only create DocumentMetadata if it's a single file (shouldUpdateContentIds = true)
+        // OR if explicitTopic is null (fallback to detect topic)
+        if (shouldUpdateContentIds || explicitTopic == null) {
+            DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(pdfContent, username, filename, explicitTopic);
+            contentId = metadata.getId();
+            topic = metadata.getTopic();
+        }
 
         // 2. Cập nhật UserResource (Lịch sử học tập theo Topic)
-        updateUserResource(username, metadata, shouldUpdateContentIds);
+        updateUserResource(username, topic, contentId, shouldUpdateContentIds);
 
         // 3. Lưu bản lưu trữ quiz (ArchivedQuestion)
         ArchivedQuestionMongoEntity archived = ArchivedQuestionMongoEntity.builder()
@@ -63,26 +76,27 @@ public class PersistQuizUseCase {
         processQuestionBank(response.getQuestions(), contentId);
 
         // 5. Cập nhật response
-        response.setTopic(metadata.getTopic());
+        response.setTopic(topic);
         response.setArchivedQuestionId(archived.getId());
 
         log.info("Quiz data persistence completed for user: {}", username);
         return response;
     }
 
-    private void updateUserResource(String username, DocumentMetadata metadata, boolean shouldUpdateContentIds) {
-        UserResourceMongoEntity u = userResourceRepository.findByUserNameAndTopic(username, metadata.getTopic())
+    private void updateUserResource(String username, String topic, String contentId, boolean shouldUpdateContentIds) {
+        UserResourceMongoEntity u = userResourceRepository.findByUserNameAndTopic(username, topic)
                 .orElseGet(() -> UserResourceMongoEntity.builder()
                         .userName(username)
-                        .topic(metadata.getTopic())
+                        .topic(topic)
                         .theta(0.0)
                         .b(0.0)
                         .history(new java.util.ArrayList<>())
+                        .thetaHistory(new java.util.ArrayList<>())
                         .contentIds(new java.util.ArrayList<>())
                         .build());
 
-        if (shouldUpdateContentIds && !u.getContentIds().contains(metadata.getId())) {
-            u.getContentIds().add(metadata.getId());
+        if (shouldUpdateContentIds && contentId != null && !u.getContentIds().contains(contentId)) {
+            u.getContentIds().add(contentId);
         }
 
         userResourceRepository.save(u);
