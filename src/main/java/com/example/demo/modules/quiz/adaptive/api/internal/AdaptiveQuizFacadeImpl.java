@@ -16,6 +16,7 @@ import com.example.demo.modules.quiz.adaptive.application.command.GenerateReview
 import com.example.demo.modules.quiz.adaptive.application.command.UpdateTopicCommand;
 import com.example.demo.modules.quiz.adaptive.application.query.GetTopicFilesQuery;
 import com.example.demo.modules.quiz.adaptive.application.query.GetTopicInfoQuery;
+import com.example.demo.modules.quiz.adaptive.application.query.GetTopicOverviewQuery;
 import com.example.demo.modules.quiz.adaptive.application.query.GetTopicScoreHistoryQuery;
 import com.example.demo.modules.quiz.analytics.api.AnalyticsFacade;
 import com.example.demo.modules.quiz.evaluation.api.EvaluationFacade;
@@ -48,6 +49,7 @@ class AdaptiveQuizFacadeImpl implements AdaptiveQuizFacade {
     private final GetTopicFilesQuery getTopicFilesQuery;
     private final GetTopicInfoQuery getTopicInfoQuery;
     private final GetTopicScoreHistoryQuery getTopicScoreHistoryQuery;
+    private final GetTopicOverviewQuery getTopicOverviewQuery;
 
     @Override
     public StateResponse<Object> generatePrivateQuiz(List<MultipartFile> files, QuizConfig config, String username) throws Exception {
@@ -107,5 +109,10 @@ class AdaptiveQuizFacadeImpl implements AdaptiveQuizFacade {
     @Override
     public StateResponse<Object> getTopicScoreHistory(String id, String username) {
         return getTopicScoreHistoryQuery.execute(id, username);
+    }
+
+    @Override
+    public StateResponse<Object> getTopicOverview(String id, String username) {
+        return getTopicOverviewQuery.execute(id, username);
     }
 }

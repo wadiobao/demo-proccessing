@@ -80,19 +80,31 @@ public class SubmitQuizUseCase {
         double scorePercentage = totalQuestions > 0 ? (correctAnswers * 100.0) / totalQuestions : 0.0;
 
         // 3. Tính toán Theta mới qua IRT-MAP
-        // Note: Cần cẩn thận với kiểu dữ liệu history trong UserResource
+        // Defensive copy: tránh side-effect ẩn khi reviewAnswer mutate list gốc
+        List<UserAnswer> historyCopy = new ArrayList<>(userResource.getHistory());
+
         double[] irtResults = irtCalculator.reviewAnswer(
                 answers,
                 userResource.getTheta(),
-                userResource.getHistory());
+                historyCopy);
+
+        // Gán lại bản copy (đã được thêm câu mới) vào entity
+        userResource.setHistory(historyCopy);
 
         double newTheta = irtResults[0];
         double newDifficulty = (irtResults[1] + irtResults[2]) / 2;
         int mastery = irtCalculator.calculateMasteryLevel(newTheta);
 
+        // [EN] Compute ELO metrics from the new theta value
+        // [VI] Tính toán các chỉ số ELO từ điểm theta mới
+        int elo = irtCalculator.thetaToElo(newTheta);
+        int eloToNext = irtCalculator.eloToNextLevel(newTheta);
+        String masteryLabel = irtCalculator.getMasteryLabel(mastery);
+
         userResource.setTheta(newTheta);
         userResource.setB(newDifficulty);
         userResource.setMastery(mastery);
+        userResource.setElo(elo);
 
         // record this session's score for historical trend tracking, capped at 100
         // entries
@@ -115,10 +127,10 @@ public class SubmitQuizUseCase {
         }
 
         // 4. Lưu lịch sử làm bài (giới hạn 200 bản ghi để tránh vượt quá 16MB document)
-        // Note: history đã được cập nhật bên trong irtCalculator.reviewAnswer
+        // history đã được gán lại từ historyCopy ở bước 3
         List<UserAnswer> history = userResource.getHistory();
         if (history.size() > 200) {
-            userResource.setHistory(new java.util.ArrayList<>(history.subList(history.size() - 200, history.size())));
+            userResource.setHistory(new ArrayList<>(history.subList(history.size() - 200, history.size())));
         }
 
         userResourceRepository.save(userResource);
@@ -138,6 +150,9 @@ public class SubmitQuizUseCase {
                 .newTheta(newTheta)
                 .newDifficulty(newDifficulty)
                 .feedback(generateFeedback(scorePercentage))
+                .elo(elo)
+                .eloToNextLevel(eloToNext)
+                .masteryLabel(masteryLabel)
                 .build();
 
         return responseBuilder.buildSuccessResponse(response);

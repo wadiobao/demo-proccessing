@@ -1,7 +1,13 @@
 package com.example.demo.modules.quiz.adaptive.api.controller;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,14 +27,19 @@ import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.quiz.adaptive.api.AdaptiveQuizFacade;
 import com.example.demo.modules.quiz.adaptive.api.request.QuizSubmissionRequest;
 import com.example.demo.modules.quiz.shared.domain.model.QuizConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controller for Adaptive (Private) quiz operations for authenticated users.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/quiz")
 @RequiredArgsConstructor
@@ -37,6 +48,10 @@ import lombok.experimental.FieldDefaults;
 public class AdaptiveQuizController {
 
     AdaptiveQuizFacade adaptiveQuizFacade;
+    StringRedisTemplate redisTemplate;
+    DefaultRedisScript<String> lockAndCheckScript;
+    DefaultRedisScript<Long> safeUnlockScript;
+    ObjectMapper mapper;
 
     /**
      * Generates a quiz for authenticated users with adaptive difficulty.
@@ -77,10 +92,65 @@ public class AdaptiveQuizController {
                 .type(1)
                 .language(language)
                 .build();
+        
+        String contentHash = config.toString(); // Mã băm nội dung
+        String dataKey = "quiz:data:" + contentHash;
+        String lockKey = "quiz:lock:" + contentHash;
+        String channel = "quiz:channel:" + contentHash;
+        String requestId = UUID.randomUUID().toString();
+        
+        String status = redisTemplate.execute(lockAndCheckScript, 
+                Arrays.asList(dataKey, lockKey), requestId, "60");
 
-        StateResponse<Object> response = adaptiveQuizFacade.generateReviewQuiz(id, config,
-                SecurityContextHolder.getContext().getAuthentication().getName());
+		if ("HAS_DATA".equals(status)) {
+			String json = redisTemplate.opsForValue().get(dataKey);
+			StateResponse response = mapper.readValue(json,StateResponse.class); // Trả về ngay nếu đã có trong cache
+	        return ResponseEntity.ok(response);
+		}
+		
+		if ("LOCKED".equals(status)) {
+		// --- ĐÂY LÀ REQUEST A (Người thắng cuộc) ---
+		try {   
+				
+				StateResponse<Object> response = adaptiveQuizFacade.generateReviewQuiz(id, config,
+						SecurityContextHolder.getContext().getAuthentication().getName());
+				String json =  mapper.writeValueAsString(response);
+				redisTemplate.opsForValue().set(dataKey, json, Duration.ofMinutes(2));
+				
+                // Phát tín hiệu cho các request đang đợi
+                redisTemplate.convertAndSend(channel, "DONE");
+                log.info("Primary session has been processed and persisted data");
         return ResponseEntity.ok(response);
+		} finally {
+            // Xóa khóa an toàn bằng Lua Script
+            redisTemplate.execute(safeUnlockScript, Collections.singletonList(lockKey), requestId);
+            log.info("Delete lock key");
+        }
+    } else {
+        // --- ĐÂY LÀ REQUEST B, C... (Người đợi) ---
+    	StateResponse response = waitForPubSubSignal(channel, dataKey);
+    	log.info("Other session get data from the primary session");
+    	
+        return ResponseEntity.ok(response);
+
+    	}
+    }
+    
+    private StateResponse<?> waitForPubSubSignal(String channel, String dataKey) throws JsonMappingException, JsonProcessingException {
+        // Sử dụng CompletableFuture hoặc đơn giản hơn là vòng lặp chờ ngắn 
+        // kết hợp với kiểm tra dataKey để đảm bảo an toàn.
+        int retry = 0;
+        while (retry < 3) { // Đợi tối đa 3p
+            String data = redisTemplate.opsForValue().get(dataKey);
+            if (data != null) {
+            	String json = redisTemplate.opsForValue().get(dataKey);
+    			StateResponse response = mapper.readValue(json,StateResponse.class); // Trả về ngay nếu đã có trong cache
+    			return response;
+            }
+            try { Thread.sleep(60000); } catch (InterruptedException e) { }
+            retry++;
+        }
+        throw new RuntimeException("AI processing timeout!");
     }
 
     /**
@@ -223,6 +293,24 @@ public class AdaptiveQuizController {
         String username = authentication.getName();
 
         StateResponse<Object> response = adaptiveQuizFacade.getTopicScoreHistory(id, username);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Returns the unified topic overview: IRT stats, ELO progress, theta history,
+     * and file list — all in a single O(2)-query call.
+     *
+     * <p>Replaces the need to call {@code /topics/score-history} and
+     * {@code /topics/files} separately.
+     */
+    @GetMapping("/topics/overview")
+    public ResponseEntity<StateResponse<Object>> getTopicOverview(
+            @RequestParam String id) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        StateResponse<Object> response = adaptiveQuizFacade.getTopicOverview(id, username);
         return ResponseEntity.ok(response);
     }
 }

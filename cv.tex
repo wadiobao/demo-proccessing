@@ -1,0 +1,202 @@
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+
+%----------FONT OPTIONS----------
+% sans-serif
+% \usepackage[sfdefault]{FiraSans}
+% \usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{noto-sans}
+% \usepackage[default]{sourcesanspro}
+
+% serif
+% \usepackage{CormorantGaramond}
+% \usepackage{charter}
+
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    \textbf{\Huge \scshape Quang Bao Duong} \\ \vspace{1pt}
+    \small +84 973703017 $|$
+    \href{mailto:dqbaowdio@gmail.com}{\underline{dqbaowdio@gmail.com}} $|$
+    \href{https://linkedin.com/in/quangbaoduong}{\underline{linkedin.com/in/quangbaoduong}} $|$
+    \href{https://github.com/wadiobao}{\underline{github.com/wadiobao}}
+\end{center}
+
+
+%-----------SUMMARY-----------
+\section{Summary}
+  \small{
+    Software Engineering student passionate about building intelligent, high-impact backend systems.
+    Experienced in taking projects from concept to production, with a focus on performance, scalability, and real-world user value.
+    Eager to contribute to teams that solve meaningful problems through software and AI.
+  }
+  \vspace{4pt}
+
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Vietnam National University of Agriculture}{Hanoi, Vietnam}
+      {Bachelor of Software Engineering $|$ GPA: 3.2 / 4.0}{Sep. 2022 -- Expected Sep. 2026}
+  \resumeSubHeadingListEnd
+
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {Monstarlab Vietnam}{Hanoi, Vietnam}
+      {Software Engineer Intern}{Jun. 2025 -- Dec. 2025}
+      \resumeItemListStart
+        \resumeItem{Executed 50+ structured test cases for Java-based enterprise applications, reducing defect leakage by \textbf{25\%} through rigorous edge-case validation.}
+        \resumeItem{Collaborated with cross-functional teams to identify and document 10+ critical issues, shortening overall bug resolution time by \textbf{20\%}.}
+        \resumeItem{Automated SQL validation scripts to verify data consistency ($\sim$95\% accuracy) between complex API responses and relational database records.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+
+      \resumeProjectHeading
+          {\textbf{FreeQuizAi -- Adaptive Learning Platform} $|$
+           \emph{Java 17, Spring Boot, Gemini API, MySQL, MongoDB, Redis}}{Feb. 2025 -- Present}
+          \resumeItemListStart
+            \resumeItem{\textbf{Engineered a Psychometric Engine} implementing the \textbf{Rasch 1PL (IRT)} model with \textbf{Maximum A Posteriori (MAP)} estimation via \textbf{Newton-Raphson optimization} (Gradient \& Hessian) to track user ability (Theta) in real-time.}
+            \resumeItem{\textbf{Developed Adaptive Question Allocation} using \textbf{Fisher Information Weighting} and \textbf{Bloom's Taxonomy} to dynamically match question difficulty with each user's Zone of Proximal Development.}
+            \resumeItem{\textbf{Architected an Advanced RAG Pipeline} integrating \textbf{Google Gemini API} with a custom \textbf{Knowledge Graph}, retrieving cross-topic context from MongoDB to increase quiz relevance by \textbf{25\%}.}
+            \resumeItem{\textbf{Designed a Hybrid Persistence Layer} (MySQL, MongoDB, Redis) achieving \textbf{$<$100ms response time} under \textbf{100 RPM} load while managing 1,000+ generated quiz collections.}
+            \resumeItem{\textbf{Built Scalable Document Ingestion} with \textbf{Uniform Sampling} and automated PDF/OCR splitting, efficiently processing large-scale documents within LLM context constraints.}
+            \resumeItem{\textbf{Secured the platform} with Spring Security, JWT, and a custom OTP Mail Service, safeguarding \textbf{25+ private REST endpoints} and all user performance data.}
+          \resumeItemListEnd
+
+    \resumeSubHeadingListEnd
+
+
+%-----------LEADERSHIP & ACTIVITIES-----------
+\section{Leadership \& Activities}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {VNUA StartUp Club}{Hanoi, Vietnam}
+      {Technical Coordinator}{Sep. 2022 -- Dec. 2024}
+      \resumeItemListStart
+        \resumeItem{Orchestrated technical infrastructure and AV systems for university-wide startup events with \textbf{500+ attendees}.}
+        \resumeItem{Developed internal utility applications, including a custom countdown system, to streamline event operations.}
+        \resumeItem{Designed digital brand assets that contributed to a \textbf{15\%} increase in club membership engagement.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Java (17+), Python, JavaScript/TypeScript, SQL} \\
+     \textbf{Backend \& Frameworks}{: Spring Boot, Spring Security (JWT/OAuth2), Spring Data JPA, RESTful API, Hibernate} \\
+     \textbf{AI \& Data}{: RAG (Retrieval-Augmented Generation), Item Response Theory (IRT), MAP Estimation, Fisher Information, Knowledge Graphs, Google Gemini API, LangChain4j, Tess4J (OCR)} \\
+     \textbf{Databases \& Caching}{: MySQL, MongoDB, Redis} \\
+     \textbf{Tools \& DevOps}{: Docker, Maven, Git/GitHub, Postman, Linux}
+    }}
+ \end{itemize}
+
+
+%-------------------------------------------
+\end{document}

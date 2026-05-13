@@ -71,4 +71,9 @@ public interface AdaptiveQuizFacade {
      * Get the theta score history of a topic by id.
      */
     StateResponse<Object> getTopicScoreHistory(String id, String username);
+
+    /**
+     * Get the unified topic overview (IRT stats + ELO + theta history + files) in a single call.
+     */
+    StateResponse<Object> getTopicOverview(String id, String username);
 }

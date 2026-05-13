@@ -28,7 +28,7 @@ public class ReadingProgressCacheAdapter {
                 .pdfId(request.getPdfId())
                 .userId(userId)
                 .scrollPercentage(request.getScrollPercentage())
-                .lastPage(null)
+                .lastPage(request.getLastPage())
                 .timestamp(System.currentTimeMillis())
                 .build();
 

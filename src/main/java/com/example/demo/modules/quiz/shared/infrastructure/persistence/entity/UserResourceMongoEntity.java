@@ -56,6 +56,10 @@ public class UserResourceMongoEntity extends BaseModel {
     @Default
     int mastery = 1;
 
+    /** ELO score (0–1200) derived from theta after each session. / Điểm ELO (0–1200) tính từ theta sau mỗi phiên. */
+    @Default
+    int elo = 0;
+
     /**
      * Fixed number of questions per quiz session for this topic.
      * Chosen by the user at topic creation and kept constant throughout the learning journey.

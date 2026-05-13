@@ -39,8 +39,18 @@ public class QuizSubmissionResponse {
      */
     private double newDifficulty;
 
-    /**
-     * Feedback message
-     */
+    /** Feedback message */
     private String feedback;
+
+    /** Total ELO score across all Bloom levels (0–1200) / Tổng ELO qua các cấp Bloom. */
+    private int elo;
+
+    /** ELO points remaining to reach the next mastery level / ELO còn thiếu để lên cấp tiếp theo. */
+    private int eloToNextLevel;
+
+    /** Human-readable label of the current mastery level / Nhãn cấp độ thành thạo hiện tại. */
+    private String masteryLabel;
+
+    /** True if the user advanced to a higher mastery level this session / Người dùng vừa lên cấp trong phiên này. */
+    private boolean leveledUp;
 }
