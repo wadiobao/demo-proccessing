@@ -37,14 +37,10 @@ class GenerationFacadeImpl implements GenerationFacade {
     }
 
     @Override
-    public StateResponse<Object> generatePersonalizedQuiz(List<String> chunks, QuizConfig config, String contentId) {
-        return generatePersonalizedQuizUseCase.execute(chunks, config, contentId);
+    public StateResponse<Object> generatePersonalizedQuiz(List<String> chunks, QuizConfig config, String requestId) {
+        return generatePersonalizedQuizUseCase.execute(chunks, config, requestId);
     }
 
-    @Override
-    public StateResponse<Object> generatePersonalizedQuiz(String text, String fileName, QuizConfig config, String contentId) {
-        return generatePersonalizedQuizUseCase.execute(text, fileName, config, contentId);
-    }
 
     @Override
     public FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText) throws Exception {

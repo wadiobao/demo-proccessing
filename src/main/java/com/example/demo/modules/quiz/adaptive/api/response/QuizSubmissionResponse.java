@@ -29,28 +29,18 @@ public class QuizSubmissionResponse {
      */
     private double scorePercentage;
 
-    /**
-     * Updated theta value (IRT ability parameter)
-     */
-    private double newTheta;
-
-    /**
-     * Updated difficulty parameter
-     */
-    private double newDifficulty;
-
     /** Feedback message */
     private String feedback;
 
     /** Total ELO score across all Bloom levels (0–1200) / Tổng ELO qua các cấp Bloom. */
-    private int elo;
-
-    /** ELO points remaining to reach the next mastery level / ELO còn thiếu để lên cấp tiếp theo. */
-    private int eloToNextLevel;
+    private int oldElo;
+    private int newElo;
+    private int deltaElo;
 
     /** Human-readable label of the current mastery level / Nhãn cấp độ thành thạo hiện tại. */
-    private String masteryLabel;
+    private String oldMasteryLabel;
+    private String newMasteryLabel;
 
-    /** True if the user advanced to a higher mastery level this session / Người dùng vừa lên cấp trong phiên này. */
-    private boolean leveledUp;
+    /** leveledUps>0 if the user advanced to a higher mastery level this session / Người dùng vừa lên cấp trong phiên này. */
+    private int leveledUp;
 }

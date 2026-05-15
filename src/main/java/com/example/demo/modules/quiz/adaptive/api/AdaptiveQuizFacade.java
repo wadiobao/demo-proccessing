@@ -20,7 +20,7 @@ public interface AdaptiveQuizFacade {
     /**
      * Generate review quiz for an existing topic (uses all files in topic).
      */
-    StateResponse<Object> generateReviewQuiz(String topicId, QuizConfig config, String username) throws Exception;
+    StateResponse<Object> generateReviewQuiz(String topicId, QuizConfig config, String username, String requestId) throws Exception;
 
     /**
      * Creates or updates a topic resource with initial documents and settings.

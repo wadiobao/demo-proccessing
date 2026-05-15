@@ -93,18 +93,28 @@ public class SubmitQuizUseCase {
 
         double newTheta = irtResults[0];
         double newDifficulty = (irtResults[1] + irtResults[2]) / 2;
-        int mastery = irtCalculator.calculateMasteryLevel(newTheta);
-
+        int newMastery = irtCalculator.calculateMasteryLevel(newTheta);
+        int oldMastery = userResource.getMastery();
+        int leveledUp = newMastery - oldMastery;
+        
+        
         // [EN] Compute ELO metrics from the new theta value
         // [VI] Tính toán các chỉ số ELO từ điểm theta mới
-        int elo = irtCalculator.thetaToElo(newTheta);
-        int eloToNext = irtCalculator.eloToNextLevel(newTheta);
-        String masteryLabel = irtCalculator.getMasteryLabel(mastery);
-
+        int newElo = irtCalculator.thetaToElo(newTheta);
+        int oldElo = userResource.getElo();
+        int deltaElo = newElo - oldElo;
+        
+        String oldMasteryLabel = irtCalculator.getMasteryLabel(oldMastery);
+        String newMasteryLabel = irtCalculator.getMasteryLabel(newMastery);
+        
+        if(newElo > userResource.getHighestElo()) {
+			userResource.setHighestElo(newElo);
+		}
+        
         userResource.setTheta(newTheta);
         userResource.setB(newDifficulty);
-        userResource.setMastery(mastery);
-        userResource.setElo(elo);
+        userResource.setMastery(newMastery);
+        userResource.setElo(newElo);
 
         // record this session's score for historical trend tracking, capped at 100
         // entries
@@ -126,12 +136,12 @@ public class SubmitQuizUseCase {
                     new java.util.ArrayList<>(thetaHistory.subList(thetaHistory.size() - 100, thetaHistory.size())));
         }
 
-        // 4. Lưu lịch sử làm bài (giới hạn 200 bản ghi để tránh vượt quá 16MB document)
-        // history đã được gán lại từ historyCopy ở bước 3
-        List<UserAnswer> history = userResource.getHistory();
-        if (history.size() > 200) {
-            userResource.setHistory(new ArrayList<>(history.subList(history.size() - 200, history.size())));
-        }
+//        // 4. Lưu lịch sử làm bài (giới hạn 200 bản ghi để tránh vượt quá 16MB document)
+//        // history đã được gán lại từ historyCopy ở bước 3
+//        List<UserAnswer> history = userResource.getHistory();
+//        if (history.size() > 200) {
+//            userResource.setHistory(new ArrayList<>(history.subList(history.size() - 200, history.size())));
+//        }
 
         userResourceRepository.save(userResource);
 
@@ -147,12 +157,13 @@ public class SubmitQuizUseCase {
                 .totalQuestions(totalQuestions)
                 .correctAnswers(correctAnswers)
                 .scorePercentage(scorePercentage)
-                .newTheta(newTheta)
-                .newDifficulty(newDifficulty)
                 .feedback(generateFeedback(scorePercentage))
-                .elo(elo)
-                .eloToNextLevel(eloToNext)
-                .masteryLabel(masteryLabel)
+                .oldMasteryLabel(oldMasteryLabel)
+                .newMasteryLabel(newMasteryLabel)
+                .oldElo(oldElo)
+                .newElo(newElo)
+                .deltaElo(deltaElo)
+                .leveledUp(leveledUp)
                 .build();
 
         return responseBuilder.buildSuccessResponse(response);

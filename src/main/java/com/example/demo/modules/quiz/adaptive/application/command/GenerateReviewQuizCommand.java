@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
-import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
 import com.example.demo.modules.quiz.adaptive.application.dto.ProcessedDocumentResult;
 import com.example.demo.modules.quiz.adaptive.application.service.AdaptiveQuizConfigService;
 import com.example.demo.modules.quiz.adaptive.application.service.AdaptiveQuizDocumentService;
@@ -36,7 +35,7 @@ public class GenerateReviewQuizCommand {
     private final AdaptiveQuizConfigService configService;
 
     @Transactional
-    public StateResponse<Object> execute(String topicId, QuizConfig config, String username) throws Exception {
+    public StateResponse<Object> execute(String topicId, QuizConfig config, String username, String requestId) throws Exception {
         log.info("Executing generate review quiz command for user: {}, topic: {}", username, topicId);
 
         // 1. Fetch & Validate Topic Resource
@@ -62,19 +61,20 @@ public class GenerateReviewQuizCommand {
         configService.preparePersonalizedConfig(config, userResource);
 
         // 5. Generate and Persist Quiz
-        return generateAndPersist(config, username, docResult, userResource.getTopic());
+        return generateAndPersist(config, username, docResult, userResource.getTopic(), requestId);
     }
 
     private StateResponse<Object> generateAndPersist(
             QuizConfig config, 
             String username, 
             ProcessedDocumentResult docResult, 
-            String detectedTopic) throws Exception {
+            String detectedTopic,
+            String requestId) throws Exception {
         
         StateResponse<Object> response = generationFacade.generatePersonalizedQuiz(
                 docResult.getSampledChunks(), 
                 config, 
-                null
+                requestId
         );
 
         if (response.getResult() instanceof FileGenerateResponse) {

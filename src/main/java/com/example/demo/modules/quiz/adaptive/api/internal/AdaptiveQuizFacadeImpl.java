@@ -57,8 +57,8 @@ class AdaptiveQuizFacadeImpl implements AdaptiveQuizFacade {
     }
 
     @Override
-    public StateResponse<Object> generateReviewQuiz(String topicId, QuizConfig config, String username) throws Exception {
-        return generateReviewQuizCommand.execute(topicId, config, username);
+    public StateResponse<Object> generateReviewQuiz(String topicId, QuizConfig config, String username, String requestId) throws Exception {
+        return generateReviewQuizCommand.execute(topicId, config, username, requestId);
     }
 
     @Override

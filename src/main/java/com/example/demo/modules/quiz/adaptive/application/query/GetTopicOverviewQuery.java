@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.exception.HandleException;
 import com.example.demo.enums.ErrorCode;
+import com.example.demo.exception.HandleException;
 import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
 import com.example.demo.modules.quiz.adaptive.api.response.TopicFileResponse;
 import com.example.demo.modules.quiz.adaptive.api.response.TopicOverviewResponse;
@@ -61,8 +61,13 @@ public class GetTopicOverviewQuery {
 
         // Step 3: ELO fields — Calculate on-the-fly to support legacy data where elo was 0
         int elo = resource.getElo();
+        int highestElo = resource.getHighestElo();
         if (elo == 0) {
             elo = irtCalculator.thetaToElo(resource.getTheta());
+        }
+        
+        if(highestElo == 0) {
+        	highestElo = elo;
         }
         int eloToNext = irtCalculator.eloToNextLevel(resource.getTheta());
 
@@ -89,6 +94,7 @@ public class GetTopicOverviewQuery {
                 .masteryLabel(masteryLabel)
                 .elo(elo)
                 .eloToNextLevel(eloToNext)
+                .highestElo(highestElo)
                 .thetaHistory(resource.getThetaHistory())
                 .files(files)
                 .build();

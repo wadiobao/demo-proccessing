@@ -34,7 +34,7 @@ public class TopicOverviewResponse {
     String topic;
 
     /** Creation timestamp / Thời điểm tạo. */
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     LocalDateTime createdAt;
 
     /** Number of questions per quiz session / Số câu hỏi mỗi phiên. */
@@ -59,6 +59,9 @@ public class TopicOverviewResponse {
 
     /** ELO points remaining to reach the next mastery level / ELO còn thiếu để lên cấp. */
     int eloToNextLevel;
+    
+    /** The highest elo in history / ELO cao nhất trong lịch sử*/
+    int highestElo;
 
     // ── History ───────────────────────────────────────────────
 

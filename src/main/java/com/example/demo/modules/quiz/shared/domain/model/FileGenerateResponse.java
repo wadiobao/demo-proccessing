@@ -1,7 +1,9 @@
 package com.example.demo.modules.quiz.shared.domain.model;
 
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +25,7 @@ public class FileGenerateResponse {
     String pdfBase64;
     String topic;
     String archivedQuestionId;
+    String requestId;
     @JsonIgnore
     String contentPdf;
 }

@@ -25,12 +25,7 @@ public interface GenerationFacade {
     /**
      * Executes personalized/adaptive quiz generation based on chunks.
      */
-    StateResponse<Object> generatePersonalizedQuiz(List<String> chunks, QuizConfig config, String contentId);
-
-    /**
-     * Executes personalized quiz generation based on raw text.
-     */
-    StateResponse<Object> generatePersonalizedQuiz(String text, String fileName, QuizConfig config, String contentId);
+    StateResponse<Object> generatePersonalizedQuiz(List<String> chunks, QuizConfig config, String requestId);
 
     /**
      * Persists generated quiz data.

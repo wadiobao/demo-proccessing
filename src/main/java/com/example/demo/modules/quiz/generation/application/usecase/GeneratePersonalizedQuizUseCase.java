@@ -33,7 +33,7 @@ public class GeneratePersonalizedQuizUseCase {
     /**
      * Entry point for multi-chunk (multi-file) personalized quiz.
      */
-    public StateResponse<Object> execute(List<String> chunks, QuizConfig config, String contentId) {
+    public StateResponse<Object> execute(List<String> chunks, QuizConfig config, String requestId) {
         try {
             log.info("Generating personalized adaptive quiz from {} chunks (Topic: {})", chunks.size(), config.getTopic());
 
@@ -58,6 +58,7 @@ public class GeneratePersonalizedQuizUseCase {
                     .pdfBase64(wordAndPdf[1])
                     .contentPdf(String.join("\n\n", chunks))
                     .topic(config.getTopic())
+                    .requestId(requestId)
                     .build();
 
             return responseBuilder.buildSuccessResponse(response);
@@ -66,12 +67,5 @@ public class GeneratePersonalizedQuizUseCase {
             log.error("Personalized quiz generation failed: {}", e.getMessage(), e);
             return responseBuilder.buildFileGenerationError();
         }
-    }
-
-    /**
-     * Supporting single file text for Level 2 adaptive quiz.
-     */
-    public StateResponse<Object> execute(String pdfText, String fileName, QuizConfig config, String contentId) {
-        return execute(List.of(pdfText), config, contentId);
     }
 }

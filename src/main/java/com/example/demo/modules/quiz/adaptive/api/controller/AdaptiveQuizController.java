@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -100,7 +101,7 @@ public class AdaptiveQuizController {
         String requestId = UUID.randomUUID().toString();
         
         String status = redisTemplate.execute(lockAndCheckScript, 
-                Arrays.asList(dataKey, lockKey), requestId, "60");
+                Arrays.asList(dataKey, lockKey), requestId, "180");
 
 		if ("HAS_DATA".equals(status)) {
 			String json = redisTemplate.opsForValue().get(dataKey);
@@ -113,12 +114,12 @@ public class AdaptiveQuizController {
 		try {   
 				
 				StateResponse<Object> response = adaptiveQuizFacade.generateReviewQuiz(id, config,
-						SecurityContextHolder.getContext().getAuthentication().getName());
+						SecurityContextHolder.getContext().getAuthentication().getName(),requestId);
 				String json =  mapper.writeValueAsString(response);
 				redisTemplate.opsForValue().set(dataKey, json, Duration.ofMinutes(2));
-				
-                // Phát tín hiệu cho các request đang đợi
-                redisTemplate.convertAndSend(channel, "DONE");
+				redisTemplate.opsForList().leftPush("signal:" + dataKey, "DONE");
+				redisTemplate.expire("signal:" + dataKey, Duration.ofMinutes(1));
+
                 log.info("Primary session has been processed and persisted data");
         return ResponseEntity.ok(response);
 		} finally {
@@ -126,28 +127,45 @@ public class AdaptiveQuizController {
             redisTemplate.execute(safeUnlockScript, Collections.singletonList(lockKey), requestId);
             log.info("Delete lock key");
         }
-    } else {
-        // --- ĐÂY LÀ REQUEST B, C... (Người đợi) ---
-    	StateResponse response = waitForPubSubSignal(channel, dataKey);
+		} else {
+    	
     	log.info("Other session get data from the primary session");
+        // --- ĐÂY LÀ REQUEST B, C... (Người đợi) ---
+    	StateResponse response = waitForSignal(dataKey);
     	
         return ResponseEntity.ok(response);
 
     	}
     }
     
+    private StateResponse<?> waitForSignal(String dataKey) throws JsonMappingException, JsonProcessingException {
+        // Tên key dùng làm "hộp thư" chờ
+        String signalKey = "signal:" + dataKey; 
+
+        // Đợi Redis đẩy tín hiệu vào List trong tối đa 200 giây
+        // Lệnh này sẽ chặn thread lại nhưng cực kỳ tiết kiệm tài nguyên
+        Object signal = redisTemplate.opsForList().leftPop(signalKey, 200, TimeUnit.SECONDS);
+
+        if (signal != null) {
+            String json = redisTemplate.opsForValue().get(dataKey);
+            StateResponse response = mapper.readValue(json,StateResponse.class);
+			return response;
+        }
+        throw new RuntimeException("AI processing timeout!");
+    }
+    
     private StateResponse<?> waitForPubSubSignal(String channel, String dataKey) throws JsonMappingException, JsonProcessingException {
         // Sử dụng CompletableFuture hoặc đơn giản hơn là vòng lặp chờ ngắn 
         // kết hợp với kiểm tra dataKey để đảm bảo an toàn.
         int retry = 0;
-        while (retry < 3) { // Đợi tối đa 3p
+        while (retry < 180) { // Đợi tối đa 3p
             String data = redisTemplate.opsForValue().get(dataKey);
             if (data != null) {
             	String json = redisTemplate.opsForValue().get(dataKey);
     			StateResponse response = mapper.readValue(json,StateResponse.class); // Trả về ngay nếu đã có trong cache
     			return response;
             }
-            try { Thread.sleep(60000); } catch (InterruptedException e) { }
+            try { Thread.sleep(1000); } catch (InterruptedException e) { }
             retry++;
         }
         throw new RuntimeException("AI processing timeout!");
