@@ -30,13 +30,23 @@ public class GetTopicInfoQuery {
         List<UserResourceMongoEntity> userResources = userResourceRepository.findAllByUserName(username);
 
         List<TopicInfoResponse> topics = userResources.stream()
-                .map(resource -> TopicInfoResponse.builder()
-                        .id(resource.getId())
-                        .topic(resource.getTopic())
-                        .createdAt(resource.getCreatedAt())
-                        .score(resource.getTheta())
-                        .mastery(irtCalculator.getMasteryLabel(resource.getMastery() == 0 ? irtCalculator.calculateMasteryLevel(resource.getTheta()) : resource.getMastery()))
-                        .build())
+                .map(resource -> {
+                        int elo = resource.getElo();
+                        // fall back to theta-derived ELO for legacy docs where elo was 0
+                        if (elo == 0) {
+                            elo = irtCalculator.thetaToElo(resource.getTheta());
+                        }
+                        int masteryLevel = resource.getMastery() == 0
+                                ? irtCalculator.calculateMasteryLevel(resource.getTheta())
+                                : resource.getMastery();
+                        return TopicInfoResponse.builder()
+                                .id(resource.getId())
+                                .topic(resource.getTopic())
+                                .createdAt(resource.getCreatedAt())
+                                .elo(elo)
+                                .mastery(irtCalculator.getMasteryLabel(masteryLevel))
+                                .build();
+                })
                 .collect(Collectors.toList());
 
         return StateResponse.builder()

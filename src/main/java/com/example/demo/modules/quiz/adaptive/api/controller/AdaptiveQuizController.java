@@ -94,7 +94,7 @@ public class AdaptiveQuizController {
                 .language(language)
                 .build();
         
-        String contentHash = config.toString(); // Mã băm nội dung
+        String contentHash = id + ":" + config.toString(); // Mã băm nội dung bao gồm cả topicId
         String dataKey = "quiz:data:" + contentHash;
         String lockKey = "quiz:lock:" + contentHash;
         String channel = "quiz:channel:" + contentHash;
@@ -142,7 +142,7 @@ public class AdaptiveQuizController {
         // Tên key dùng làm "hộp thư" chờ
         String signalKey = "signal:" + dataKey; 
 
-        // Đợi Redis đẩy tín hiệu vào List trong tối đa 200 giây
+        // Đợi Redis đẩy tín hiệu vào List trong tối đa 180 giây
         // Lệnh này sẽ chặn thread lại nhưng cực kỳ tiết kiệm tài nguyên
         Object signal = redisTemplate.opsForList().leftPop(signalKey, 200, TimeUnit.SECONDS);
 
@@ -283,6 +283,23 @@ public class AdaptiveQuizController {
         String username = authentication.getName();
 
         StateResponse<Object> response = adaptiveQuizFacade.getTopicFiles(id, username);
+        return ResponseEntity.ok(response);
+    }
+    
+    
+    /**
+     * Delete a file in a specific learning topic for the
+     * authenticated user.
+     */
+    @DeleteMapping("/topics/files")
+    public ResponseEntity<StateResponse<Object>> deleteTopicFiles(
+    		@RequestParam String topicId,
+            @RequestParam String fileId) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        StateResponse<Object> response = adaptiveQuizFacade.deleteTopicFiles(topicId,fileId, username);
         return ResponseEntity.ok(response);
     }
 

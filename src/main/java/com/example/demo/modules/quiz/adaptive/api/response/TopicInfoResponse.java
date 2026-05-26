@@ -21,6 +21,6 @@ public class TopicInfoResponse {
     String topic;
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     LocalDateTime createdAt;
-    double score;
+    int elo;
     String mastery;
 }

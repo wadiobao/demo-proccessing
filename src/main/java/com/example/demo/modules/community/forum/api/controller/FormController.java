@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,12 +21,15 @@ import com.example.demo.modules.community.forum.api.dto.TopicRequest;
 import com.example.demo.modules.community.forum.application.usecase.command.CreateFormUseCase;
 import com.example.demo.modules.community.forum.application.usecase.command.CreateTopicUseCase;
 import com.example.demo.modules.community.forum.application.usecase.command.DeleteFormUseCase;
+import com.example.demo.modules.community.forum.application.usecase.command.DeleteUserFormUseCase;
 import com.example.demo.modules.community.forum.application.usecase.command.ManageFormSessionUseCase;
+import com.example.demo.modules.community.forum.application.usecase.command.UpdateFormUseCase;
 import com.example.demo.modules.community.forum.application.usecase.query.GetFormDetailUseCase;
 import com.example.demo.modules.community.forum.application.usecase.query.GetFormVoteUseCase;
 import com.example.demo.modules.community.forum.application.usecase.query.GetTopicTagsUseCase;
 import com.example.demo.modules.community.forum.application.usecase.query.ListFormsUseCase;
 import com.example.demo.modules.community.forum.application.usecase.query.ListTopicsUseCase;
+import com.example.demo.modules.community.forum.application.usecase.query.ListUserFormsUseCase;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
 
 import jakarta.validation.Valid;
@@ -45,10 +49,18 @@ public class FormController {
     private final DeleteFormUseCase deleteFormUseCase;
     private final GetFormVoteUseCase getFormVoteUseCase;
     private final ManageFormSessionUseCase manageFormSessionUseCase;
+    private final UpdateFormUseCase updateFormUseCase;
+    private final DeleteUserFormUseCase deleteUserFormUseCase;
+    private final ListUserFormsUseCase listUserFormsUseCase;
 
     @GetMapping("/getAll")
     public ResponseEntity<StateResponse<Object>> getAllForm(Pageable pageable) {
         return ResponseEntity.ok(listFormsUseCase.execute(pageable));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<StateResponse<Object>> getMyForms(Pageable pageable) {
+        return ResponseEntity.ok(listUserFormsUseCase.execute(pageable));
     }
 
     @PostMapping("/{topicId}/newForm")
@@ -97,6 +109,18 @@ public class FormController {
         return ResponseEntity.ok(deleteFormUseCase.execute(formId));
     }
 
+    @PutMapping("/{formId}/update")
+    public ResponseEntity<StateResponse<Object>> updateForm(
+            @PathVariable String formId,
+            @RequestBody @Valid FormRequest request) {
+        return ResponseEntity.ok(updateFormUseCase.execute(formId, request));
+    }
+
+    @DeleteMapping("/{formId}/delete-user")
+    public ResponseEntity<StateResponse<Object>> deleteUserForm(@PathVariable String formId) {
+        return ResponseEntity.ok(deleteUserFormUseCase.execute(formId));
+    }
+
     @GetMapping("/{formId}/getVote")
     public ResponseEntity<StateResponse<Object>> getVote(@PathVariable String formId) {
         return ResponseEntity.ok(getFormVoteUseCase.execute(formId));
@@ -121,14 +145,13 @@ public class FormController {
         return ResponseEntity.ok(StateResponse.builder().message("Session discarded").build());
     }
 
-
     @GetMapping("/session/{sessionId}/questions")
     public ResponseEntity<StateResponse<Object>> getSessionQuestions(@PathVariable String sessionId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         FormSession session = manageFormSessionUseCase.getSession(sessionId, username);
         if (session == null) {
-			return ResponseEntity.notFound().build();
-		}
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(StateResponse.builder().result(session.getQuestions()).build());
     }
 

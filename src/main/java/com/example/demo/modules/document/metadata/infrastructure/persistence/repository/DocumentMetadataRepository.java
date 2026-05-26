@@ -15,4 +15,5 @@ public interface DocumentMetadataRepository extends MongoRepository<DocumentMeta
      * Finds the first document that contains a specific tag, excluding a specific ID.
      */
     Optional<DocumentMetadataMongoEntity> findFirstByTagsContainingAndIdNot(String tag, String excludeId);
+    Optional<DocumentMetadataMongoEntity> findByIdAndOwner(String id, String owner);
 }

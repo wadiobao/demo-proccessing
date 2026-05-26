@@ -57,4 +57,7 @@ public class Form {
 	@ManyToOne
 	@JoinColumn(name = "topic_id")
 	Topic topic;
+
+	@jakarta.persistence.Column(columnDefinition = "boolean default false")
+	Boolean hasChanged = false;
 }

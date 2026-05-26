@@ -13,6 +13,7 @@ import com.example.demo.modules.quiz.adaptive.api.response.UserStatsResponse;
 import com.example.demo.modules.quiz.shared.domain.model.UserAnswer;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.UserResourceMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.UserResourceRepository;
+import com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ class UserAnalyticsService {
 
     UserResourceRepository userResourceRepository;
     MessageSource messageSource;
+    IRTCalculator irtCalculator;
 
     public StateResponse<Object> getUserStats(String username, String topic) {
         log.info("Retrieving stats for user: {}, topic: {}", username, topic);
@@ -103,7 +105,7 @@ class UserAnalyticsService {
                     .result(UserOverviewStatsResponse.builder()
                             .username(username)
                             .totalTopicsMastered(0)
-                            .overallSkillLevel(0.0)
+                            .averageElo(0)
                             .overallAccuracyPercentage(0.0)
                             .totalQuestionsAnswered(0)
                             .radarChartData(new java.util.ArrayList<>())
@@ -127,12 +129,20 @@ class UserAnalyticsService {
 
             sumTheta += resource.getTheta();
 
-            double masteryScale = Math.max(0, Math.min(100, ((resource.getTheta() + 3.0) / 6.0) * 100.0));
-            masteryScale = Math.round(masteryScale * 10.0) / 10.0;
+            int elo = resource.getElo();
+            if (elo == 0) {
+                elo = irtCalculator.thetaToElo(resource.getTheta());
+            }
+
+            int mastery = resource.getMastery() == 0
+                    ? irtCalculator.calculateMasteryLevel(resource.getTheta())
+                    : resource.getMastery();
+            String masteryLabel = irtCalculator.getMasteryLabel(mastery);
 
             radarChartData.add(TopicMastery.builder()
                     .topic(resource.getTopic())
-                    .masteryLevel(masteryScale)
+                    .elo(elo)
+                    .masteryLabel(masteryLabel)
                     .build());
         }
 
@@ -142,13 +152,12 @@ class UserAnalyticsService {
         overallAccuracy = Math.round(overallAccuracy * 10.0) / 10.0;
 
         double averageTheta = sumTheta / totalTopicsCount;
-        double overallSkillLevel = Math.max(0, Math.min(100, ((averageTheta + 3.0) / 6.0) * 100.0));
-        overallSkillLevel = Math.round(overallSkillLevel * 10.0) / 10.0;
+        int averageElo = irtCalculator.thetaToElo(averageTheta);
 
         UserOverviewStatsResponse overview = UserOverviewStatsResponse.builder()
                 .username(username)
                 .totalTopicsMastered(totalTopicsCount)
-                .overallSkillLevel(overallSkillLevel)
+                .averageElo(averageElo)
                 .overallAccuracyPercentage(overallAccuracy)
                 .totalQuestionsAnswered(totalQuestionsAnswered)
                 .radarChartData(radarChartData)

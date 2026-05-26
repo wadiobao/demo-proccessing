@@ -27,4 +27,6 @@ public class FormResponse {
 	Integer userVoteValue; // 1, -1, or 0 (optional based on auth)
 	String contentId;
 	boolean hasQuiz;
+	Boolean hasChanged;
+	Boolean isAuthor;
 }

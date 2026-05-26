@@ -28,4 +28,6 @@ public interface FormRepository extends JpaRepository<Form, String> {
 
 	@Query("SELECT f FROM Form f WHERE f.tieuDe LIKE %:keyword% OR f.content.noiDung LIKE %:keyword%")
 	Page<Form> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+	Page<Form> findByTacGiaOrderByNgayDangDesc(String tacGia, Pageable pageable);
 }

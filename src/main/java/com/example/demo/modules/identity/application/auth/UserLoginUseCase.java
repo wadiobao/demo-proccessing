@@ -1,7 +1,5 @@
 package com.example.demo.modules.identity.application.auth;
 
-import org.springframework.http.ResponseCookie;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,13 +7,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.modules.identity.api.dto.LoginRequest;
+import com.example.demo.modules.identity.api.dto.LoginResult;
 import com.example.demo.modules.identity.domain.model.NormalUser;
 import com.example.demo.modules.identity.domain.model.User;
 import com.example.demo.modules.identity.domain.repository.IUserRepository;
 import com.example.demo.modules.identity.infrastructure.security.JwtUtils;
 
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,11 +27,20 @@ public class UserLoginUseCase {
 
     @Transactional
     public LoginResult execute(LoginRequest request) {
-        User user = userRepository.findByUserName(request.getUserName())
+        String loginIdentifier = request.getUserName();
+        User user = userRepository.findByUserName(loginIdentifier)
+                .or(() -> userRepository.findByEmail(loginIdentifier))
                 .orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
 
         if (!(user instanceof NormalUser)) {
             throw new HandleException(ErrorCode.UNAUTHORIZED);
+        }
+
+        NormalUser normalUser = (NormalUser) user;
+
+        // BẢO MẬT/LOGIC: Nếu tài khoản chỉ liên kết qua Google và chưa được thiết lập mật khẩu cục bộ
+        if (normalUser.getProvider() == com.example.demo.modules.identity.domain.model.AuthProvider.GOOGLE && normalUser.getPassword() == null) {
+            throw new HandleException(ErrorCode.UNAUTHENTICATED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -51,11 +57,4 @@ public class UserLoginUseCase {
                 .build();
     }
 
-    @Data
-    @Builder
-    public static class LoginResult {
-        private ResponseCookie accessTokenCookie;
-        private ResponseCookie refreshTokenCookie;
-        private boolean authenticated;
-    }
 }

@@ -8,12 +8,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.modules.identity.api.dto.GoogleLoginRequest;
 import com.example.demo.modules.identity.api.dto.IntrospectResponse;
 import com.example.demo.modules.identity.api.dto.LoginRequest;
+import com.example.demo.modules.identity.api.dto.LoginResult;
 import com.example.demo.modules.identity.api.dto.UserProfileResponse;
 import com.example.demo.modules.identity.api.dto.UserRegistrationRequest;
-import com.example.demo.modules.identity.infrastructure.security.JwtUtils;
 import com.example.demo.modules.identity.application.auth.AdminLoginUseCase;
+import com.example.demo.modules.identity.application.auth.GoogleOAuthLoginUseCase;
 import com.example.demo.modules.identity.application.auth.LogoutUseCase;
 import com.example.demo.modules.identity.application.auth.RefreshTokenUseCase;
 import com.example.demo.modules.identity.application.auth.RegisterUseCase;
@@ -29,6 +31,7 @@ import com.example.demo.modules.identity.application.verification.SendRegistrati
 import com.example.demo.modules.identity.application.verification.VerifyForgotPasswordOtpUseCase;
 import com.example.demo.modules.identity.application.verification.VerifyRegistrationOtpUseCase;
 import com.example.demo.modules.identity.domain.model.User;
+import com.example.demo.modules.identity.infrastructure.security.JwtUtils;
 import com.nimbusds.jose.JOSEException;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,17 +60,22 @@ public class IdentityFacade {
     private final VerifyForgotPasswordOtpUseCase verifyForgotPasswordOtpUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
+    private final GoogleOAuthLoginUseCase googleOAuthLoginUseCase;
     private final JwtUtils jwtUtils;
 
     public UserProfileResponse getUserByUsername(String username) {
         return getUserProfileByUsernameUseCase.execute(username);
     }
 
-    public UserLoginUseCase.LoginResult login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
         return userLoginUseCase.execute(request);
     }
+    
+    public LoginResult googleLogin(GoogleLoginRequest request) {
+        return googleOAuthLoginUseCase.execute(request);
+    }
 
-    public AdminLoginUseCase.LoginResult adminLogin(LoginRequest request) {
+    public LoginResult adminLogin(LoginRequest request) {
         return adminLoginUseCase.execute(request);
     }
 

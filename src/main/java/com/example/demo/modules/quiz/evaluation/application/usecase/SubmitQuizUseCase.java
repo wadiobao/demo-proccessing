@@ -44,7 +44,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class SubmitQuizUseCase {
-
+	
+	private final int MAX_SESSION_HISTORY = 100;
+	
     private final UserResourceRepository userResourceRepository;
     private final QuestionBankRepository questionBankRepository;
     private final IRTCalculator irtCalculator;
@@ -131,17 +133,19 @@ public class SubmitQuizUseCase {
         }
 
         thetaHistory.add(snapshot);
-        if (thetaHistory.size() > 100) {
+        // Số lượng lịch sử phiên tối đa 100
+        if (thetaHistory.size() > MAX_SESSION_HISTORY) {
             userResource.setThetaHistory(
-                    new java.util.ArrayList<>(thetaHistory.subList(thetaHistory.size() - 100, thetaHistory.size())));
+                    new ArrayList<>(thetaHistory.subList(thetaHistory.size() - MAX_SESSION_HISTORY, thetaHistory.size())));
         }
 
-//        // 4. Lưu lịch sử làm bài (giới hạn 200 bản ghi để tránh vượt quá 16MB document)
-//        // history đã được gán lại từ historyCopy ở bước 3
-//        List<UserAnswer> history = userResource.getHistory();
-//        if (history.size() > 200) {
-//            userResource.setHistory(new ArrayList<>(history.subList(history.size() - 200, history.size())));
-//        }
+        // 4. Lưu lịch sử làm bài (giới hạn ở MAX_SESSION_HISTORY * session size)
+        // history đã được gán lại từ historyCopy ở bước 3
+        int maxAnsHistory = MAX_SESSION_HISTORY * userResource.getSessionSize();
+        List<UserAnswer> history = userResource.getHistory();
+        if (history.size() > maxAnsHistory) {
+            userResource.setHistory(new ArrayList<>(history.subList(history.size() - maxAnsHistory, history.size())));
+        }
 
         userResourceRepository.save(userResource);
 

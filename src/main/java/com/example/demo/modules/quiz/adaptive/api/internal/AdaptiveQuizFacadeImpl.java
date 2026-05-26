@@ -10,6 +10,7 @@ import com.example.demo.modules.quiz.adaptive.api.AdaptiveQuizFacade;
 import com.example.demo.modules.quiz.adaptive.api.request.QuizSubmissionRequest;
 import com.example.demo.modules.quiz.adaptive.application.command.AddFileToTopicCommand;
 import com.example.demo.modules.quiz.adaptive.application.command.CreateTopicCommand;
+import com.example.demo.modules.quiz.adaptive.application.command.DeleteFileInTopicCommand;
 import com.example.demo.modules.quiz.adaptive.application.command.DeleteTopicCommand;
 import com.example.demo.modules.quiz.adaptive.application.command.GenerateAdaptiveQuizCommand;
 import com.example.demo.modules.quiz.adaptive.application.command.GenerateReviewQuizCommand;
@@ -44,6 +45,7 @@ class AdaptiveQuizFacadeImpl implements AdaptiveQuizFacade {
     private final UpdateTopicCommand updateTopicCommand;
     private final DeleteTopicCommand deleteTopicCommand;
     private final AddFileToTopicCommand addFileToTopicCommand;
+    private final DeleteFileInTopicCommand deleteFileInTopicCommand;
 
     // Queries
     private final GetTopicFilesQuery getTopicFilesQuery;
@@ -115,4 +117,9 @@ class AdaptiveQuizFacadeImpl implements AdaptiveQuizFacade {
     public StateResponse<Object> getTopicOverview(String id, String username) {
         return getTopicOverviewQuery.execute(id, username);
     }
+
+	@Override
+	public StateResponse<Object> deleteTopicFiles(String topicId, String fileId, String username) {
+		return deleteFileInTopicCommand.execute(topicId, fileId, username);
+	}
 }

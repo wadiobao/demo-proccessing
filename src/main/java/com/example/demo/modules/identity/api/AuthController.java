@@ -3,6 +3,7 @@ package com.example.demo.modules.identity.api;
 import java.text.ParseException;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.modules.identity.api.dto.GoogleLoginRequest;
 import com.example.demo.modules.identity.api.dto.LoginRequest;
+import com.example.demo.modules.identity.api.dto.LoginResult;
 import com.example.demo.modules.identity.api.dto.UserProfileResponse;
 import com.example.demo.modules.identity.api.dto.UserRegistrationRequest;
-import com.example.demo.modules.identity.application.auth.AdminLoginUseCase;
 import com.example.demo.modules.identity.application.auth.RefreshTokenUseCase;
-import com.example.demo.modules.identity.application.auth.UserLoginUseCase;
 import com.nimbusds.jose.JOSEException;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,14 +33,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<StateResponse<Object>> login(@RequestBody LoginRequest request) {
-        UserLoginUseCase.LoginResult result = identityFacade.login(request);
+        LoginResult result = identityFacade.login(request);
         return createAuthResponse(result.getAccessTokenCookie(), result.getRefreshTokenCookie(),
                 result.isAuthenticated());
     }
 
     @PostMapping("/admin/login")
     public ResponseEntity<StateResponse<Object>> adminLogin(@RequestBody LoginRequest request) {
-        AdminLoginUseCase.LoginResult result = identityFacade.adminLogin(request);
+        LoginResult result = identityFacade.adminLogin(request);
         return createAuthResponse(result.getAccessTokenCookie(), result.getRefreshTokenCookie(),
                 result.isAuthenticated());
     }
@@ -71,8 +72,16 @@ public class AuthController {
         identityFacade.logout(response, token);
         return ResponseEntity.noContent().build();
     }
+    
+    @PostMapping("/google")
+    public ResponseEntity<StateResponse<Object>> googleLogin(@RequestBody GoogleLoginRequest request)
+            throws JOSEException, ParseException {
+        LoginResult result = identityFacade.googleLogin(request);
+        return createAuthResponse(result.getAccessTokenCookie(), result.getRefreshTokenCookie(),
+                result.isAuthenticated());
+    }
 
-    private ResponseEntity<StateResponse<Object>> createAuthResponse(org.springframework.http.ResponseCookie access, org.springframework.http.ResponseCookie refresh, boolean auth) {
+    private ResponseEntity<StateResponse<Object>> createAuthResponse(ResponseCookie access,ResponseCookie refresh, boolean auth) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, access.toString())
                 .header(HttpHeaders.SET_COOKIE, refresh.toString())

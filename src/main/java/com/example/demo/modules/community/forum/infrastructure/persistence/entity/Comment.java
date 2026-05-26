@@ -54,4 +54,7 @@ public class Comment extends BaseModel {
 	@Temporal(TemporalType.TIMESTAMP)
 	Date ngayComment;
 	
+	@jakarta.persistence.Column(columnDefinition = "boolean default false")
+	Boolean hasChanged = false;
+	
 }

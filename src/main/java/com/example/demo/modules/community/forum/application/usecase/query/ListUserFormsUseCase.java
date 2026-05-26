@@ -1,12 +1,12 @@
 package com.example.demo.modules.community.forum.application.usecase.query;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.community.forum.api.dto.FormResponse;
@@ -18,41 +18,38 @@ import com.example.demo.modules.identity.domain.repository.IUserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Lấy danh sách các Form do chính người dùng hiện tại đã đăng.
+ *
+ * <p>Lọc các Form theo tacGia khớp với username của người dùng đang đăng nhập,
+ * sắp xếp theo ngày đăng mới nhất.
+ *
+ * @since 1.0
+ */
 @Service
 @RequiredArgsConstructor
-public class ListFormsUseCase {
+public class ListUserFormsUseCase {
 
     private final FormRepository formRepository;
     private final IUserRepository userRepository;
     private final ReputationFacade reputationFacade;
 
+    /**
+     * Thực thi truy vấn danh sách form đã đăng của người dùng hiện tại.
+     *
+     * @param pageable tham số phân trang
+     * @return StateResponse chứa danh sách FormResponse
+     */
+    @Transactional(readOnly = true)
     public StateResponse<Object> execute(Pageable pageable) {
-        Page<Form> all = formRepository.findAllByOrderByNgayDangDesc(pageable);
-        return StateResponse.builder().result(decorateWithVotes(all)).build();
-    }
-
-    public StateResponse<Object> executeForTopic(Long topicId, String tag, Pageable pageable) {
-        Page<Form> all;
-        if (tag != null && !tag.isEmpty()) {
-            all = formRepository.findByTopic_TopicIdAndTagsContainingOrderByNgayDangDesc(topicId, tag, pageable);
-        } else {
-            all = formRepository.findByTopic_TopicIdOrderByNgayDangDesc(topicId, pageable);
-        }
-        return StateResponse.builder().result(decorateWithVotes(all)).build();
-    }
-
-    public StateResponse<Object> searchByKeyword(String keyword, Pageable pageable) {
-        Page<Form> results = formRepository.searchByKeyword(keyword, pageable);
-        return StateResponse.builder().result(decorateWithVotes(results)).build();
-    }
-
-    private Page<FormResponse> decorateWithVotes(Page<Form> forms) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUserName(currentUsername).orElse(null);
 
-        Map<String, Integer> userVotes = reputationFacade.getVotesForForms(currentUser, forms.getContent());
+        Page<Form> userForms = formRepository.findByTacGiaOrderByNgayDangDesc(currentUsername, pageable);
 
-        return forms.map(form -> {
+        Map<String, Integer> userVotes = reputationFacade.getVotesForForms(currentUser, userForms.getContent());
+
+        Page<FormResponse> responses = userForms.map(form -> {
             boolean isFormAuthor = currentUser != null && form.getTacGia().equals(currentUser.getUserName());
             return FormResponse.builder()
                     .formId(form.getFormId())
@@ -70,5 +67,7 @@ public class ListFormsUseCase {
                     .isAuthor(isFormAuthor)
                     .build();
         });
+
+        return StateResponse.builder().result(responses).build();
     }
 }

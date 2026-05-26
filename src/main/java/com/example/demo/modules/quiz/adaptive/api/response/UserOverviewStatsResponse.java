@@ -17,7 +17,7 @@ import lombok.experimental.FieldDefaults;
 public class UserOverviewStatsResponse {
     String username;
     int totalTopicsMastered;
-    double overallSkillLevel;
+    int averageElo;
     double overallAccuracyPercentage;
     int totalQuestionsAnswered;
     List<TopicMastery> radarChartData;
@@ -28,6 +28,7 @@ public class UserOverviewStatsResponse {
     @Builder
     public static class TopicMastery {
         private String topic;
-        private double masteryLevel; // Converted from theta (0-100)
+        private int elo;
+        private String masteryLabel;
     }
 }

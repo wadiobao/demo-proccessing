@@ -20,4 +20,6 @@ public class CommentResponse {
 	String tacGia;
 	String noiDung;
 	Date ngayComment;
+	Boolean hasChanged;
+	Boolean isAuthor;
 }

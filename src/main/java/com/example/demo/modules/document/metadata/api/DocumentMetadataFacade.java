@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.modules.document.metadata.domain.command.DeleteMetadataCommand;
 import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
 import com.example.demo.modules.document.metadata.infrastructure.persistence.entity.DocumentMetadataMongoEntity;
 import com.example.demo.modules.document.metadata.infrastructure.persistence.repository.DocumentMetadataRepository;
@@ -32,6 +33,7 @@ public class DocumentMetadataFacade {
     private final DocumentMetadataRepository repository;
     private final VectorUtils vectorUtils;
     private final DocumentProcessingFacade documentProcessingFacade;
+    private final DeleteMetadataCommand deleteMetadataCommand;
 
     /**
      * Saves or retrieves existing metadata for the given content.
@@ -195,5 +197,9 @@ public class DocumentMetadataFacade {
         return repository.findFirstByTagsContainingAndIdNot(tag, excludeId)
                 .map(DocumentMetadataMongoEntity::toDomain)
                 .orElse(null);
+    }
+    
+    public String deleteByIdAndOwner(String id, String owner) {
+    	 return deleteMetadataCommand.execute(id, owner);
     }
 }

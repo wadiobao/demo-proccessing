@@ -17,7 +17,8 @@ public final class SecurityEndpoints {
             "/api/v1/auth/logout",
             "/api/v1/auth/refresh",
             "/api/v1/auth/register/otp",
-            "/api/v1/auth/register/verify"
+            "/api/v1/auth/register/verify",
+            "/api/v1/auth/google"
         };
 
         public static final String[] USER = {

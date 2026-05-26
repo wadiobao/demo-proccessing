@@ -93,6 +93,7 @@ public class CreateFormUseCase {
                 .topic(topic)
                 .contentId(contentId)
                 .hasQuiz(hasQuiz)
+                .hasChanged(false)
                 .build();
 
         FormContent content = new FormContent();
@@ -116,6 +117,8 @@ public class CreateFormUseCase {
                         .userVoteValue(0)
                         .contentId(contentId)
                         .hasQuiz(hasQuiz)
+                        .hasChanged(false)
+                        .isAuthor(true)
                         .build())
                 .build();
     }

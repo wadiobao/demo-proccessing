@@ -2,7 +2,12 @@ package com.example.demo.modules.identity.infrastructure.persistence.entity;
 
 import java.time.LocalDateTime;
 
+import com.example.demo.modules.identity.domain.model.AuthProvider;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -35,4 +40,12 @@ public class NormalUserEntity extends UserEntity {
     private TierEntity currentTier;
 
     private LocalDateTime lastReputationReset;
+    
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider provider = AuthProvider.LOCAL; // Mặc định là LOCAL cho user cũ
+
+    @Column(name = "provider_id", nullable = true, unique = true)
+    private String providerId; // Sẽ lưu chuỗi 'sub' (Google User ID)
 }

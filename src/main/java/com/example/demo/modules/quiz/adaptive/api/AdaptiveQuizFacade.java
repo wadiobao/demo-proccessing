@@ -61,6 +61,11 @@ public interface AdaptiveQuizFacade {
      * Get the list of files in a user's topic by id.
      */
     StateResponse<Object> getTopicFiles(String id, String username);
+    
+    /**
+     * Delete a file in a user's topic by id.
+     */
+    StateResponse<Object> deleteTopicFiles(String topicId, String fileId, String username);
 
     /**
      * Get information of all topics for a user.

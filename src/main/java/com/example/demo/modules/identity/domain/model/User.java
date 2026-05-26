@@ -1,6 +1,7 @@
 package com.example.demo.modules.identity.domain.model;
 
 import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

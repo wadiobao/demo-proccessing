@@ -23,36 +23,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AddCommentUseCase {
 
-    private final CommentRepository commentRepository;
-    private final IUserRepository userRepository;
-    private final FormRepository formRepository;
-    private final IdentityEntityMapper identityMapper;
+        private final CommentRepository commentRepository;
+        private final IUserRepository userRepository;
+        private final FormRepository formRepository;
+        private final IdentityEntityMapper identityMapper;
 
-    @Transactional
-    public StateResponse<Object> execute(String formId, CommentRequest request) {
-        var context = SecurityContextHolder.getContext();
-        String name = context.getAuthentication().getName();
+        @Transactional
+        public StateResponse<Object> execute(String formId, CommentRequest request) {
+                var context = SecurityContextHolder.getContext();
+                String name = context.getAuthentication().getName();
 
-        User user = userRepository.findByUserName(name)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                User user = userRepository.findByUserName(name)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Form form = formRepository.findById(formId)
-                .orElseThrow(() -> new RuntimeException("Form not found"));
+                Form form = formRepository.findById(formId)
+                                .orElseThrow(() -> new RuntimeException("Form not found"));
 
-        Comment comment = Comment.builder()
-                .user(identityMapper.toEntity(user))
-                .noiDung(request.getNoiDung())
-                .form(form)
-                .ngayComment(new Date())
-                .build();
-        commentRepository.save(comment);
+                Comment comment = Comment.builder()
+                                .user(identityMapper.toEntity(user))
+                                .noiDung(request.getNoiDung())
+                                .hasChanged(false)
+                                .form(form)
+                                .ngayComment(new Date())
+                                .build();
+                commentRepository.save(comment);
 
-        return StateResponse.builder()
-                .result(CommentResponse.builder()
-                        .tacGia(name)
-                        .noiDung(comment.getNoiDung())
-                        .ngayComment(comment.getNgayComment())
-                        .build())
-                .build();
-    }
+                return StateResponse.builder()
+                                .result(CommentResponse.builder()
+                                                .tacGia(name)
+                                                .noiDung(comment.getNoiDung())
+                                                .ngayComment(comment.getNgayComment())
+                                                .hasChanged(comment.getHasChanged())
+                                                .isAuthor(true)
+                                                .build())
+                                .build();
+        }
 }

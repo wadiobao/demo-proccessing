@@ -35,18 +35,30 @@ public interface IdentityEntityMapper {
     TierEntity toEntity(Tier domain);
 
     default User toDomain(UserEntity entity) {
-        if (entity == null) return null;
-        if (entity instanceof AdminEntity) return toDomain((AdminEntity) entity);
-        if (entity instanceof NormalUserEntity) return toDomain((NormalUserEntity) entity);
+        if (entity == null) {
+			return null;
+		}
+        if (entity instanceof AdminEntity) {
+			return toDomain((AdminEntity) entity);
+		}
+        if (entity instanceof NormalUserEntity) {
+			return toDomain((NormalUserEntity) entity);
+		}
         return toBaseDomain(entity);
     }
 
     User toBaseDomain(UserEntity entity);
 
     default UserEntity toEntity(User domain) {
-        if (domain == null) return null;
-        if (domain instanceof Admin) return toEntity((Admin) domain);
-        if (domain instanceof NormalUser) return toEntity((NormalUser) domain);
+        if (domain == null) {
+			return null;
+		}
+        if (domain instanceof Admin) {
+			return toEntity((Admin) domain);
+		}
+        if (domain instanceof NormalUser) {
+			return toEntity((NormalUser) domain);
+		}
         return toBaseEntity(domain);
     }
 
@@ -56,6 +68,8 @@ public interface IdentityEntityMapper {
     AdminEntity toEntity(Admin domain);
 
     NormalUser toDomain(NormalUserEntity entity);
+    
+    @Mapping(target = "provider", defaultValue = "LOCAL")
     NormalUserEntity toEntity(NormalUser domain);
 
     InvalidatedToken toDomain(InvalidatedTokenEntity entity);

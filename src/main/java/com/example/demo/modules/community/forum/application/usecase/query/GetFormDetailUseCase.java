@@ -50,12 +50,19 @@ public class GetFormDetailUseCase {
         }
 
         Page<Comment> comments = commentRepository.findByForm_FormId(formId, pageable);
-        Page<CommentResponse> responses = comments.map(comment -> CommentResponse.builder()
-                .id(comment.getCommenttId())
-                .tacGia(comment.getUser().getUserName())
-                .noiDung(comment.getNoiDung())
-                .ngayComment(comment.getNgayComment())
-                .build());
+        Page<CommentResponse> responses = comments.map(comment -> {
+            boolean isCommentAuthor = currentUser != null 
+                    && comment.getUser() != null 
+                    && comment.getUser().getUserName().equals(currentUser.getUserName());
+            return CommentResponse.builder()
+                    .id(comment.getCommenttId())
+                    .tacGia(comment.getUser().getUserName())
+                    .noiDung(comment.getNoiDung())
+                    .hasChanged(comment.getHasChanged())
+                    .isAuthor(isCommentAuthor)
+                    .ngayComment(comment.getNgayComment())
+                    .build();
+        });
 
         FormDetailResponse detail = FormDetailResponse.builder()
                 .form(formResponse)
@@ -68,6 +75,7 @@ public class GetFormDetailUseCase {
 
     private FormResponse mapToFormResponse(Form form, User currentUser) {
         int userVoteValue = reputationFacade.getUserVote(currentUser, form);
+        boolean isFormAuthor = currentUser != null && form.getTacGia().equals(currentUser.getUserName());
 
         return FormResponse.builder()
                 .formId(form.getFormId())
@@ -81,6 +89,8 @@ public class GetFormDetailUseCase {
                 .userVoteValue(userVoteValue)
                 .contentId(form.getContentId())
                 .hasQuiz(form.isHasQuiz())
+                .hasChanged(form.getHasChanged())
+                .isAuthor(isFormAuthor)
                 .build();
     }
 }
