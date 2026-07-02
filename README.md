@@ -339,7 +339,8 @@ Tạo file .env từ .env.example:
 |---|---|---|
 | GEMINI_API_KEY | API key Gemini AI | AIza... |
 | DB_URL | JDBC URL cho MySQL | jdbc:mysql://localhost:3306/mydb |
-| DB_USERNAME / DB_PASSWORD | Thông tin MySQL | oot / password |
+| DB_USERNAME / DB_PASSWORD | Thông tin MySQL | 
+oot / password |
 | MONGODB_URI | Connection string MongoDB | mongodb://localhost:27017/pdfstore |
 | REDIS_HOST / REDIS_PORT | Kết nối Redis | localhost / 6379 |
 | REDIS_PASSWORD | Mật khẩu Redis | — |
@@ -416,8 +417,4 @@ demo-proccessing/
 └── .env.example          # Template biến môi trường
 ```
 
----
 
-## 📜 License
-
-Dự án này được phân phối theo giấy phép [MIT](LICENSE).
