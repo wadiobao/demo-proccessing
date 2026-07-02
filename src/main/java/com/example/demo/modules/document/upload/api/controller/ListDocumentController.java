@@ -9,33 +9,32 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.modules.document.upload.application.query.ListPdfQuery;
-import com.example.demo.modules.document.upload.application.query.FilterPdfQuery;
-import com.example.demo.modules.document.upload.application.usecase.query.ListPdfUseCase;
-import com.example.demo.modules.document.upload.api.request.PdfFileFilterRequest;
-import com.example.demo.modules.document.upload.application.mapper.PdfFileMapper;
+import com.example.demo.modules.document.upload.api.request.ListDocumentQueryRequest;
+import com.example.demo.modules.document.upload.application.mapper.DocumentMapper;
+import com.example.demo.modules.document.upload.application.query.FilterDocumentQuery;
+import com.example.demo.modules.document.upload.application.query.ListDocumentQuery;
+import com.example.demo.modules.document.upload.application.usecase.query.ListDocumentUseCase;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-// TODO FIXME: Đổi tên thành ListDocumentController
 @RestController
 @RequestMapping("/api/v1/pdfs") // TODO FIXME: Cẩn thận duplicate mapping nếu không gom facade
 @RequiredArgsConstructor
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class ListPdfController {
+public class ListDocumentController {
 
-    ListPdfUseCase listPdfUseCase;
-    PdfFileMapper pdfFileMapper;
+    ListDocumentUseCase listPdfUseCase;
+    DocumentMapper pdfFileMapper;
 
     @GetMapping
     public ResponseEntity<StateResponse<Object>> getAllPdfs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
             
-        ListPdfQuery query = ListPdfQuery.builder()
+        ListDocumentQuery query = ListDocumentQuery.builder()
                 .page(page)
                 .size(size)
                 .build();
@@ -45,8 +44,8 @@ public class ListPdfController {
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<StateResponse<Object>> findAllByMajor(@RequestBody PdfFileFilterRequest request) {
-        FilterPdfQuery query = FilterPdfQuery.builder()
+    public ResponseEntity<StateResponse<Object>> findAllByMajor(@RequestBody ListDocumentQueryRequest request) {
+        FilterDocumentQuery query = FilterDocumentQuery.builder()
                 .request(request)
                 .build();
                 

@@ -10,7 +10,7 @@ import lombok.Data;
 // TODO FIXME: Đổi tên thành DocumentDto
 @Data
 @Builder
-public class PdfFileDto {
+public class DocumentDto {
     private Long id;
     private String title;
     private String pdfUrl;

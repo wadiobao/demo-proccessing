@@ -6,6 +6,6 @@ import lombok.Getter;
 // TODO FIXME: Đổi tên thành GetDocumentQuery
 @Getter
 @Builder
-public class GetPdfQuery {
+public class GetDocumentQuery {
     private final Long id;
 }

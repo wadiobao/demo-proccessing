@@ -2,7 +2,7 @@ package com.example.demo.modules.document.upload.application.validator;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.modules.document.upload.application.command.UploadPdfCommand;
+import com.example.demo.modules.document.upload.application.command.UploadDocumentCommand;
 import com.example.demo.modules.document.upload.domain.service.UploadPolicyDomainService;
 import com.example.demo.modules.document.upload.domain.valueobject.FileFormat;
 import com.example.demo.modules.document.upload.domain.valueobject.FileSize;
@@ -12,11 +12,11 @@ import lombok.RequiredArgsConstructor;
 // TODO FIXME: Đổi tên thành UploadDocumentValidator
 @Component
 @RequiredArgsConstructor
-public class UploadPdfValidator {
+public class UploadDocumentValidator {
 
     private final UploadPolicyDomainService uploadPolicyDomainService;
 
-    public void validate(UploadPdfCommand command) {
+    public void validate(UploadDocumentCommand command) {
         if (command.getFile() == null || command.getFile().isEmpty()) {
             throw new IllegalArgumentException("File tải lên không được để trống.");
         }

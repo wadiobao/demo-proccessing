@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.modules.document.upload.application.command.DeletePdfCommand;
-import com.example.demo.modules.document.upload.application.query.ListPdfQuery;
-import com.example.demo.modules.document.upload.application.usecase.command.DeletePdfUseCase;
-import com.example.demo.modules.document.upload.application.usecase.query.ListPdfUseCase;
+import com.example.demo.modules.document.upload.application.command.DeleteDocumentCommand;
+import com.example.demo.modules.document.upload.application.query.ListDocumentQuery;
+import com.example.demo.modules.document.upload.application.usecase.command.DeleteDocumentUseCase;
+import com.example.demo.modules.document.upload.application.usecase.query.ListDocumentUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,8 +32,8 @@ import lombok.RequiredArgsConstructor;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminFileController {
 
-    private final ListPdfUseCase listPdfUseCase;
-    private final DeletePdfUseCase deletePdfUseCase;
+    private final ListDocumentUseCase listPdfUseCase;
+    private final DeleteDocumentUseCase deletePdfUseCase;
 
     /**
      * Lists all PDF files with pagination for management.
@@ -43,7 +43,7 @@ public class AdminFileController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
-        ListPdfQuery query = ListPdfQuery.builder()
+        ListDocumentQuery query = ListDocumentQuery.builder()
                 .page(page)
                 .size(size)
                 .build();
@@ -58,7 +58,7 @@ public class AdminFileController {
      */
     @DeleteMapping("/{cloudinaryId}")
     public ResponseEntity<StateResponse<Object>> deleteFile(@PathVariable String cloudinaryId) {
-        DeletePdfCommand command = DeletePdfCommand.builder()
+        DeleteDocumentCommand command = DeleteDocumentCommand.builder()
                 .cloudinaryIds(Collections.singletonList(cloudinaryId))
                 .build();
         
@@ -75,7 +75,7 @@ public class AdminFileController {
      */
     @DeleteMapping("/bulk")
     public ResponseEntity<StateResponse<Object>> deleteFilesBulk(@RequestBody List<String> cloudinaryIds) {
-        DeletePdfCommand command = DeletePdfCommand.builder()
+        DeleteDocumentCommand command = DeleteDocumentCommand.builder()
                 .cloudinaryIds(cloudinaryIds)
                 .build();
         

@@ -4,9 +4,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 
-import com.example.demo.modules.document.upload.application.command.UpdatePdfCommand;
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
-import com.example.demo.modules.document.upload.application.mapper.PdfFileMapper;
+import com.example.demo.modules.document.upload.application.command.UpdateDocumentCommand;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
+import com.example.demo.modules.document.upload.application.mapper.DocumentMapper;
 import com.example.demo.modules.document.upload.application.port.output.DocumentPersistencePort;
 
 import com.example.demo.modules.document.shared.domain.model.PdfFile;
@@ -18,15 +18,15 @@ import lombok.RequiredArgsConstructor;
 // TODO FIXME: Đổi tên thành UpdateDocumentUseCase
 @Service
 @RequiredArgsConstructor
-public class UpdatePdfUseCase {
+public class UpdateDocumentUseCase {
 
     private final DocumentPersistencePort documentPersistencePort;
     private final MajorRepository majorRepository;
-    private final PdfFileMapper pdfFileMapper;
+    private final DocumentMapper pdfFileMapper;
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public PdfFileDto execute(UpdatePdfCommand command) {
+    public DocumentDto execute(UpdateDocumentCommand command) {
         PdfFile pdfFile = documentPersistencePort.findById(command.getId())
                 .orElseThrow(() -> new RuntimeException("PdfFile not found with id: " + command.getId()));
         

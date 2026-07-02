@@ -7,27 +7,27 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.modules.document.shared.domain.model.PdfFile;
 import com.example.demo.modules.document.upload.application.port.output.DocumentPersistencePort;
-import com.example.demo.modules.document.upload.application.query.ListPdfQuery;
-import com.example.demo.modules.document.upload.application.query.FilterPdfQuery;
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
-import com.example.demo.modules.document.upload.application.mapper.PdfFileMapper;
+import com.example.demo.modules.document.upload.application.query.ListDocumentQuery;
+import com.example.demo.modules.document.upload.application.query.FilterDocumentQuery;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
+import com.example.demo.modules.document.upload.application.mapper.DocumentMapper;
 
 import lombok.RequiredArgsConstructor;
 
 // TODO FIXME: Đổi tên thành ListDocumentUseCase
 @Service
 @RequiredArgsConstructor
-public class ListPdfUseCase {
+public class ListDocumentUseCase {
 
     private final DocumentPersistencePort documentPersistencePort;
-    private final PdfFileMapper pdfFileMapper;
+    private final DocumentMapper pdfFileMapper;
 
-    public Page<PdfFileDto> executeAll(ListPdfQuery query) {
+    public Page<DocumentDto> executeAll(ListDocumentQuery query) {
         Page<PdfFile> page = documentPersistencePort.findAll(PageRequest.of(query.getPage(), query.getSize()));
         return page.map(pdfFileMapper::toDto);
     }
 
-    public Page<PdfFileDto> executeFilter(FilterPdfQuery query) {
+    public Page<DocumentDto> executeFilter(FilterDocumentQuery query) {
         Pageable pageable = PageRequest.of(query.getRequest().getNumPage(), query.getRequest().getSize());
         Page<PdfFile> page;
         if (query.getRequest().getMajorId() != null) {

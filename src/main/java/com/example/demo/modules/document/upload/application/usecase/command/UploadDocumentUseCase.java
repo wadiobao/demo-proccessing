@@ -6,10 +6,10 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 
-import com.example.demo.modules.document.upload.application.command.UploadPdfCommand;
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
-import com.example.demo.modules.document.upload.application.mapper.PdfFileMapper;
-import com.example.demo.modules.document.upload.application.validator.UploadPdfValidator;
+import com.example.demo.modules.document.upload.application.command.UploadDocumentCommand;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
+import com.example.demo.modules.document.upload.application.mapper.DocumentMapper;
+import com.example.demo.modules.document.upload.application.validator.UploadDocumentValidator;
 import com.example.demo.modules.document.upload.application.port.output.DocumentPersistencePort;
 import com.example.demo.modules.document.upload.application.port.output.FileStoragePort;
 
@@ -22,16 +22,16 @@ import lombok.RequiredArgsConstructor;
 // TODO FIXME: Đổi tên thành UploadDocumentUseCase
 @Service
 @RequiredArgsConstructor
-public class UploadPdfUseCase {
+public class UploadDocumentUseCase {
 
     private final DocumentPersistencePort documentPersistencePort;
     private final MajorRepository majorRepository;
     private final FileStoragePort fileStoragePort;
-    private final PdfFileMapper pdfFileMapper;
-    private final UploadPdfValidator uploadPdfValidator;
+    private final DocumentMapper pdfFileMapper;
+    private final UploadDocumentValidator uploadPdfValidator;
 
     @Transactional
-    public PdfFileDto execute(UploadPdfCommand command) throws IOException {
+    public DocumentDto execute(UploadDocumentCommand command) throws IOException {
         uploadPdfValidator.validate(command);
         
         Map<String, String> uploadResult = fileStoragePort.uploadFile(command.getFile());

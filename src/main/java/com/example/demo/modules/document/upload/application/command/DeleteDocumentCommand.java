@@ -8,6 +8,6 @@ import lombok.Getter;
 // TODO FIXME: Đổi tên thành DeleteDocumentCommand
 @Getter
 @Builder
-public class DeletePdfCommand {
+public class DeleteDocumentCommand {
     private final List<String> cloudinaryIds;
 }

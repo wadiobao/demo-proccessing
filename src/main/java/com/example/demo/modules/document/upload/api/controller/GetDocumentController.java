@@ -16,30 +16,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriUtils;
 
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
-import com.example.demo.modules.document.upload.application.query.GetPdfQuery;
-import com.example.demo.modules.document.upload.application.usecase.query.GetPdfUseCase;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
+import com.example.demo.modules.document.upload.application.query.GetDocumentQuery;
+import com.example.demo.modules.document.upload.application.usecase.query.GetDocumentUseCase;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-// TODO FIXME: Đổi tên thành GetDocumentController
 @RestController
 @RequestMapping("/api/v1/pdfs") 
 @RequiredArgsConstructor
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class GetPdfController {
+public class GetDocumentController {
 
-    GetPdfUseCase getPdfUseCase;
+    GetDocumentUseCase getPdfUseCase;
 
     @GetMapping("/{id}/view")
     public void streamPdfFromCloudinary(@PathVariable Long id, HttpServletResponse response) {
         try {
-            GetPdfQuery query = GetPdfQuery.builder().id(id).build();
-            PdfFileDto pdfFileDto = getPdfUseCase.execute(query);
+            GetDocumentQuery query = GetDocumentQuery.builder().id(id).build();
+            DocumentDto pdfFileDto = getPdfUseCase.execute(query);
             URL url = new URL(pdfFileDto.getPdfUrl());
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");

@@ -2,15 +2,15 @@ package com.example.demo.modules.quiz.evaluation.application.service;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
 import com.example.demo.modules.quiz.evaluation.application.service.irt.AdaptiveScheduler;
 import com.example.demo.modules.quiz.evaluation.application.service.irt.BloomMasteryMapper;
 import com.example.demo.modules.quiz.evaluation.application.service.irt.IRTEngine;
-import com.example.demo.modules.quiz.evaluation.application.service.irt.UserAnswerGenerator;
 import com.example.demo.modules.quiz.shared.domain.model.UserAnswer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * Mathematical engine for estimating user ability and adjusting question

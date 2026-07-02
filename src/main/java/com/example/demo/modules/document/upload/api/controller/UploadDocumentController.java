@@ -13,56 +13,55 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.modules.document.upload.application.command.UploadPdfCommand;
-import com.example.demo.modules.document.upload.application.command.UpdatePdfCommand;
-import com.example.demo.modules.document.upload.application.usecase.command.UploadPdfUseCase;
-import com.example.demo.modules.document.upload.application.usecase.command.UpdatePdfUseCase;
-import com.example.demo.modules.document.upload.api.request.PdfFileRequest;
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
-import com.example.demo.modules.document.upload.application.mapper.PdfFileMapper;
 import com.example.demo.dto.StateResponse;
+import com.example.demo.modules.document.upload.api.request.UploadDocumentRequest;
+import com.example.demo.modules.document.upload.application.command.UpdateDocumentCommand;
+import com.example.demo.modules.document.upload.application.command.UploadDocumentCommand;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
+import com.example.demo.modules.document.upload.application.mapper.DocumentMapper;
+import com.example.demo.modules.document.upload.application.usecase.command.UpdateDocumentUseCase;
+import com.example.demo.modules.document.upload.application.usecase.command.UploadDocumentUseCase;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-// TODO FIXME: Đổi tên thành UploadDocumentController
 @RestController
 @RequestMapping("/api/v1/pdfs") // TODO FIXME: Thay đổi route cẩn thận khi refactor
 @RequiredArgsConstructor
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class UploadPdfController {
+public class UploadDocumentController {
 
-    UploadPdfUseCase uploadPdfUseCase;
-    UpdatePdfUseCase updatePdfUseCase;
-    PdfFileMapper pdfFileMapper;
+    UploadDocumentUseCase uploadPdfUseCase;
+    UpdateDocumentUseCase updatePdfUseCase;
+    DocumentMapper pdfFileMapper;
 
     @PostMapping("/upload")
     public ResponseEntity<StateResponse<Object>> uploadPdf(
             @RequestPart("file") MultipartFile file,
-            @RequestPart("request") PdfFileRequest request) throws IOException {
+            @RequestPart("request") UploadDocumentRequest request) throws IOException {
         
-        UploadPdfCommand command = UploadPdfCommand.builder()
+        UploadDocumentCommand command = UploadDocumentCommand.builder()
                 .file(file)
                 .request(request)
                 .build();
                 
-        PdfFileDto dto = uploadPdfUseCase.execute(command);
+        DocumentDto dto = uploadPdfUseCase.execute(command);
         return ResponseEntity.ok(StateResponse.builder().result(pdfFileMapper.toResponse(dto)).build());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<StateResponse<Object>> updatePdf(
             @PathVariable("id") Long id,
-            @RequestBody PdfFileRequest request) {
+            @RequestBody UploadDocumentRequest request) {
             
-        UpdatePdfCommand command = UpdatePdfCommand.builder()
+        UpdateDocumentCommand command = UpdateDocumentCommand.builder()
                 .id(id)
                 .request(request)
                 .build();
                 
-        PdfFileDto dto = updatePdfUseCase.execute(command);
+        DocumentDto dto = updatePdfUseCase.execute(command);
         return ResponseEntity.ok(StateResponse.builder().result(pdfFileMapper.toResponse(dto)).build());
     }
 }

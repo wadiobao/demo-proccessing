@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PdfFileFilterRequest {
+public class ListDocumentQueryRequest {
     Long majorId;
     int size;
     int numPage;

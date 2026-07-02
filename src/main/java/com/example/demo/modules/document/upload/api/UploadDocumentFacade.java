@@ -2,9 +2,9 @@ package com.example.demo.modules.document.upload.api;
 
 import org.springframework.stereotype.Service;
 
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
-import com.example.demo.modules.document.upload.application.query.GetPdfQuery;
-import com.example.demo.modules.document.upload.application.usecase.query.GetPdfUseCase;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
+import com.example.demo.modules.document.upload.application.query.GetDocumentQuery;
+import com.example.demo.modules.document.upload.application.usecase.query.GetDocumentUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,11 +18,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UploadDocumentFacade {
 
-    private final GetPdfUseCase getPdfUseCase;
+    private final GetDocumentUseCase getPdfUseCase;
 
     // Ví dụ một hàm cho module khác gọi để lấy thông tin File DTO
-    public PdfFileDto getDocumentById(Long documentId) {
-        GetPdfQuery query = GetPdfQuery.builder().id(documentId).build();
+    public DocumentDto getDocumentById(Long documentId) {
+        GetDocumentQuery query = GetDocumentQuery.builder().id(documentId).build();
         return getPdfUseCase.execute(query);
     }
 }

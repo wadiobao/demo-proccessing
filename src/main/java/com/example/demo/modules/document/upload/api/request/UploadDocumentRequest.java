@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PdfFileRequest {
+public class UploadDocumentRequest {
     String title;
     Long majorId;
     FileType fileType;

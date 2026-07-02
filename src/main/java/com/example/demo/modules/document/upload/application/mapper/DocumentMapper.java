@@ -3,19 +3,19 @@ package com.example.demo.modules.document.upload.application.mapper;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.modules.document.shared.domain.model.PdfFile;
-import com.example.demo.modules.document.upload.api.response.PdfFileResponse;
-import com.example.demo.modules.document.upload.application.dto.PdfFileDto;
+import com.example.demo.modules.document.upload.api.response.DocumentResponse;
+import com.example.demo.modules.document.upload.application.dto.DocumentDto;
 
 // TODO FIXME: Đổi tên thành DocumentMapper
 @Component
-public class PdfFileMapper {
+public class DocumentMapper {
 
-    public PdfFileDto toDto(PdfFile pdfFile) {
+    public DocumentDto toDto(PdfFile pdfFile) {
         if (pdfFile == null) {
 			return null;
 		}
         
-        return PdfFileDto.builder()
+        return DocumentDto.builder()
                 .id(pdfFile.getId())
                 .title(pdfFile.getTitle())
                 .pdfUrl(pdfFile.getPdfUrl())
@@ -28,11 +28,11 @@ public class PdfFileMapper {
                 .build();
     }
     
-    public PdfFileResponse toResponse(PdfFileDto dto) {
+    public DocumentResponse toResponse(DocumentDto dto) {
         if (dto == null) {
 			return null;
 		}
-        return PdfFileResponse.builder()
+        return DocumentResponse.builder()
                 .id(dto.getId())
                 .title(dto.getTitle())
                 .pdfUrl(dto.getPdfUrl())
