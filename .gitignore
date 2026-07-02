@@ -58,3 +58,8 @@ Thumbs.db
 *.txt
 
 .agents
+
+*.pem
+
+*.properties
+!application.properties

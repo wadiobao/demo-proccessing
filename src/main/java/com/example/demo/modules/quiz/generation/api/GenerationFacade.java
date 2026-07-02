@@ -34,4 +34,5 @@ public interface GenerationFacade {
     FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText) throws Exception;
     FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText, boolean shouldUpdateContentIds) throws Exception;
     FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText, boolean shouldUpdateContentIds, String explicitTopic) throws Exception;
+    FileGenerateResponse persistQuiz(FileGenerateResponse response, String username, String fileName, String rawText, boolean shouldUpdateContentIds, String explicitTopic, String type) throws Exception;
 }

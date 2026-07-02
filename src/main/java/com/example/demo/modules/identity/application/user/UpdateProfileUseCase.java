@@ -16,6 +16,8 @@ import com.example.demo.utils.CloudinaryUtils;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.Date;
+
 @Service
 @RequiredArgsConstructor
 public class UpdateProfileUseCase {
@@ -24,7 +26,7 @@ public class UpdateProfileUseCase {
     private final CloudinaryUtils cloudinaryUtils;
 
     @Transactional
-    public UserProfileResponse execute(MultipartFile avatar) throws IOException {
+    public UserProfileResponse execute(MultipartFile avatar, Date birthDate) throws IOException {
         var context = SecurityContextHolder.getContext();
         String name = context.getAuthentication().getName();
         
@@ -34,6 +36,10 @@ public class UpdateProfileUseCase {
         if (avatar != null && !avatar.isEmpty()) {
             String avatarUrl = cloudinaryUtils.uploadAvatar(avatar);
             user.setAvatarUrl(avatarUrl);
+        }
+
+        if (birthDate != null) {
+            user.setDate(birthDate);
         }
 
         userRepository.save(user);

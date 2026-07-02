@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.3</version>
+		<version>3.5.15</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
@@ -299,6 +299,12 @@
 			<version>2.8.5</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>3.0.10</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -325,10 +331,8 @@
 						</path>
 					</annotationProcessorPaths>
 					<compilerArgs>
-						<compilerArg>
-							-Amapstruct.suppressGeneratorTimestamp=true
-							-Amapstruct.defaultComponentModel=spring
-						</compilerArg>
+						<compilerArg>-Amapstruct.suppressGeneratorTimestamp=true</compilerArg>
+						<compilerArg>-Amapstruct.defaultComponentModel=spring</compilerArg>
 					</compilerArgs>
 				</configuration>
 			</plugin>

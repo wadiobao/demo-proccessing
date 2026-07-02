@@ -103,8 +103,8 @@ public class IdentityFacade {
         resetPasswordUseCase.execute(email, newPassword);
     }
 
-    public UserProfileResponse updateProfile(MultipartFile avatar) throws IOException {
-        return updateProfileUseCase.execute(avatar);
+    public UserProfileResponse updateProfile(MultipartFile avatar, java.util.Date birthDate) throws IOException {
+        return updateProfileUseCase.execute(avatar, birthDate);
     }
 
     public String sendRegistrationOtp(UserRegistrationRequest request) {

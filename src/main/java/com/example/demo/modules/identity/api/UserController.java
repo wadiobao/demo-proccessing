@@ -1,7 +1,9 @@
 package com.example.demo.modules.identity.api;
 
 import java.io.IOException;
+import java.util.Date;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,9 +53,11 @@ public class UserController {
     }
 
     @PutMapping("/profile/update")
-    public ResponseEntity<StateResponse<UserProfileResponse>> updateProfile(@RequestParam(required = false) MultipartFile avatar) throws IOException {
+    public ResponseEntity<StateResponse<UserProfileResponse>> updateProfile(
+            @RequestParam(required = false) MultipartFile avatar,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date birthDate) throws IOException {
         return ResponseEntity.ok(StateResponse.<UserProfileResponse>builder()
-                .result(identityFacade.updateProfile(avatar))
+                .result(identityFacade.updateProfile(avatar, birthDate))
                 .build());
     }
 

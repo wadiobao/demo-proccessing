@@ -24,6 +24,7 @@ public class PdfFileMapper {
                 .majorName(pdfFile.getMajor() != null ? pdfFile.getMajor().getDisplayName() : null)
                 .fileType(pdfFile.getFileType())
                 .author(pdfFile.getAuthor())
+                .createdAt(pdfFile.getCreatedAt())
                 .build();
     }
     
@@ -40,6 +41,7 @@ public class PdfFileMapper {
                 .majorName(dto.getMajorName())
                 .fileType(dto.getFileType())
                 .author(dto.getAuthor())
+                .createdAt(dto.getCreatedAt())
                 .build();
     }
 }

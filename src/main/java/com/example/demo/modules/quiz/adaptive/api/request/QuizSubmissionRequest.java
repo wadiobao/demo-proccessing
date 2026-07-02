@@ -19,11 +19,6 @@ import lombok.NoArgsConstructor;
 public class QuizSubmissionRequest {
 
     /**
-     * ID of the archived question set (optional, for tracking)
-     */
-    private String archivedQuestionId;
-
-    /**
      * Topic of the quiz (for IRT tracking)
      */
     private String topic;
@@ -32,4 +27,9 @@ public class QuizSubmissionRequest {
      * List of user answers with question IDs and correctness
      */
     private List<UserAnswer> answers;
+
+    /**
+     * Unique ID of the quiz session request (for tracking review/adaptive quizzes)
+     */
+    private String requestId;
 }

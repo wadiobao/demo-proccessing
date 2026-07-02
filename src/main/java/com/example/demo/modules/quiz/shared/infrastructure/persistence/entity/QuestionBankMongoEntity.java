@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.example.demo.enums.VerificationStatus;
+import com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
 
 import lombok.AccessLevel;
@@ -33,13 +33,10 @@ public class QuestionBankMongoEntity {
     @Id
     String id;
 
-    @Indexed
     String contentId;
 
-    @Indexed
     String questionHash; // MD5/SHA of question text for deduplication
 
-    @TextIndexed
     Question questionData;
 
     @Builder.Default
@@ -51,7 +48,6 @@ public class QuestionBankMongoEntity {
     @Builder.Default
     double difficulty = 0.0; // The 'b' parameter in IRT
 
-    @Indexed
     String contributorId; // ID of the user who uploaded/edited this
 
     @Builder.Default

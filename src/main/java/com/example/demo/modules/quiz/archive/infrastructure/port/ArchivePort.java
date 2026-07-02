@@ -3,24 +3,24 @@ package com.example.demo.modules.quiz.archive.infrastructure.port;
 import java.util.List;
 import java.util.Optional;
 
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 /**
  * Port for accessing the Quiz Archive (Persistence and external Cloudinary).
  */
 public interface ArchivePort {
     
-    ArchivedQuestionMongoEntity save(ArchivedQuestionMongoEntity archive);
+    ArchivedSessionMongoEntity save(ArchivedSessionMongoEntity archive);
 
-    List<ArchivedQuestionMongoEntity> findByAuthor(String author);
+    List<ArchivedSessionMongoEntity> findByAuthor(String author);
 
-    List<ArchivedQuestionMongoEntity> findAll();
+    List<ArchivedSessionMongoEntity> findAll();
 
-    Optional<ArchivedQuestionMongoEntity> findById(String id);
+    Optional<ArchivedSessionMongoEntity> findById(String id);
 
-    Optional<ArchivedQuestionMongoEntity> findOldestByAuthor(String author);
+    Optional<ArchivedSessionMongoEntity> findOldestByAuthor(String author);
 
-    void delete(ArchivedQuestionMongoEntity archive);
+    void delete(ArchivedSessionMongoEntity archive);
 
     void deleteAllByAuthor(String author);
 

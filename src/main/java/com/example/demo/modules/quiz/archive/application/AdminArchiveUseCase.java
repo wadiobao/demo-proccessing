@@ -6,7 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,7 @@ public class AdminArchiveUseCase {
      * Retrieves all archived records across all users.
      */
     @PreAuthorize("hasRole('ADMIN')")
-    public List<ArchivedQuestionMongoEntity> findAll() {
+    public List<ArchivedSessionMongoEntity> findAll() {
         return archivePort.findAll();
     }
 }

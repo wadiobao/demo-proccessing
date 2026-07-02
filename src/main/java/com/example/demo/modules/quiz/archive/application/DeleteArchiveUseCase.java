@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class DeleteArchiveUseCase {
      */
     @Transactional
     public void execute(String archiveId, String requesterUsername, boolean isAdmin) {
-        ArchivedQuestionMongoEntity archive = archivePort.findById(archiveId)
+        ArchivedSessionMongoEntity archive = archivePort.findById(archiveId)
                 .orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
 
         if (!isAdmin && !archive.getAuthor().equals(requesterUsername)) {

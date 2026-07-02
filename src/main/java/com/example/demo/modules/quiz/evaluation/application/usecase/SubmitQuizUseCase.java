@@ -22,12 +22,10 @@ import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.HandleException;
 import com.example.demo.modules.quiz.adaptive.api.request.QuizSubmissionRequest;
 import com.example.demo.modules.quiz.adaptive.api.response.QuizSubmissionResponse;
-import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
 import com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator;
 import com.example.demo.modules.quiz.shared.application.QuizResponseBuilder;
 import com.example.demo.modules.quiz.shared.domain.model.ThetaSnapshot;
 import com.example.demo.modules.quiz.shared.domain.model.UserAnswer;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.QuestionBankMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.UserResourceMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.QuestionBankRepository;
@@ -50,7 +48,6 @@ public class SubmitQuizUseCase {
     private final UserResourceRepository userResourceRepository;
     private final QuestionBankRepository questionBankRepository;
     private final IRTCalculator irtCalculator;
-    private final ArchivePort archivePort;
     private final MongoTemplate mongoTemplate;
     private final MessageSource messageSource;
     private final QuizResponseBuilder responseBuilder;
@@ -59,30 +56,21 @@ public class SubmitQuizUseCase {
     public StateResponse<Object> execute(QuizSubmissionRequest request, String username) {
         log.info("Processing quiz submission for user: {}, topic: {}", username, request.getTopic());
 
-        // 1. Kiểm tra xem bài tập đã được nộp chưa (idempotency)
-        ArchivedQuestionMongoEntity archive = archivePort.findById(request.getArchivedQuestionId())
-                .orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
-
-        if (archive.isEvaluated()) {
-            throw new HandleException(ErrorCode.EVALUATED_QUESTIONS);
-        }
-
-        // 2. Lấy thông tin năng lực người dùng (phải tồn tại vì UserResource được tạo
-        // khi generate quiz)
-        UserResourceMongoEntity userResource = userResourceRepository
-                .findByUserNameAndTopic(username, request.getTopic())
-                .orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
-
         List<UserAnswer> answers = request.getAnswers();
         if (answers == null) {
             answers = new ArrayList<>();
         }
-        int totalQuestions = archive.getQuestions().size();
+
+        int totalQuestions = answers.size();
         int correctAnswers = (int) answers.stream().filter(UserAnswer::isCorrect).count();
         double scorePercentage = totalQuestions > 0 ? (correctAnswers * 100.0) / totalQuestions : 0.0;
 
+        // 2. Lấy thông tin năng lực người dùng
+        UserResourceMongoEntity userResource = userResourceRepository
+                .findByUserNameAndTopic(username, request.getTopic())
+                .orElseThrow(() -> new HandleException(ErrorCode.RESOURCE_NOT_FOUND));
+
         // 3. Tính toán Theta mới qua IRT-MAP
-        // Defensive copy: tránh side-effect ẩn khi reviewAnswer mutate list gốc
         List<UserAnswer> historyCopy = new ArrayList<>(userResource.getHistory());
 
         double[] irtResults = irtCalculator.reviewAnswer(
@@ -148,10 +136,6 @@ public class SubmitQuizUseCase {
         }
 
         userResourceRepository.save(userResource);
-
-        // Mark archive as evaluated and save
-        archive.setEvaluated(true);
-        archivePort.save(archive);
 
         // 5. Hiệu chỉnh độ khó cho Question Bank
         recalibrateQuestionBank(answers, newTheta);

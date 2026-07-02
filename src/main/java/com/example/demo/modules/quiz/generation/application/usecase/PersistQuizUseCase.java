@@ -8,9 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
 import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
+import com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator;
 import com.example.demo.modules.quiz.shared.domain.model.FileGenerateResponse;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.QuestionBankMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.UserResourceMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.ArchivedQuestionRepository;
@@ -34,50 +35,65 @@ public class PersistQuizUseCase {
     private final ArchivedQuestionRepository archivedQuestionRepository;
     private final QuestionBankRepository questionBankRepository;
     private final GeneralUtils generalUtils;
+    private final IRTCalculator irtCalculator;
 
     @Transactional
     public FileGenerateResponse execute(FileGenerateResponse response, String username, String filename,
             String pdfContent, boolean shouldUpdateContentIds) throws Exception {
-        return execute(response, username, filename, pdfContent, shouldUpdateContentIds, null);
+        return execute(response, username, filename, pdfContent, shouldUpdateContentIds, null, "ADAPTIVE");
     }
 
     @Transactional
     public FileGenerateResponse execute(FileGenerateResponse response, String username, String filename,
             String pdfContent, boolean shouldUpdateContentIds, String explicitTopic) throws Exception {
-        log.info("Starting quiz data persistence for user: {}, file: {}, explicit topic: {}", username, filename, explicitTopic);
+        return execute(response, username, filename, pdfContent, shouldUpdateContentIds, explicitTopic, "ADAPTIVE");
+    }
+
+    @Transactional
+    public FileGenerateResponse execute(FileGenerateResponse response, String username, String filename,
+            String pdfContent, boolean shouldUpdateContentIds, String explicitTopic, String type) throws Exception {
+        log.info("Starting quiz data persistence for user: {}, file: {}, explicit topic: {}, type: {}", username, filename,
+                explicitTopic, type);
 
         String topic = explicitTopic;
         String contentId = null;
 
-        // Only create DocumentMetadata if it's a single file (shouldUpdateContentIds = true)
-        // OR if explicitTopic is null (fallback to detect topic)
-        if (shouldUpdateContentIds || explicitTopic == null) {
-            DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(pdfContent, username, filename, explicitTopic);
-            contentId = metadata.getId();
-            topic = metadata.getTopic();
+        if ("ADAPTIVE".equalsIgnoreCase(type)) {
+            // Only create DocumentMetadata if it's a single file (shouldUpdateContentIds =
+            // true)
+            // OR if explicitTopic is null (fallback to detect topic)
+            if (shouldUpdateContentIds || explicitTopic == null) {
+                DocumentMetadata metadata = documentMetadataFacade.findOrCreateMetadata(pdfContent, username, filename,
+                        explicitTopic);
+                contentId = metadata.getId();
+                topic = metadata.getTopic();
+            }
+
+            // 2. Cập nhật UserResource (Lịch sử học tập theo Topic)
+            updateUserResource(username, topic, contentId, shouldUpdateContentIds);
         }
 
-        // 2. Cập nhật UserResource (Lịch sử học tập theo Topic)
-        updateUserResource(username, topic, contentId, shouldUpdateContentIds);
-
         // 3. Lưu bản lưu trữ quiz (ArchivedQuestion)
-        ArchivedQuestionMongoEntity archived = ArchivedQuestionMongoEntity.builder()
-                .author(username)
-                .questions(response.getQuestions())
-                .pdfBase64(response.getPdfBase64())
-                .wordBase64(response.getWordBase64())
-                .title(filename)
-                .resourceId(contentId)
-                .build();
+        if ("PUBLIC".equalsIgnoreCase(type)) {
+            ArchivedSessionMongoEntity archived = ArchivedSessionMongoEntity.builder()
+                    .author(username)
+                    .questions(response.getQuestions())
+                    .pdfBase64(response.getPdfBase64())
+                    .wordBase64(response.getWordBase64())
+                    .excelBase64(response.getExcelBase64())
+                    .title(filename)
+                    .resourceId(contentId)
+                    .build();
 
-        archived = archivedQuestionRepository.save(archived);
+            archived = archivedQuestionRepository.save(archived);
+            response.setArchivedQuestionId(archived.getId());
+        }
 
         // 4. Cập nhật Question Bank (Ngân hàng câu hỏi dùng chung)
         processQuestionBank(response.getQuestions(), contentId);
 
         // 5. Cập nhật response
         response.setTopic(topic);
-        response.setArchivedQuestionId(archived.getId());
 
         log.info("Quiz data persistence completed for user: {}", username);
         return response;
@@ -104,8 +120,8 @@ public class PersistQuizUseCase {
 
     private void processQuestionBank(List<Question> questions, String contentId) {
         if (questions == null) {
-			return;
-		}
+            return;
+        }
 
         for (Question q : questions) {
             String qHash = generalUtils.sha256(q.getQuestion());

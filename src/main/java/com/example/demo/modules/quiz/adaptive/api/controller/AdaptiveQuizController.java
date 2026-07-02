@@ -98,7 +98,7 @@ public class AdaptiveQuizController {
         String dataKey = "quiz:data:" + contentHash;
         String lockKey = "quiz:lock:" + contentHash;
         String channel = "quiz:channel:" + contentHash;
-        String requestId = UUID.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString()+id;
         
         String status = redisTemplate.execute(lockAndCheckScript, 
                 Arrays.asList(dataKey, lockKey), requestId, "180");
@@ -109,12 +109,14 @@ public class AdaptiveQuizController {
 	        return ResponseEntity.ok(response);
 		}
 		
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		
 		if ("LOCKED".equals(status)) {
 		// --- ĐÂY LÀ REQUEST A (Người thắng cuộc) ---
 		try {   
 				
 				StateResponse<Object> response = adaptiveQuizFacade.generateReviewQuiz(id, config,
-						SecurityContextHolder.getContext().getAuthentication().getName(),requestId);
+						username,requestId);
 				String json =  mapper.writeValueAsString(response);
 				redisTemplate.opsForValue().set(dataKey, json, Duration.ofMinutes(2));
 				redisTemplate.opsForList().leftPush("signal:" + dataKey, "DONE");
@@ -126,6 +128,7 @@ public class AdaptiveQuizController {
             // Xóa khóa an toàn bằng Lua Script
             redisTemplate.execute(safeUnlockScript, Collections.singletonList(lockKey), requestId);
             log.info("Delete lock key");
+            redisTemplate.opsForValue().set("quiz:"+username, requestId, questionCount, TimeUnit.MINUTES);
         }
 		} else {
     	
@@ -154,22 +157,6 @@ public class AdaptiveQuizController {
         throw new RuntimeException("AI processing timeout!");
     }
     
-    private StateResponse<?> waitForPubSubSignal(String channel, String dataKey) throws JsonMappingException, JsonProcessingException {
-        // Sử dụng CompletableFuture hoặc đơn giản hơn là vòng lặp chờ ngắn 
-        // kết hợp với kiểm tra dataKey để đảm bảo an toàn.
-        int retry = 0;
-        while (retry < 180) { // Đợi tối đa 3p
-            String data = redisTemplate.opsForValue().get(dataKey);
-            if (data != null) {
-            	String json = redisTemplate.opsForValue().get(dataKey);
-    			StateResponse response = mapper.readValue(json,StateResponse.class); // Trả về ngay nếu đã có trong cache
-    			return response;
-            }
-            try { Thread.sleep(1000); } catch (InterruptedException e) { }
-            retry++;
-        }
-        throw new RuntimeException("AI processing timeout!");
-    }
 
     /**
      * Submits quiz answers for evaluation and IRT update.
@@ -180,9 +167,23 @@ public class AdaptiveQuizController {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-
+        
+        String requestId = redisTemplate.opsForValue().get("quiz:"+username);
+        if(!requestId.equals(request.getRequestId())) {
+        	throw new RuntimeException("Invalid request");
+        }
         StateResponse<Object> response = adaptiveQuizFacade.submitQuiz(request, username);
+        redisTemplate.delete("quiz:"+username);
+        log.info("Delete quiz session");
         return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/session/out")
+    public void outSession() throws Exception {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        redisTemplate.delete("quiz:"+username);
+        log.info("Delete quiz session");
     }
 
     /**

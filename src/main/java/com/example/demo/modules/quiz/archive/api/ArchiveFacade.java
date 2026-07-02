@@ -3,14 +3,14 @@ package com.example.demo.modules.quiz.archive.api;
 import java.util.List;
 
 import com.example.demo.dto.StateResponse;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 /**
  * Facade for Quiz Archiving.
  */
 public interface ArchiveFacade {
-    ArchivedQuestionMongoEntity createArchive(ArchivedQuestionMongoEntity archive);
+    ArchivedSessionMongoEntity createArchive(ArchivedSessionMongoEntity archive);
     StateResponse<Object> getAuthorHistory(String author);
     void deleteArchive(String id, String username, boolean isAdmin);
-    List<ArchivedQuestionMongoEntity> getAllArchives();
+    List<ArchivedSessionMongoEntity> getAllArchives();
 }

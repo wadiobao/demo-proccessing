@@ -42,7 +42,7 @@ public final class Constants {
 
     // API
     public static final class Api {
-        public static final String GEMINI_MODEL = "gemini-2.5-flash";
+        public static final String GEMINI_MODEL = "gemini-3.1-flash-lite";
         public static final String IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
         public static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     }

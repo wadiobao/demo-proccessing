@@ -28,5 +28,5 @@ public class QuizArchiveResponse {
     LocalDateTime createdAt;
     String pdfBase64;
     String wordBase64;
-    boolean evaluated;
+    String excelBase64;
 }

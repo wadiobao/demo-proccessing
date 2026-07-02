@@ -23,6 +23,7 @@ public class FileGenerateResponse {
     List<Question> questions;
     String wordBase64;
     String pdfBase64;
+    String excelBase64;
     String topic;
     String archivedQuestionId;
     String requestId;

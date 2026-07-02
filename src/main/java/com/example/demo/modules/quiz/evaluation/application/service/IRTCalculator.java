@@ -55,8 +55,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class IRTCalculator {
 
-	/** Default damping factor used in MAP optimization to prevent theta from diverging too fast.
-	 * / Hệ số giảm xóc mặc định trong tối ưu hóa MAP, giữ theta không nhảy quá mạnh trong mỗi bước. */
+	/**
+	 * Default damping factor used in MAP optimization to prevent theta from
+	 * diverging too fast.
+	 * / Hệ số giảm xóc mặc định trong tối ưu hóa MAP, giữ theta không nhảy quá mạnh
+	 * trong mỗi bước.
+	 */
 	public static final double DEFAULT_DAMPING_FACTOR = 0.3;
 
 	/**
@@ -67,13 +71,42 @@ public class IRTCalculator {
 	public static final double[] LEVEL_MIN = { -3.00, -1.10, -0.41, 0.20, 0.85, 1.73 };
 
 	/**
-	 * [EN] Upper boundary (inclusive) of each Bloom mastery level on the IRT theta scale.
-	 * [VI] Cận trên (bao gồm) của từng cấp độ thành thạo Bloom trên thang đo theta IRT.
+	 * [EN] Upper boundary (inclusive) of each Bloom mastery level on the IRT theta
+	 * scale.
+	 * [VI] Cận trên (bao gồm) của từng cấp độ thành thạo Bloom trên thang đo theta
+	 * IRT.
 	 */
 	public static final double[] LEVEL_MAX = { -1.10, -0.41, 0.20, 0.85, 1.73, 3.00 };
 
-	/** ELO points allocated per Bloom level / Số ELO phân bổ cho mỗi cấp độ Bloom. */
+	/**
+	 * ELO points allocated per Bloom level / Số ELO phân bổ cho mỗi cấp độ Bloom.
+	 */
 	public static final int ELO_PER_LEVEL = 200;
+
+	public static final String[] BLOOM_LEVELS = {
+			"Remembering",
+			"Understanding",
+			"Applying",
+			"Analyzing",
+			"Evaluating",
+			"Creating"
+	};
+
+	/**
+	 * Maps a value (theta or difficulty) to a Bloom label String.
+	 * [Hợp calculateMasteryLevel và getMasteryLabel thành 1]
+	 * 
+	 * @param value theta or difficulty
+	 * @return Bloom label
+	 */
+	public static String mapToBloom(double value) {
+		for (int i = 0; i < LEVEL_MAX.length - 1; i++) {
+			if (value <= LEVEL_MAX[i]) {
+				return BLOOM_LEVELS[i];
+			}
+		}
+		return BLOOM_LEVELS[5];
+	}
 
 	/**
 	 * Computes the probability of a correct answer using the 1-Parameter Logistic
@@ -473,9 +506,13 @@ public class IRTCalculator {
 	/**
 	 * Maps an IRT theta score to a discrete mastery level on a 6-point Bloom scale.
 	 *
-	 * <p>[EN] Uses the actual non-uniform Bloom level boundaries from the item bank configuration.
+	 * <p>
+	 * [EN] Uses the actual non-uniform Bloom level boundaries from the item bank
+	 * configuration.
 	 * Each level boundary is right-closed (upper bound is inclusive).
-	 * <p>[VI] Dùng biên giới không đều của từng cấp Bloom theo cấu hình ngân hàng câu hỏi.
+	 * <p>
+	 * [VI] Dùng biên giới không đều của từng cấp Bloom theo cấu hình ngân hàng câu
+	 * hỏi.
 	 * Biên trên của mỗi cấp là inclusive (kép kín bên phải).
 	 *
 	 * @param theta user's latent ability / năng lực thực tế của người dùng
@@ -495,17 +532,20 @@ public class IRTCalculator {
 	}
 
 	public String getMasteryLabel(int level) {
-		if (level < 1 || level > 6)
+		if (level < 1 || level > 6) {
 			return "Unknown";
+		}
 		return UserAnswerGenerator.BLOOM_LEVELS[level - 1];
 	}
 
 	/**
 	 * Converts a theta score to a total ELO score (0–1200) across all Bloom levels.
 	 *
-	 * <p>[EN] Each Bloom level contributes 200 ELO points. Progress within a level
+	 * <p>
+	 * [EN] Each Bloom level contributes 200 ELO points. Progress within a level
 	 * is normalized by that level’s own theta span, which is non-uniform.
-	 * <p>[VI] Mỗi cấp Bloom đóng góp 200 điểm ELO. Tiến trình trong cấp được chuẩn hóa
+	 * <p>
+	 * [VI] Mỗi cấp Bloom đóng góp 200 điểm ELO. Tiến trình trong cấp được chuẩn hóa
 	 * theo span theta riêng của cấp đó (không đều nhau).
 	 *
 	 * @param theta user’s latent ability / năng lực của người dùng
@@ -522,8 +562,10 @@ public class IRTCalculator {
 	/**
 	 * Returns the ELO score within the user’s current Bloom mastery level (0–200).
 	 *
-	 * <p>[EN] Useful for displaying a progress bar within the current level.
-	 * <p>[VI] Dùng để hiển thị thanh tiến trình trong cấp độ hiện tại.
+	 * <p>
+	 * [EN] Useful for displaying a progress bar within the current level.
+	 * <p>
+	 * [VI] Dùng để hiển thị thanh tiến trình trong cấp độ hiện tại.
 	 *
 	 * @param theta user’s latent ability / năng lực của người dùng
 	 * @return ELO progress within the current level [0, 200]
@@ -538,8 +580,10 @@ public class IRTCalculator {
 	/**
 	 * Returns how many ELO points remain to reach the next mastery level.
 	 *
-	 * <p>[EN] Returns 0 if the user is already at the maximum level (Creating).
-	 * <p>[VI] Trả về 0 nếu người dùng đã ở cấp tối đa (Creating).
+	 * <p>
+	 * [EN] Returns 0 if the user is already at the maximum level (Creating).
+	 * <p>
+	 * [VI] Trả về 0 nếu người dùng đã ở cấp tối đa (Creating).
 	 *
 	 * @param theta user’s latent ability / năng lực của người dùng
 	 * @return ELO points needed to advance to the next level
@@ -657,39 +701,28 @@ public class IRTCalculator {
 		final double B_MIN_LIMIT = -3.0;
 		final double B_MAX_LIMIT = 3.0;
 
-		for (int i = 0; i < answers.size(); i++) {
-
-			// [EN] 1. Suggest difficulty based on P(target)
-			// [VI] 1. Gợi ý độ khó theo P(target)
-			double pTarget = 0.8;
-			double suggestedB = suggestDifficultyB(thetaCurrent, pTarget);
-
-			suggestedB = Math.max(suggestedB, B_MIN_LIMIT);
-			suggestedB = Math.min(suggestedB, B_MAX_LIMIT);
-
-			// [EN] 2. Create the proposed difficulty range (B_min, B_max)
-			// [VI] 2. Tạo khoảng B đề xuất (B_min, B_max)
-			b_min = Math.max(suggestedB - 0.3, B_MIN_LIMIT);
-			b_max = Math.min(suggestedB + 0.3, B_MAX_LIMIT);
-
-			// [EN] 3. Get current user answer
-			// [VI] 3. Lấy dữ liệu người dùng hiện tại
-			UserAnswer userAnswer = answers.get(i);
-
-			// [EN] 4. Append to history
-			// [VI] 4. Ghi vào lịch sử
+		for (UserAnswer userAnswer : answers) {
 			history.add(userAnswer);
-
-			// [EN] 5. Calculate new theta (MAP)
-			// [VI] 5. Tính theta mới (bằng phương pháp MAP)
-			double newTheta = estimateThetaMAP(history, thetaCurrent, sigma, dampingFactor);
-
-			// [EN] 6. Update current theta for the next iteration
-			// [VI] 6. Cập nhật current theta cho vòng lặp tiếp theo
-			thetaCurrent = newTheta;
 		}
 
-		return new double[] { thetaCurrent, b_min, b_max };
+		// [EN] 1. Calculate new theta (MAP)
+		// [VI] 1. Tính theta mới (bằng phương pháp MAP)
+		double newTheta = estimateThetaMAP(history, thetaCurrent, sigma, dampingFactor);
+
+		// [EN] 2. Suggest difficulty based on P(target)
+		// [VI] 2. Gợi ý độ khó theo P(target)
+		double pTarget = 0.8;
+		double suggestedB = suggestDifficultyB(newTheta, pTarget);
+
+		suggestedB = Math.max(suggestedB, B_MIN_LIMIT);
+		suggestedB = Math.min(suggestedB, B_MAX_LIMIT);
+
+		// [EN] 3. Create the proposed difficulty range (B_min, B_max)
+		// [VI] 3. Tạo khoảng B đề xuất (B_min, B_max)
+		b_min = Math.max(suggestedB - 0.3, B_MIN_LIMIT);
+		b_max = Math.min(suggestedB + 0.3, B_MAX_LIMIT);
+
+		return new double[] { newTheta, b_min, b_max };
 	}
 
 }

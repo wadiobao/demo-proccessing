@@ -1,6 +1,9 @@
 package com.example.demo.modules.quiz.shared.domain.model;
 
+import org.springframework.data.mongodb.core.index.TextIndexed;
+
 import com.google.gson.annotations.SerializedName;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +24,7 @@ public class Question {
     int id;
 
     @SerializedName("question")
+    @TextIndexed
     String question;
 
     @SerializedName("options")

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.quiz.archive.api.ArchiveFacade;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +26,7 @@ class ArchiveFacadeImpl implements ArchiveFacade {
     private final AdminArchiveUseCase adminArchiveUseCase;
 
     @Override
-    public ArchivedQuestionMongoEntity createArchive(ArchivedQuestionMongoEntity archive) {
+    public ArchivedSessionMongoEntity createArchive(ArchivedSessionMongoEntity archive) {
         return archiveQuizUseCase.execute(archive);
     }
 
@@ -41,7 +41,7 @@ class ArchiveFacadeImpl implements ArchiveFacade {
     }
 
     @Override
-    public List<ArchivedQuestionMongoEntity> getAllArchives() {
+    public List<ArchivedSessionMongoEntity> getAllArchives() {
         return adminArchiveUseCase.findAll();
     }
 }

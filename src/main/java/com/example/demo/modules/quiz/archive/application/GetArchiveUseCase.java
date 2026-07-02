@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.quiz.archive.api.dto.QuizArchiveResponse;
 import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class GetArchiveUseCase {
      * Finds all archived quizzes for the given author.
      */
     public StateResponse<Object> findByAuthor(String author) {
-        List<ArchivedQuestionMongoEntity> archives = archivePort.findByAuthor(author);
+        List<ArchivedSessionMongoEntity> archives = archivePort.findByAuthor(author);
         
         List<QuizArchiveResponse> result = archives.stream()
                 .map(this::mapToResponse)
@@ -38,7 +38,7 @@ public class GetArchiveUseCase {
                 .build();
     }
 
-    private QuizArchiveResponse mapToResponse(ArchivedQuestionMongoEntity entity) {
+    private QuizArchiveResponse mapToResponse(ArchivedSessionMongoEntity entity) {
         return QuizArchiveResponse.builder()
                 .id(entity.getId())
                 .author(entity.getAuthor())
@@ -46,8 +46,8 @@ public class GetArchiveUseCase {
                 .questions(entity.getQuestions())
                 .createdAt(entity.getCreatedAt())
                 .pdfBase64(entity.getPdfBase64())
+                .excelBase64(entity.getExcelBase64())
                 .wordBase64(entity.getWordBase64())
-                .evaluated(entity.isEvaluated())
                 .build();
     }
 }

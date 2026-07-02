@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class ArchiveQuizUseCase {
     private final ArchivePort archivePort;
 
     @Transactional
-    public ArchivedQuestionMongoEntity execute(ArchivedQuestionMongoEntity archive) {
+    public ArchivedSessionMongoEntity execute(ArchivedSessionMongoEntity archive) {
         log.info("Archiving quiz '{}' for author: {}", archive.getTitle(), archive.getAuthor());
 
         // 1. Enforce limit: Max 6 archives per user

@@ -10,7 +10,6 @@ import com.example.demo.modules.quiz.shared.domain.model.Question;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -25,9 +24,9 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "archived_questions")
+@Document(collection = "archived_session")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ArchivedQuestionMongoEntity extends BaseModel {
+public class ArchivedSessionMongoEntity extends BaseModel {
     @Id
     String id;
     String author;
@@ -35,7 +34,6 @@ public class ArchivedQuestionMongoEntity extends BaseModel {
     List<Question> questions;
     String pdfBase64;
     String wordBase64;
+    String excelBase64;
     String resourceId;
-    @Default
-    boolean isEvaluated = false;
 }

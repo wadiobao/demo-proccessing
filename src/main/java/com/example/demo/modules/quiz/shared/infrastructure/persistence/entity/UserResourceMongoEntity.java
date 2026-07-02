@@ -34,10 +34,10 @@ import lombok.experimental.SuperBuilder;
 public class UserResourceMongoEntity extends BaseModel {
     @Id
     String id;
-    
+
     // topic is unique within context
     String topic;
-    
+
     @Default
     List<String> contentIds = new ArrayList<>();
 
@@ -46,26 +46,27 @@ public class UserResourceMongoEntity extends BaseModel {
 
     @Default
     List<UserAnswer> history = new ArrayList<>();
-    
+
     @Default
     double theta = 0.0;
-    
+
     @Default
     double b = 0.0;
-    
+
     @Default
     int mastery = 1;
 
     /** ELO score (0–1200) derived from theta after each session. / Điểm ELO (0–1200) tính từ theta sau mỗi phiên. */
     @Default
-    int elo = 0;
-    
+    int elo = 534;
+
     @Default
     int highestElo = 0;
 
     /**
      * Fixed number of questions per quiz session for this topic.
-     * Chosen by the user at topic creation and kept constant throughout the learning journey.
+     * Chosen by the user at topic creation and kept constant throughout the
+     * learning journey.
      * Supported values: 15, 30, 50.
      */
     @Default

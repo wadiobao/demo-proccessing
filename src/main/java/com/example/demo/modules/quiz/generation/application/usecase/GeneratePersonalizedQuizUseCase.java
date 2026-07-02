@@ -51,11 +51,13 @@ public class GeneratePersonalizedQuizUseCase {
             if (wordAndPdf == null) {
                 return responseBuilder.buildFileGenerationError();
             }
+            String excelBase64 = documentRetrievalFacade.generateExcelDocument(questions);
 
             FileGenerateResponse response = FileGenerateResponse.builder()
                     .questions(questions)
                     .wordBase64(wordAndPdf[0])
                     .pdfBase64(wordAndPdf[1])
+                    .excelBase64(excelBase64)
                     .contentPdf(String.join("\n\n", chunks))
                     .topic(config.getTopic())
                     .requestId(requestId)

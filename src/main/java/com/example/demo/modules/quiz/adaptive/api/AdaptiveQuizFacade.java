@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.StateResponse;
+import com.example.demo.enums.TimeRange;
 import com.example.demo.modules.quiz.adaptive.api.request.QuizSubmissionRequest;
 import com.example.demo.modules.quiz.shared.domain.model.QuizConfig;
 
@@ -73,7 +74,7 @@ public interface AdaptiveQuizFacade {
     StateResponse<Object> getAllTopicsInfo(String username);
 
     /**
-     * Get the theta score history of a topic by id.
+     * Get the theta score history of a topic by id for all time ranges.
      */
     StateResponse<Object> getTopicScoreHistory(String id, String username);
 

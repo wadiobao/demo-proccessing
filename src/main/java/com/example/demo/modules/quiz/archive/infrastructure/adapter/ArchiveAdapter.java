@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.modules.quiz.archive.infrastructure.port.ArchivePort;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 import com.example.demo.modules.quiz.shared.infrastructure.persistence.repository.ArchivedQuestionRepository;
 import com.example.demo.utils.CloudinaryUtils;
 
@@ -27,32 +27,32 @@ public class ArchiveAdapter implements ArchivePort {
     private final CloudinaryUtils cloudinaryUtils;
 
     @Override
-    public ArchivedQuestionMongoEntity save(ArchivedQuestionMongoEntity archive) {
+    public ArchivedSessionMongoEntity save(ArchivedSessionMongoEntity archive) {
         return repository.save(archive);
     }
 
     @Override
-    public List<ArchivedQuestionMongoEntity> findByAuthor(String author) {
+    public List<ArchivedSessionMongoEntity> findByAuthor(String author) {
         return repository.findAllByAuthorOrderByCreatedAtDesc(author);
     }
 
     @Override
-    public List<ArchivedQuestionMongoEntity> findAll() {
+    public List<ArchivedSessionMongoEntity> findAll() {
         return repository.findAll();
     }
 
     @Override
-    public Optional<ArchivedQuestionMongoEntity> findById(String id) {
+    public Optional<ArchivedSessionMongoEntity> findById(String id) {
         return repository.findById(id);
     }
 
     @Override
-    public Optional<ArchivedQuestionMongoEntity> findOldestByAuthor(String author) {
+    public Optional<ArchivedSessionMongoEntity> findOldestByAuthor(String author) {
         return repository.findFirstByAuthorOrderByCreatedAtAsc(author);
     }
 
     @Override
-    public void delete(ArchivedQuestionMongoEntity archive) {
+    public void delete(ArchivedSessionMongoEntity archive) {
         // 1. Cleanup Cloudinary images
         List<String> deleteImgList = new ArrayList<>();
         List<Question> questions = archive.getQuestions();
@@ -80,8 +80,8 @@ public class ArchiveAdapter implements ArchivePort {
 
     @Override
     public void deleteAllByAuthor(String author) {
-        List<ArchivedQuestionMongoEntity> archives = repository.findAllByAuthorOrderByCreatedAtDesc(author);
-        for (ArchivedQuestionMongoEntity archive : archives) {
+        List<ArchivedSessionMongoEntity> archives = repository.findAllByAuthorOrderByCreatedAtDesc(author);
+        for (ArchivedSessionMongoEntity archive : archives) {
             delete(archive); // Reuse individual delete for image cleanup
         }
     }

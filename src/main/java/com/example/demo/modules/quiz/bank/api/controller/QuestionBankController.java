@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.quiz.bank.api.QuestionBankFacade;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.QuestionBankMongoEntity;
+import com.example.demo.modules.quiz.bank.api.request.QuestionBankRequest;
+import com.example.demo.modules.quiz.bank.api.response.QuestionBankResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,7 +40,7 @@ public class QuestionBankController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<QuestionBankMongoEntity> result = bankFacade.findAll(PageRequest.of(page, size));
+        Page<QuestionBankResponse> result = bankFacade.findAll(PageRequest.of(page, size));
         return ResponseEntity.ok(StateResponse.builder().result(result).build());
     }
 
@@ -52,7 +53,7 @@ public class QuestionBankController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<QuestionBankMongoEntity> result = bankFacade.search(keyword, PageRequest.of(page, size));
+        Page<QuestionBankResponse> result = bankFacade.search(keyword, PageRequest.of(page, size));
         return ResponseEntity.ok(StateResponse.builder().result(result).build());
     }
 
@@ -62,11 +63,11 @@ public class QuestionBankController {
     @PutMapping("/{id}")
     public ResponseEntity<StateResponse<Object>> update(
             @PathVariable String id,
-            @RequestBody QuestionBankMongoEntity updatedData,
+            @RequestBody QuestionBankRequest request,
             Authentication authentication) {
 
         String username = authentication.getName();
-        QuestionBankMongoEntity saved = bankFacade.updateQuestion(id, updatedData, username);
+        QuestionBankResponse saved = bankFacade.updateQuestion(id, request, username);
 
         return ResponseEntity.ok(StateResponse.builder()
                 .message("Question updated successfully.")

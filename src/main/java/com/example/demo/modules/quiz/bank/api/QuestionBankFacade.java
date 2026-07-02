@@ -1,10 +1,13 @@
 package com.example.demo.modules.quiz.bank.api;
 
 import java.util.List;
-import com.example.demo.modules.quiz.shared.domain.model.Question;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.QuestionBankMongoEntity;
+
+import com.example.demo.modules.quiz.bank.api.request.QuestionBankRequest;
+import com.example.demo.modules.quiz.bank.api.response.QuestionBankResponse;
+import com.example.demo.modules.quiz.shared.domain.model.Question;
 
 /**
  * Facade for Question Bank operations (storage, retrieval, committing staged questions).
@@ -23,17 +26,17 @@ public interface QuestionBankFacade {
     /**
      * Finds questions with pagination.
      */
-    Page<QuestionBankMongoEntity> findAll(Pageable pageable);
+    Page<QuestionBankResponse> findAll(Pageable pageable);
 
     /**
      * Searches questions by keyword with pagination.
      */
-    Page<QuestionBankMongoEntity> search(String keyword, Pageable pageable);
+    Page<QuestionBankResponse> search(String keyword, Pageable pageable);
 
     /**
      * Updates a question in the bank.
      */
-    QuestionBankMongoEntity updateQuestion(String id, QuestionBankMongoEntity updatedData, String username);
+    QuestionBankResponse updateQuestion(String id, QuestionBankRequest request, String username);
 
     /**
      * Deletes a question from the bank.

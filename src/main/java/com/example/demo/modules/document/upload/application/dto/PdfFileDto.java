@@ -1,6 +1,9 @@
 package com.example.demo.modules.document.upload.application.dto;
 
+import java.time.LocalDateTime;
+
 import com.example.demo.enums.FileType;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,4 +19,5 @@ public class PdfFileDto {
     private String majorName;
     private FileType fileType;
     private String author;
+    private LocalDateTime createdAt;
 }

@@ -142,7 +142,7 @@ public class IrtUserSimulator {
         System.out.printf("Final Estimated Theta after %d sessions: %.4f%n", numSessions, currentTheta);
         System.out.printf("Final Mastery Level: %d (%s)%n", 
                 calculator.calculateMasteryLevel(currentTheta),
-                calculator.getMasteryLabel(calculator.calculateMasteryLevel(currentTheta)));
+                calculator.mapToBloom(currentTheta));
                 
         // [EN] Convergence check
         // [VI] Kiểm tra mức độ hội tụ (Sai số)

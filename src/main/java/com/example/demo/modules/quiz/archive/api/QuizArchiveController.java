@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.StateResponse;
 import com.example.demo.modules.quiz.archive.api.ArchiveFacade;
-import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedQuestionMongoEntity;
+import com.example.demo.modules.quiz.shared.infrastructure.persistence.entity.ArchivedSessionMongoEntity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,7 +35,7 @@ public class QuizArchiveController {
      * Archives a quiz.
      */
     @PostMapping
-    public ResponseEntity<ArchivedQuestionMongoEntity> create(@RequestBody ArchivedQuestionMongoEntity archive) {
+    public ResponseEntity<ArchivedSessionMongoEntity> create(@RequestBody ArchivedSessionMongoEntity archive) {
         return ResponseEntity.ok(archiveFacade.createArchive(archive));
     }
 
@@ -70,7 +70,7 @@ public class QuizArchiveController {
      * Global archive list for admins.
      */
     @GetMapping("/all")
-    public ResponseEntity<List<ArchivedQuestionMongoEntity>> getAll() {
+    public ResponseEntity<List<ArchivedSessionMongoEntity>> getAll() {
         return ResponseEntity.ok(archiveFacade.getAllArchives());
     }
 }

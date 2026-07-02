@@ -13,6 +13,7 @@ import com.example.demo.modules.document.processing.api.DocumentProcessingFacade
 import com.example.demo.modules.identity.domain.model.NormalUser;
 import com.example.demo.modules.identity.domain.model.User;
 import com.example.demo.modules.identity.domain.repository.IUserRepository;
+import com.example.demo.modules.quiz.evaluation.application.service.IRTCalculator;
 import com.example.demo.modules.quiz.shared.application.QuizPromptBuilder;
 import com.example.demo.modules.quiz.shared.domain.model.Question;
 import com.example.demo.modules.quiz.shared.domain.port.AiGenerationPort;
@@ -57,8 +58,10 @@ public class BulkQuestionUploadService {
         String extractedText = documentProcessingFacade.processDocument(file).getRawText();
         QuizPromptBuilder.PromptContext context = promptBuilder.buildIdentificationPrompt(extractedText);
 
-        // AiGenerationPort returns record AiResponse(String status, List<Question> questions)
-        List<Question> questions = aiGenerationPort.generateIdentifiedQuestions(context.instruction(), context.userMessage()).questions();
+        // AiGenerationPort returns record AiResponse(String status, List<Question>
+        // questions)
+        List<Question> questions = aiGenerationPort
+                .generateIdentifiedQuestions(context.instruction(), context.userMessage()).questions();
 
         FormSession session = FormSession.builder()
                 .sessionId(sessionId)
@@ -73,9 +76,6 @@ public class BulkQuestionUploadService {
         return questions;
     }
 
-    /**
-     * Commits staged questions to the permanent bank.
-     */
     public List<QuestionBankMongoEntity> commitStagedQuestions(List<Question> questions, String username,
             String contentId) {
         List<QuestionBankMongoEntity> bankEntries = new ArrayList<>();
@@ -96,8 +96,8 @@ public class BulkQuestionUploadService {
     public List<Question> getStagedQuestions(String sessionId, String username) {
         String json = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
         if (json == null) {
-			throw new RuntimeException("Session not found or expired.");
-		}
+            throw new RuntimeException("Session not found or expired.");
+        }
 
         FormSession session = gson.fromJson(json, FormSession.class);
         if (username != null && !username.equals(session.getOwnerName())) {
@@ -109,13 +109,13 @@ public class BulkQuestionUploadService {
     public void updateStagedQuestions(String sessionId, List<Question> updatedQuestions, String username) {
         String json = redisTemplate.opsForValue().get(SESSION_KEY_PREFIX + sessionId);
         if (json == null) {
-			throw new RuntimeException("Session not found or expired.");
-		}
+            throw new RuntimeException("Session not found or expired.");
+        }
 
         FormSession session = gson.fromJson(json, FormSession.class);
         if (!session.getOwnerName().equals(username)) {
-			throw new RuntimeException("Unauthorized");
-		}
+            throw new RuntimeException("Unauthorized");
+        }
 
         session.setQuestions(updatedQuestions);
         redisTemplate.opsForValue().set(SESSION_KEY_PREFIX + sessionId, gson.toJson(session),

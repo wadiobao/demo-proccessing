@@ -28,14 +28,14 @@ public class AdminLoginUseCase {
     @Transactional
     public LoginResult execute(LoginRequest request) {
         User user = userRepository.findByUserName(request.getUserName())
-                .orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+                .orElseThrow(() -> new HandleException(ErrorCode.BAD_CREDENTIALS));
 
         if (!(user instanceof Admin)) {
             throw new HandleException(ErrorCode.UNAUTHORIZED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new HandleException(ErrorCode.UNAUTHENTICATED);
+            throw new HandleException(ErrorCode.BAD_CREDENTIALS);
         }
 
         String accessToken = jwtUtils.generateToken(user, false);

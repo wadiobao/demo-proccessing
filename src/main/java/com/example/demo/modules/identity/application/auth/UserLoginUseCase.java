@@ -30,7 +30,7 @@ public class UserLoginUseCase {
         String loginIdentifier = request.getUserName();
         User user = userRepository.findByUserName(loginIdentifier)
                 .or(() -> userRepository.findByEmail(loginIdentifier))
-                .orElseThrow(() -> new HandleException(ErrorCode.USER_NOT_EXISTED));
+                .orElseThrow(() -> new HandleException(ErrorCode.BAD_CREDENTIALS));
 
         if (!(user instanceof NormalUser)) {
             throw new HandleException(ErrorCode.UNAUTHORIZED);
@@ -40,11 +40,11 @@ public class UserLoginUseCase {
 
         // BẢO MẬT/LOGIC: Nếu tài khoản chỉ liên kết qua Google và chưa được thiết lập mật khẩu cục bộ
         if (normalUser.getProvider() == com.example.demo.modules.identity.domain.model.AuthProvider.GOOGLE && normalUser.getPassword() == null) {
-            throw new HandleException(ErrorCode.UNAUTHENTICATED);
+            throw new HandleException(ErrorCode.BAD_CREDENTIALS);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new HandleException(ErrorCode.UNAUTHENTICATED);
+            throw new HandleException(ErrorCode.BAD_CREDENTIALS);
         }
 
         String accessToken = jwtUtils.generateToken(user, false);

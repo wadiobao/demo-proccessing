@@ -1,5 +1,7 @@
 package com.example.demo.modules.document.upload.api.response;
 
+import java.time.LocalDateTime;
+
 import com.example.demo.enums.FileType;
 
 import lombok.Builder;
@@ -17,4 +19,5 @@ public class PdfFileResponse {
     private String majorName;
     private FileType fileType;
     private String author;
+    private LocalDateTime createdAt;
 }

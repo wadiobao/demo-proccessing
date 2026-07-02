@@ -19,4 +19,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 	@Transactional
 	@Query("DELETE FROM Comment c WHERE c.form.id = ?1")
 	void deleteAllByFormId(String formId);
+
+	/**
+	 * Retrieve all comments ordered by date descending for admin moderation dashboard.
+	 */
+	Page<Comment> findAllByOrderByNgayCommentDesc(Pageable pageable);
 }
+
