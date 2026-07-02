@@ -1,0 +1,83 @@
+### BLOOM TAXONOMY — QUESTION DESIGN GUIDE
+
+Each question MUST map to exactly one Bloom level. Use the definitions below to select the correct question type.
+
+---
+
+**1. REMEMBERING**
+- Definition: Recall or recognize previously learned information.
+- Examples: Listing facts, identifying definitions, recalling names/formulas/dates.
+- Action Verbs: List, Define, Identify, Name, Describe, Recall, Recognize.
+- Question Type: Ask directly for a definition, term, formula, or symbol. No reasoning required.
+
+**2. UNDERSTANDING**
+- Definition: Comprehend and interpret information in one's own words.
+- Examples: Summarizing a text, explaining a concept, interpreting data.
+- Action Verbs: Explain, Summarize, Paraphrase, Classify, Compare, Interpret.
+- Question Type: Ask learner to restate meaning, distinguish between concepts, or describe in their own words.
+
+**3. APPLYING**
+- Definition: Use knowledge to solve problems or execute procedures in new situations.
+- Examples: Using a formula to calculate a result, applying a theory to a real scenario.
+- Action Verbs: Implement, Execute, Solve, Use, Demonstrate, Apply, Calculate.
+- Question Type: Provide a concrete scenario or problem. Require selection of the correct result by applying a rule or formula.
+
+**4. ANALYZING**
+- Definition: Break information into components and understand its internal structure.
+- Examples: Comparing theories, identifying cause-effect relationships, examining arguments.
+- Action Verbs: Analyze, Compare, Contrast, Categorize, Dissect, Differentiate, Examine.
+- Question Type: Require identification of differences, causes, or classification by a specific criterion.
+
+**5. EVALUATING**
+- Definition: Make judgments based on criteria and standards.
+- Examples: Critiquing a work, assessing argument validity, choosing the optimal solution.
+- Action Verbs: Evaluate, Judge, Critique, Assess, Argue, Defend, Justify.
+- Question Type: Present a complex claim or scenario. Require selection of the best solution with justification based on evidence.
+
+**6. CREATING**
+- Definition: Synthesize information to produce new ideas, products, or understanding.
+- Examples: Designing an experiment, formulating a new theory, producing a novel solution.
+- Action Verbs: Create, Design, Construct, Invent, Formulate, Develop, Produce.
+- Question Type: Pose a situation not covered in the source material. Require synthesis across multiple knowledge chunks to propose an original solution.
+
+---
+
+### BLOOM-DIFFICULTY SYNC (IRT Rasch 1PL Scale: -3.0 to +3.0)
+
+The `difficulty` field MUST fall within the IRT range corresponding to the assigned `bloom_level`:
+
+| bloom_level   | difficulty range        |
+|---------------|------------------------|
+| Remembering   | -3.00  to  -1.10       |
+| Understanding | -1.10  to  -0.41       |
+| Applying      | -0.41  to   0.20       |
+| Analyzing      |  0.20  to   0.85       |
+| Evaluating    |  0.85  to   1.73       |
+| Creating      |  1.73  to   3.00       |
+
+---
+
+### CONFLICT RESOLUTION RULE (MANDATORY)
+
+In case of conflict between `[[bloom_allocation]]` and session boundaries (`[[min_difficulty]]`, `[[max_difficulty]]`):
+
+1. **PRIORITY 1**: The **BLOOM-DIFFICULTY SYNC** table is the absolute authority. Each question's `difficulty` MUST remain within the range defined for its assigned `bloom_level`.
+2. **PRIORITY 2**: The `[[min_difficulty]]` and `[[max_difficulty]]` are **guiding targets** for the session. 
+3. **EXECUTION (Overlap Selection Strategy)**: 
+   - **Step 1: Check Overlap**: Find the intersection between the mandatory Bloom Level Range and the session boundaries `[[min_difficulty]]` to `[[max_difficulty]]`.
+   - **Step 2: If Overlap Exists**: You MUST pick a `difficulty` value within that **intersection**. This acts as a precision filter to tailor the Bloom level to the user's specific ability.
+   - **Step 3: If NO Overlap Exists**: (e.g., for "warmup" or "challenge" questions), pick the value from the Bloom Level's native range that is **CLOSEST** to the session boundaries.
+   - **Example**: If `[[min_difficulty]]` is 0.5 and you generate a "Remembering" question (Native Range: -3.0 to -1.1), pick a value near -1.1 (the closest possible value to the session start).
+
+---
+
+### MANDATORY RULES FOR CALCULATION QUESTIONS (Applying / Analyzing)
+
+- Goal: The explanation MUST focus entirely on presenting the correct step-by-step solution.
+- Data Rule: ALL numerical values needed to solve the problem MUST be stated explicitly inside the `question` field. Never reference an external table or chart that is not provided.
+- Explanation Structure (in order):
+  1. State the core principle / formula (cite source section if available).
+  2. Set up the equation or condition.
+  3. Execute the calculation or check each option against the condition.
+  4. Confirm the correct answer.
+- FORBIDDEN: "trial and error" analysis or self-questioning about answer choices. Only present the path to the correct answer.

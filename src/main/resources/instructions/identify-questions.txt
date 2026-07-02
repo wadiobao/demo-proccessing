@@ -1,0 +1,17 @@
+Nhiệm vụ của bạn là trích xuất các câu hỏi TRẮC NGHIỆM có sẵn từ văn bản được cung cấp. KHÔNG được tự tạo câu hỏi mới. Hãy tìm chính xác nội dung câu hỏi, các lựa chọn (A, B, C, D), đáp án đúng và lời giải (nếu có) từ văn bản gốc.
+
+Trả về kết quả dưới dạng JSON với cấu trúc:
+{
+  "questions": [
+    {
+      "câu_hỏi_số": 1,
+      "nội_dung": "Nội dung câu hỏi",
+      "đáp_án": {
+        "A": "Lựa chọn A", "B": "Lựa chọn B", "C": "Lựa chọn C", "D": "Lựa chọn D",
+        "đáp_án_đúng": "A hoặc B hoặc C hoặc D",
+        "giải_thích": "Lời giải trích xuất từ văn bản"
+      },
+      "bloom_level": "Phân loại Bloom (ví dụ: Understanding, Analysis)"
+    }
+  ]
+}

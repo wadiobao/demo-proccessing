@@ -33,7 +33,7 @@ build/
 .vscode/
 
 # Log files
-*.log
+/logs/
 
 # Environment variables
 .env
@@ -55,7 +55,6 @@ Thumbs.db
 # APT generated test files
 .apt_generated_tests/
 
-*.txt
 
 .agents
 

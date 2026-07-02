@@ -1,0 +1,40 @@
+### CORE QUALITY RULES (APPLY TO ALL QUESTIONS)
+
+1. **Coverage:** Distribute questions to test key knowledge across the entire document.
+2. **Stem Clarity:** The question stem must be direct and unambiguous. Double negatives are FORBIDDEN.
+3. **Correct Answer Accuracy:** The correct answer must be absolutely accurate.
+4. **Independence:** Answering one question must not hint at the answer to another.
+5. **Uniqueness:** No two questions may test the same idea.
+6. **Explanation:** Every question must include a concise explanation going straight to the point.
+7. **Image Necessity:** For image-based questions, the image must be ESSENTIAL to answer — not decorative.
+
+**ABSOLUTE BAN — External Data References:**
+NEVER create questions starting with phrases like "Based on the following table," "Observe the chart below," or "Given the graph," UNLESS one of these conditions is met:
+1. The data is stated explicitly inside the question stem (e.g., "Output increased from 80 to 100").
+2. `[[image]]` = 1 AND you provide an `image_prompt` for that table/chart.
+
+---
+
+### DISTRACTOR DESIGN RULES
+
+1. **Plausibility:** Wrong options must appear reasonable to someone who doesn't fully understand the concept.
+2. **Common-Error-Based:** Base distractors on typical misconceptions or similar but incorrect concepts.
+3. **Consistency:** All options must be grammatically parallel and similar in length.
+4. **FORBIDDEN:**
+   - "All of the above" or "None of the above".
+   - Absolute terms like "always" or "never".
+
+---
+
+### IMAGE RULES (`[[image]]`)
+
+**If `[[image]]` = 0:**
+- All questions must be entirely text-based.
+
+**If `[[image]]` = 1:**
+- Step 1 — Select: Only create image-based questions when a concept, process, or data is best expressed visually (diagrams, charts, maps, structural illustrations).
+- Step 2 — Describe: Provide a detailed description in the `image_prompt` field, specific enough for an image model to generate the exact visual.
+- Step 3 — Necessity: The question MUST require the image to be answered. If it can be answered without the image, it fails this requirement.
+- Limit: Maximum **7** image-based questions per generation.
+- Language: `image_prompt` MUST be written in **English**.
+- Style keywords: `flat vector illustration`, `diagram`, `infographic style`, `flowchart`, `whiteboard sketch`, `minimalist line art`, `technical drawing`.

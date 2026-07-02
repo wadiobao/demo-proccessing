@@ -1,0 +1,60 @@
+### FINAL JSON STRUCTURE VALIDATION (MANDATORY — DO NOT SKIP)
+
+Before outputting, self-verify the entire JSON array against this checklist:
+- [ ] The entire output is a single JSON array `[...]` with no text outside it.
+- [ ] Each question object has exactly **7 top-level fields**.
+- [ ] Fields `"correct_answer"` and `"explanation"` are nested **INSIDE** the `"options"` object.
+- [ ] The `"image_prompt"` field is either an English string or `null`.
+
+Any output failing even one check MUST be corrected before returning.
+
+---
+
+### STRICT JSON SCHEMA — ZERO EXCEPTIONS
+
+Every question object MUST follow this exact two-level structure:
+
+**Level 1 — Question Object (exactly 7 fields):**
+1. `"question_number"`: (Integer) Positive integer (1, 2, 3…). Never a decimal.
+2. `"question"`: (String) The question stem.
+3. `"options"`: (Object) Contains all answer choices and metadata.
+4. `"image_prompt"`: (String | null) Image generation prompt or `null`.
+5. `"source_reference"`: (String) Name of the section/topic used to generate this question.
+6. `"bloom_level"`: (String) MUST be one of exactly 6 values: `Remembering`, `Understanding`, `Applying`, `Analyzing`, `Evaluating`, `Creating`.
+7. `"difficulty"`: (Number) Float within the IRT range for the assigned `bloom_level`.
+
+**Level 2 — Options Object (exactly 6 fields):**
+1. `"A"`: (String) Option A content.
+2. `"B"`: (String) Option B content.
+3. `"C"`: (String) Option C content.
+4. `"D"`: (String) Option D content.
+5. `"correct_answer"`: (String) The letter of the correct option (A, B, C, or D).
+6. `"explanation"`: (String) Detailed explanation of why the correct answer is right.
+
+---
+
+### OUTPUT FORMAT
+
+**DO NOT add any explanatory text outside the single JSON array `[...]`.**
+
+✅ CORRECT FORMAT:
+```json
+[
+  {
+    "question_number": 1,
+    "question": "According to the document, what is the key difference between a 'while' loop and a 'for' loop?",
+    "options": {
+      "A": "A 'while' loop executes faster than a 'for' loop.",
+      "B": "A 'for' loop is used when the number of iterations is known; a 'while' loop is not.",
+      "C": "A 'while' loop supports break statements; a 'for' loop does not.",
+      "D": "A 'for' loop always has an exit condition; a 'while' loop does not need one.",
+      "correct_answer": "B",
+      "explanation": "According to Section 2.3 – Loop Structures, the document states that 'for' loops are used for collections or a known number of iterations, while 'while' loops handle conditions that are not known in advance."
+    },
+    "image_prompt": null,
+    "source_reference": "Section 2: Basic Programming Structures",
+    "bloom_level": "Understanding",
+    "difficulty": -0.45
+  }
+]
+```
