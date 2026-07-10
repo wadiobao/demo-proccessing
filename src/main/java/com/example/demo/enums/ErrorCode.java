@@ -48,6 +48,7 @@ public enum ErrorCode {
 	INVALID_FILE_TYPE(4004, "Loại tệp không hợp lệ", HttpStatus.BAD_REQUEST),
 	DATABASE_ERROR(4005, "Lỗi cơ sở dữ liệu", HttpStatus.INTERNAL_SERVER_ERROR),
 	EVALUATED_QUESTIONS(4006, "Câu hỏi đã được đánh giá", HttpStatus.BAD_REQUEST),
+	MALICIOUS_FILE(4007, "File tải lên bị từ chối: nội dung không an toàn hoặc định dạng không hợp lệ", HttpStatus.BAD_REQUEST),
 
 	// 5xxx: AI & Quiz Errors
 	QUIZ_GENERATION_FAILED(5001, "Tạo bài trắc nghiệm thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
