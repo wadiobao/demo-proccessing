@@ -64,3 +64,8 @@ Thumbs.db
 !application.properties
 
 *.sql
+
+/src/main/resources/instructions/base
+/src/main/resources/instructions/modes
+
+*.tex
