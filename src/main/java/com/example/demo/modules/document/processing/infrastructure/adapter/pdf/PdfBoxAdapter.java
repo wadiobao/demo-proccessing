@@ -3,7 +3,9 @@ package com.example.demo.modules.document.processing.infrastructure.adapter.pdf;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -79,68 +81,105 @@ public class PdfBoxAdapter implements TextExtractorPort {
     }
 
     private String performOcr(MultipartFile file) throws IOException {
-        try (PDDocument document = PDDocument.load(file.getInputStream())) {
+
+        // Tesseract khởi tạo 1 lần/thread, tái sử dụng cho mọi trang thread đó xử lý
+        // (tránh load lại tessdata tiếng Việt mỗi trang — chi phí I/O + memory không
+        // nhỏ)
+        ThreadLocal<Tesseract> tesseractThreadLocal = ThreadLocal.withInitial(() -> {
+            Tesseract tesseract = new Tesseract();
+            tesseract.setDatapath(Constants.FilePaths.TESSDATA_PATH);
+            tesseract.setLanguage(Constants.Languages.VIETNAMESE);
+            tesseract.setVariable("user_defined_dpi", "300");
+            return tesseract;
+        });
+
+        try (PDDocument document = PDDocument.load(file.getInputStream())) { // PDFBox 2.x
             PDFRenderer pdfRenderer = new PDFRenderer(document);
-            StringBuilder pdfStringBuilder = new StringBuilder();
-
             int pageCount = document.getNumberOfPages();
-            List<Future<String>> results = new ArrayList<>();
 
+            List<CompletableFuture<PageOcrResult>> futures = new ArrayList<>();
+
+            // Đưa TOÀN BỘ pipeline (render + tiền xử lý + OCR) vào async task
+            // -> tận dụng đa luồng cho cả bước render, không chỉ riêng OCR
             for (int i = 0; i < pageCount; i++) {
-                final int index = i;
+                final int pageIndex = i;
 
-                PDPage page = document.getPage(index);
-                PDRectangle box = page.getMediaBox();
-
-                // 1 point = 1/72 inch
-                float widthInInches = box.getWidth() / 72f;
-                float heightInInches = box.getHeight() / 72f;
-
-                int dpi = 300;
-                float maxExpectedPixels = Math.max(widthInInches * dpi, heightInInches * dpi);
-
-                // Giới hạn kích thước ảnh tối đa 4000 pixels để tránh sập RAM (OOM DoS)
-                if (maxExpectedPixels > 4000) {
-                    dpi = (int) (300 * (4000 / maxExpectedPixels));
-                    if (dpi < 72)
-                        dpi = 72; // Cố định DPI tối thiểu để vẫn đọc được text
-                    log.warn("Trang {} quá lớn ({}x{} inches). Giảm DPI xuống {} để chống sập RAM.",
-                            index + 1, widthInInches, heightInInches, dpi);
-                }
-
-                BufferedImage rawImg = pdfRenderer.renderImageWithDPI(index, dpi);
-
-                // Image preprocessing for better OCR results
-                BufferedImage processedImg = imageProcessor.toGrayscale(rawImg);
-                processedImg = imageProcessor.medianFilter(processedImg);
-                processedImg = imageProcessor.binaryThreshold(processedImg);
-
-                final BufferedImage finalImg = processedImg;
-
-                results.add(threadPoolTaskExecutor.submit(() -> {
+                CompletableFuture<PageOcrResult> futureTask = CompletableFuture.supplyAsync(() -> {
+                    BufferedImage rawImg = null;
+                    BufferedImage processedImg = null;
                     try {
-                        Tesseract tesseract = new Tesseract();
-                        tesseract.setDatapath(Constants.FilePaths.TESSDATA_PATH);
-                        tesseract.setLanguage(Constants.Languages.VIETNAMESE);
-                        tesseract.setVariable("user_defined_dpi", "300");
-                        return String.format(Constants.Messages.PAGE_FORMAT, index + 1, tesseract.doOCR(finalImg));
-                    } catch (TesseractException e) {
-                        log.error("OCR Error on page {}: {}", index + 1, e.getMessage());
-                        return "Error OCR Page " + (index + 1);
+                        // a. Tính DPI an toàn theo kích thước trang, chống OOM
+                        PDPage page = document.getPage(pageIndex);
+                        PDRectangle box = page.getMediaBox();
+                        float widthInInches = box.getWidth() / 72f;
+                        float heightInInches = box.getHeight() / 72f;
+
+                        int dpi = 300;
+                        float maxExpectedPixels = Math.max(widthInInches * dpi, heightInInches * dpi);
+                        if (maxExpectedPixels > 4000) {
+                            dpi = Math.max(72, (int) (300 * (4000 / maxExpectedPixels)));
+                            log.warn("Trang {} quá lớn ({}x{} inches). Giảm DPI xuống {} để chống sập RAM.",
+                                    pageIndex + 1, widthInInches, heightInInches, dpi);
+                        }
+
+                        // b. Render ảnh trong thread con.
+                        // PDFRenderer của PDFBox 2.x KHÔNG đảm bảo thread-safe khi gọi
+                        // đồng thời trên cùng 1 PDDocument -> bắt buộc synchronized ở đây.
+                        synchronized (document) {
+                            rawImg = pdfRenderer.renderImageWithDPI(pageIndex, dpi);
+                        }
+
+                        // c. Tiền xử lý ảnh trong thread con
+                        processedImg = imageProcessor.toGrayscale(rawImg);
+                        processedImg = imageProcessor.medianFilter(processedImg);
+                        processedImg = imageProcessor.binaryThreshold(processedImg);
+
+                        // d. OCR dùng Tesseract tái sử dụng từ ThreadLocal
+                        Tesseract tesseract = tesseractThreadLocal.get();
+                        String text = tesseract.doOCR(processedImg);
+
+                        String formatted = String.format(Constants.Messages.PAGE_FORMAT, pageIndex + 1, text);
+                        return new PageOcrResult(pageIndex, formatted);
+
+                    } catch (Exception e) {
+                        // Cô lập lỗi theo từng trang — 1 trang hỏng không làm mất
+                        // kết quả các trang khác đã xử lý xong
+                        log.error("OCR Error on page {}: {}", pageIndex + 1, e.getMessage(), e);
+                        return new PageOcrResult(pageIndex, "Error OCR Page " + (pageIndex + 1) + "\n");
+                    } finally {
+                        // Giải phóng RAM ngay sau khi xong trang đó — cả 2 ảnh, không chỉ rawImg
+                        if (rawImg != null)
+                            rawImg.flush();
+                        if (processedImg != null)
+                            processedImg.flush();
                     }
-                }));
-                rawImg.flush();
+                }, threadPoolTaskExecutor);
+
+                futures.add(futureTask);
             }
 
-            for (Future<String> result : results) {
-                try {
-                    pdfStringBuilder.append(result.get());
-                } catch (InterruptedException | ExecutionException e) {
-                    log.error("Lỗi khi chờ Thread OCR: {}", e.getMessage());
-                    Thread.currentThread().interrupt();
-                }
+            // Chờ tất cả các trang hoàn thành
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            // Sắp xếp lại tường minh theo pageIndex — an toàn tuyệt đối bất kể
+            // thread nào hoàn thành trước, tránh lệch thứ tự trang
+            List<PageOcrResult> results = futures.stream()
+                    .map(CompletableFuture::join)
+                    .sorted(Comparator.comparingInt(PageOcrResult::pageIndex))
+                    .toList();
+
+            StringBuilder pdfStringBuilder = new StringBuilder();
+            for (PageOcrResult result : results) {
+                pdfStringBuilder.append(result.text());
             }
+
             return pdfStringBuilder.toString();
+
+        } finally {
+            tesseractThreadLocal.remove();
         }
+    }
+
+    private record PageOcrResult(int pageIndex, String text) {
     }
 }
