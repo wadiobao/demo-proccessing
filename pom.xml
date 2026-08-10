@@ -305,6 +305,49 @@
 			<version>3.0.10</version>
 		</dependency>
 
+		<!-- ================= NEW OFFLINE PIPELINE DEPENDENCIES ================= -->
+		<!-- Deep Java Library (DJL) cho Embedding Model -->
+		<dependency>
+			<groupId>ai.djl</groupId>
+			<artifactId>api</artifactId>
+			<version>0.27.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ai.djl.onnxruntime</groupId>
+			<artifactId>onnxruntime-engine</artifactId>
+			<version>0.27.0</version>
+			<scope>runtime</scope>
+		</dependency>
+		
+		<!-- Apache Lucene cho Vector Search -->
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-core</artifactId>
+			<version>9.11.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queryparser</artifactId>
+			<version>9.11.1</version>
+		</dependency>
+		
+		<!-- JGraphT cho Đồ thị Liên kết -->
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-core</artifactId>
+			<version>1.5.2</version>
+		</dependency>
+		
+		<!-- Smile (Statistical Machine Intelligence and Learning Engine) cho HDBSCAN clustering -->
+		<dependency>
+			<groupId>com.github.haifengl</groupId>
+			<artifactId>smile-core</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+
+		<!-- VnCoreNLP (sử dụng thư viện ngoài hoặc local, thêm placeholder) -->
+		<!-- Cần thêm vào m2 hoặc lib nếu không có trên Maven Central -->
+		
 	</dependencies>
 
 	<build>
