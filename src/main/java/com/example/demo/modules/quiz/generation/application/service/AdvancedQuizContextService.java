@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.modules.document.metadata.api.DocumentMetadataFacade;
 import com.example.demo.modules.document.metadata.domain.model.DocumentMetadata;
+import com.example.demo.modules.document.shared.application.TagNormalizer;
 import com.example.demo.modules.quiz.graph.infrastructure.persistence.repository.TagRelationRepository;
 
 import lombok.Builder;
@@ -24,6 +25,7 @@ public class AdvancedQuizContextService {
 
     private final TagRelationRepository tagRelationRepository;
     private final DocumentMetadataFacade documentMetadataFacade;
+    private final TagNormalizer tagNormalizer;
 
     @Data
     @Builder
@@ -40,10 +42,7 @@ public class AdvancedQuizContextService {
             return fallbackStrategy("No source tags", currentTopic);
         }
 
-        List<String> normalizedTags = sourceTags.stream()
-                .map(String::toLowerCase)
-                .map(String::trim)
-                .toList();
+        List<String> normalizedTags = tagNormalizer.normalizeAll(sourceTags);
 
         // 1. Dò Graph lấy Top 3 Tags liên quan nhất
         List<String> relatedTags = tagRelationRepository.findMostRelatedTagsExcludingInput(
@@ -81,11 +80,20 @@ public class AdvancedQuizContextService {
         return fallbackStrategy("No content found for related tags", currentTopic);
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.quiz.context.max-snippet-length:1000}")
+    private int maxSnippetLength;
+
+    @org.springframework.beans.factory.annotation.Value("${app.quiz.context.snippet-offset-before:400}")
+    private int snippetOffsetBefore;
+
+    @org.springframework.beans.factory.annotation.Value("${app.quiz.context.snippet-offset-after:600}")
+    private int snippetOffsetAfter;
+
     private String extractSmartSnippet(String fullText, String keyword) {
         if (fullText == null || fullText.isEmpty()) {
 			return null;
 		}
-        if (fullText.length() < 1000) {
+        if (fullText.length() < maxSnippetLength) {
 			return fullText.trim();
 		}
 
@@ -94,12 +102,12 @@ public class AdvancedQuizContextService {
 
         // Nếu tag có trong metadata nhưng không tìm thấy trong content (do lỗi OCR hoặc viết tắt)
         if (index == -1) {
-            return alignToSentences(fullText.substring(0, Math.min(fullText.length(), 1000)));
+            return alignToSentences(fullText.substring(0, Math.min(fullText.length(), maxSnippetLength)));
         }
 
         // Lấy phạm vi rộng hơn để đảm bảo đủ ngữ cảnh cho các mức Bloom cao
-        int start = Math.max(0, index - 400);
-        int end = Math.min(fullText.length(), index + 600);
+        int start = Math.max(0, index - snippetOffsetBefore);
+        int end = Math.min(fullText.length(), index + snippetOffsetAfter);
 
         return alignToSentences(fullText.substring(start, end));
     }
@@ -110,7 +118,7 @@ public class AdvancedQuizContextService {
         // Tìm dấu chấm cuối cùng để tránh câu bị cụt đuôi
         int lastDot = snippet.lastIndexOf(".");
 
-        if (firstDot != -1 && lastDot != -1 && lastDot > firstDot) {
+        if (firstDot != -1 && lastDot != -1 && (lastDot - firstDot) > 20) {
             return snippet.substring(firstDot + 1, lastDot + 1).trim();
         }
         return snippet.trim();

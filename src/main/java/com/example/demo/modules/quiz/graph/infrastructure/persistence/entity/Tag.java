@@ -39,4 +39,7 @@ public class Tag {
     @Builder.Default
     @Column(name = "usage_count", nullable = false)
     Long usageCount = 1L;
+
+    @Column(name = "embedding_json", columnDefinition = "TEXT")
+    String embeddingJson;
 }
