@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.example.demo.modules.document.processing.application.port.output.AiAnalysisPort;
+import com.example.demo.modules.document.processing.application.port.output.TokenizerPort;
+import com.example.demo.modules.document.processing.application.port.output.KeywordExtractionPort;
+import com.example.demo.modules.document.processing.application.port.output.ExtractiveSummaryPort;
 import com.example.demo.modules.document.processing.domain.model.ExtractedContent;
 
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AnalyzeDocumentUseCase {
 
-    private final AiAnalysisPort aiAnalysisPort;
+    private final TokenizerPort tokenizerPort;
+    private final KeywordExtractionPort keywordExtractionPort;
+    private final ExtractiveSummaryPort extractiveSummaryPort;
 
     /**
      * Analyzes the provided text and builds an ExtractedContent domain object.
@@ -35,8 +39,11 @@ public class AnalyzeDocumentUseCase {
         log.info("Analyzing document content with AI strategy: {}", strategy);
         
         try {
-            List<String> keywords = aiAnalysisPort.extractKeywords(text, 15);
-            String summary = aiAnalysisPort.analyze("Tóm tắt ngắn gọn nội dung sau trong 1-2 câu: " + text);
+            List<String> tokens = tokenizerPort.tokenize(text);
+            List<String> keywords = keywordExtractionPort.extractKeywords(tokens, 15);
+            List<String> sentences = List.of(text.split("(?<=[.!?])\\s+"));
+            List<String> summarySentences = extractiveSummaryPort.summarize(sentences, 2);
+            String summary = String.join(" ", summarySentences);
 
             return ExtractedContent.builder()
                     .rawText(text)

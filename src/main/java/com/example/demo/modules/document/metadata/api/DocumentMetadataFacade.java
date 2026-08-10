@@ -2,7 +2,9 @@ package com.example.demo.modules.document.metadata.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +15,10 @@ import com.example.demo.modules.document.metadata.infrastructure.persistence.ent
 import com.example.demo.modules.document.metadata.infrastructure.persistence.repository.DocumentMetadataRepository;
 import com.example.demo.modules.document.processing.api.DocumentProcessingFacade;
 import com.example.demo.modules.document.processing.domain.model.ExtractedContent;
-import com.example.demo.utils.VectorUtils;
+import com.example.demo.modules.document.shared.application.TagNormalizer;
+import com.example.demo.modules.document.metadata.application.port.output.EmbeddingPort;
+import com.example.demo.modules.document.metadata.application.port.output.VectorIndexPort;
+import com.example.demo.modules.document.metadata.application.port.output.DocumentGraphPort;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +36,11 @@ import lombok.extern.slf4j.Slf4j;
 public class DocumentMetadataFacade {
 
     private final DocumentMetadataRepository repository;
-    private final VectorUtils vectorUtils;
+    private final EmbeddingPort embeddingPort;
+    private final VectorIndexPort vectorIndexPort;
+    private final DocumentGraphPort documentGraphPort;
     private final DocumentProcessingFacade documentProcessingFacade;
+    private final TagNormalizer tagNormalizer;
     private final DeleteMetadataCommand deleteMetadataCommand;
 
     /**
@@ -45,8 +53,10 @@ public class DocumentMetadataFacade {
 
     /**
      * Saves or retrieves existing metadata for the given content with an optional explicit topic.
+     * @deprecated Sử dụng kiến trúc Pipeline Offline thay vì gọi AI bên ngoài.
      */
     @Transactional
+    @Deprecated(since = "1.0", forRemoval = true)
     public DocumentMetadata findOrCreateMetadata(String content, String owner, String originalName, String explicitTopic) {
         // 1. Check for EXACT match first
         Optional<DocumentMetadataMongoEntity> exactMatch = repository.findFirstByContentAndOwner(content, owner);
@@ -71,9 +81,9 @@ public class DocumentMetadataFacade {
             return entity.toDomain();
         }
 
-        log.info("[AI-CALL] Creating text embedding (Vectorization)");
-        List<Double> embedding = vectorUtils.createVector(content);
-        log.info("[AI-RESULT] Embedding created (Dimensions: {})", embedding != null ? embedding.size() : 0);
+        log.info("[OFFLINE-PIPELINE] Creating text embedding (Vectorization)");
+        List<Double> embedding = embeddingPort.embedDocument(content);
+        log.info("[OFFLINE-PIPELINE] Embedding created (Dimensions: {})", embedding != null ? embedding.size() : 0);
         String detectedTopic = null;
         List<String> tags = null;
 
@@ -140,17 +150,25 @@ public class DocumentMetadataFacade {
             tags = new ArrayList<>();
         }
 
+        List<String> normalizedTags = tagNormalizer.normalizeAll(tags);
+
         DocumentMetadata domain = DocumentMetadata.builder()
                 .content(content)
                 .owner(owner)
                 .embedding(embedding)
                 .topic(detectedTopic)
-                .tags(tags)
+                .tags(normalizedTags)
                 .originalName(originalName)
                 .build();
 
         DocumentMetadataMongoEntity entity = DocumentMetadataMongoEntity.fromDomain(domain);
-        return repository.save(entity).toDomain();
+        DocumentMetadata savedMetadata = repository.save(entity).toDomain();
+        
+        log.info("[OFFLINE-PIPELINE] Indexing into Lucene & JGraphT...");
+        vectorIndexPort.indexDocument(savedMetadata.getId(), embedding, Map.of("title", savedMetadata.getOriginalName()));
+        documentGraphPort.addDocumentToGraph(savedMetadata.getId(), embedding, normalizedTags, Set.of());
+        
+        return savedMetadata;
     }
 
     public DocumentMetadata findById(String id) {
