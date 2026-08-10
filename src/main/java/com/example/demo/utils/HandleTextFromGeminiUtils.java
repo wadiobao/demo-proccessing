@@ -198,6 +198,7 @@ public class HandleTextFromGeminiUtils {
      * @return DTO containing topic and tag list / đối tượng chứa chủ đề và danh
      *         sách thẻ
      */
+    @Deprecated(since = "1.0", forRemoval = true)
     public TopicAndTags parseTopicAndTags(String inputText) {
         if (inputText == null || inputText.trim().isEmpty()) {
             return new TopicAndTags();

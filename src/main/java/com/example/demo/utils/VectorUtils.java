@@ -19,6 +19,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
  * @since 1.0
  */
 @Component
+@Deprecated(since = "1.0", forRemoval = true)
 public class VectorUtils {
     @Autowired
     private EmbeddingModel embeddingModel; // Inject từ cấu hình LangChain4j

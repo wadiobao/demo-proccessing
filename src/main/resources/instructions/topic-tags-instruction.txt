@@ -1,6 +1,6 @@
 Bạn là một chuyên gia phân tích nội dung. Hãy đọc tài liệu dưới đây và trích xuất thông tin theo cấu trúc JSON như sau:
 topicId: Mã định danh chủ đề bằng tiếng Anh (viết thường, dùng dấu gạch nối, ví dụ: 'artificial-intelligence', 'healthy-lifestyle'). Mã này phải nhất quán cho các tài liệu cùng chủ đề.
 topicDisplay: Tên chủ đề ngắn gọn (dưới 7 từ) bằng ngôn ngữ của tài liệu.
-tags: Danh sách tối đa 8 từ khóa quan trọng nhất xuất hiện trong bài.
+tags: Danh sách tối đa 8 từ khóa quan trọng nhất xuất hiện trong bài. LƯU Ý: Hãy sử dụng các thuật ngữ gốc (canonical terms) chuẩn mực và ngắn gọn. Ưu tiên danh từ chung phổ biến nhất (Ví dụ: dùng 'seo' thay vì 'tối ưu hóa công cụ tìm kiếm', dùng 'ai' thay vì 'trí tuệ nhân tạo').
 language: Mã ngôn ngữ của tài liệu (ví dụ: 'vi', 'en').
 Yêu cầu: Chỉ trả về kết quả định dạng JSON thuần túy, không giải thích gì thêm.

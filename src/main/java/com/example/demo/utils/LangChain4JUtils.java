@@ -11,6 +11,7 @@ import dev.langchain4j.service.SystemMessage;
  *
  * @since 1.0
  */
+@Deprecated(since = "1.0", forRemoval = true)
 public class LangChain4JUtils {
 
 	interface Assistant {
